@@ -1,5 +1,4 @@
-import { Text, useColorScheme, View, Image } from "react-native";
-import { Link } from "expo-router";
+import { Text, View } from "react-native";
 
 export default function Index() {
   return (
@@ -11,9 +10,6 @@ export default function Index() {
       }}
     >
       <Text style={{ fontSize: 24, fontWeight: "bold" }}>DESocial</Text>
-      <Link href="/profile">
-        <Text>Go to Profile</Text>
-      </Link>
     </View>
   );
 }
