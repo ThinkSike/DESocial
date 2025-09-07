@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "DESocial",
-    "slug": "DESocial",
+    "name": "desocial",
+    "slug": "desocial",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",

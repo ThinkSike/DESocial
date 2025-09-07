@@ -1,30 +1,50 @@
-### 🌞 Light Mode Palette
+# Welcome to your Expo app 👋
 
-- **Primary**: `#E68625` (warm orange from book)
-- **Secondary**: `#8B4513` (brown from text/outlines)
-- **Background**: `#FFFFFF` (pure white)
-- **Surface / Card**: `#F9F5F2` (soft off-white, low strain)
-- **Text Primary**: `#2C1A10` (dark brown, readable)
-- **Text Secondary**: `#6B4F3A` (muted brown)
-- **Accent**: `#F4A940` (golden highlight)
+This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
----
+## Get started
 
-### 🌙 Dark Mode Palette
+1. Install dependencies
 
-- **Primary**: `#E68625` (same orange, stands out in dark)
-- **Secondary**: `#F4A940` (gold highlight for buttons/links)
-- **Background**: `#12100E` (very dark brownish-black)
-- **Surface / Card**: `#1E1B18` (softer dark)
-- **Text Primary**: `#F5F5F5` (light white/cream)
-- **Text Secondary**: `#C9B8A8` (warm gray for subtitles)
-- **Accent**: `#B85C25` (deep muted orange for hover/active states)
+   ```bash
+   npm install
+   ```
 
----
+2. Start the app
 
-### 🎨 Usage Recommendations
+   ```bash
+   npx expo start
+   ```
 
-- Use **orange (#E68625)** for buttons, highlights, and active states.
-- Use **brown (#8B4513)** for headings and brand elements.
-- Keep **backgrounds minimal** with white/off-white in light mode and deep brown/black in dark mode.
-- Use **gold (#F4A940)** sparingly for accents (icons, badges, notification dots).
+In the output, you'll find options to open the app in a
+
+- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
+- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
+- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
+- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+
+You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+
+## Get a fresh project
+
+When you're ready, run:
+
+```bash
+npm run reset-project
+```
+
+This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+
+## Learn more
+
+To learn more about developing your project with Expo, look at the following resources:
+
+- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
+- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+
+## Join the community
+
+Join our community of developers creating universal apps.
+
+- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
+- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
