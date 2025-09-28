@@ -3,7 +3,7 @@ import { Button, Text, StyleSheet } from "react-native";
 import { useThemeColors } from "@/constants/Colors";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const HomeScreen = () => {
+export default function HomeScreen() {
   const router = useRouter();
   const colors = useThemeColors();
 
@@ -17,9 +17,9 @@ const HomeScreen = () => {
       />
     </SafeAreaView>
   );
-};
+}
 
-const styles = (colors: { background: string; textPrimary: string }) =>
+const styles = (colors: any) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -33,5 +33,3 @@ const styles = (colors: { background: string; textPrimary: string }) =>
       color: colors.textPrimary,
     },
   });
-
-export default HomeScreen;

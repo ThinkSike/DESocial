@@ -1,14 +1,20 @@
 import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
+import { useThemeColors } from "@/constants/Colors";
 
 export default function TabLayout() {
+  const colors = useThemeColors();
+
   return (
-    <NativeTabs>
+    <NativeTabs
+      backgroundColor={colors.surface}
+      iconColor={colors.textSecondary}
+    >
       <NativeTabs.Trigger name="index">
-        <Label>Home</Label>
+        <Label hidden />
         <Icon sf="house" drawable="custom_android_drawable" />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="forum">
-        <Label>forum</Label>
+        <Label hidden />
         <Icon
           sf="bubble.left.and.bubble.right"
           drawable="custom_android_drawable"
@@ -16,11 +22,11 @@ export default function TabLayout() {
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="search">
         <Icon sf="magnifyingglass" drawable="custom_search_drawable" />
-        <Label>Search</Label>
+        <Label hidden />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile">
         <Icon sf="person" drawable="custom_profile_drawable" />
-        <Label>Profile</Label>
+        <Label hidden />
       </NativeTabs.Trigger>
     </NativeTabs>
   );
