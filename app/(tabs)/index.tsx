@@ -1,15 +1,15 @@
 import { useRouter } from "expo-router";
-import { Button, Text } from "react-native";
+import { Button, Text, StyleSheet } from "react-native";
 import { useThemeColors } from "@/constants/Colors";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function HomeScreen() {
+const HomeScreen = () => {
   const router = useRouter();
   const colors = useThemeColors();
 
   return (
-    <SafeAreaView style={[{ backgroundColor: colors.background }]}>
-      <Text style={[{ color: colors.textPrimary }]}>DESocial</Text>
+    <SafeAreaView style={styles(colors).container}>
+      <Text style={styles(colors).title}>DESocial</Text>
       <Button
         title="Open Chat"
         onPress={() => router.push("/chats" as any)}
@@ -17,4 +17,21 @@ export default function HomeScreen() {
       />
     </SafeAreaView>
   );
-}
+};
+
+const styles = (colors: { background: string; textPrimary: string }) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      paddingHorizontal: 16,
+      backgroundColor: colors.background,
+    },
+    title: {
+      fontSize: 24,
+      fontWeight: "600",
+      marginBottom: 8,
+      color: colors.textPrimary,
+    },
+  });
+
+export default HomeScreen;
