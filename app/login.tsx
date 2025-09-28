@@ -16,8 +16,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
-import { authService } from '../services/authService';
 import '../global.css'; // NativeWind styles
+import { authService } from '../services/authService';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
