@@ -1,11 +1,12 @@
+import { useThemeColors } from "@/constants/Colors";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import {
+  Button,
   FlatList,
   StyleSheet,
   Text,
   TextInput,
-  Button,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -35,6 +36,7 @@ export default function ChatScreen() {
   const { username } = useLocalSearchParams();
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState(mockMessages);
+  const colors = useThemeColors();
 
   const sendMessage = () => {
     if (message.trim()) {
@@ -56,17 +58,48 @@ export default function ChatScreen() {
     <View
       style={[
         styles.messageContainer,
-        item.sender === "me" ? styles.myMessage : styles.otherMessage,
+        item.sender === "me"
+          ? { backgroundColor: colors.primary, alignSelf: "flex-end" }
+          : { backgroundColor: colors.surface, alignSelf: "flex-start" },
       ]}
     >
-      <Text style={styles.messageText}>{item.text}</Text>
-      <Text style={styles.messageTime}>{item.timestamp}</Text>
+      <Text
+        style={[
+          styles.messageText,
+          {
+            color:
+              item.sender === "me" ? colors.background : colors.textPrimary,
+          },
+        ]}
+      >
+        {item.text}
+      </Text>
+      <Text
+        style={[
+          styles.messageTime,
+          {
+            color:
+              item.sender === "me" ? colors.background : colors.textSecondary,
+          },
+        ]}
+      >
+        {item.timestamp}
+      </Text>
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.header}>{username}</Text>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
+      <Text
+        style={[
+          styles.header,
+          { color: colors.textPrimary, borderBottomColor: colors.border },
+        ]}
+      >
+        {username}
+      </Text>
 
       <FlatList
         data={messages}
@@ -76,15 +109,23 @@ export default function ChatScreen() {
         contentContainerStyle={styles.messagesContainer}
       />
 
-      <View style={styles.inputContainer}>
+      <View style={[styles.inputContainer, { borderTopColor: colors.border }]}>
         <TextInput
-          style={styles.textInput}
+          style={[
+            styles.textInput,
+            {
+              borderColor: colors.border,
+              backgroundColor: colors.surface,
+              color: colors.textPrimary,
+            },
+          ]}
           value={message}
           onChangeText={setMessage}
           placeholder="Type a message..."
+          placeholderTextColor={colors.textSecondary}
           multiline
         />
-        <Button title="Send" onPress={sendMessage} />
+        <Button title="Send" onPress={sendMessage} color={colors.primary} />
       </View>
     </SafeAreaView>
   );
@@ -93,14 +134,12 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   header: {
     fontSize: 18,
     fontWeight: "600",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
   },
   messagesList: {
     flex: 1,
@@ -114,22 +153,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     maxWidth: "80%",
   },
-  myMessage: {
-    backgroundColor: "#007AFF",
-    alignSelf: "flex-end",
-  },
-  otherMessage: {
-    backgroundColor: "#f0f0f0",
-    alignSelf: "flex-start",
-  },
   messageText: {
     fontSize: 16,
-    color: "#fff",
     marginBottom: 4,
   },
   messageTime: {
     fontSize: 12,
-    color: "#fff",
     opacity: 0.7,
   },
   inputContainer: {
@@ -137,12 +166,10 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: "#eee",
   },
   textInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#ddd",
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 12,

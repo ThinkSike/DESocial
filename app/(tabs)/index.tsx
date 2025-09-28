@@ -1,8 +1,9 @@
 import { useRouter } from "expo-router";
-import { Button, Text, StyleSheet } from "react-native";
+import { StyleSheet, View, TouchableOpacity } from "react-native";
 import { useThemeColors } from "@/constants/Colors";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -10,13 +11,22 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles(colors).container}>
-      <Text style={styles(colors).title}>DESocial</Text>
-
-      <Button
-        title="Open Chat"
-        onPress={() => router.push("/chats" as any)}
-        color={colors.primary}
-      />
+      <View style={styles(colors).header}>
+        <Image
+          source={require("@/assets/images/icon.png")}
+          style={styles(colors).logo}
+        />
+        <TouchableOpacity
+          onPress={() => router.push("/chats" as any)}
+          style={styles(colors).chatButton}
+        >
+          <Ionicons
+            name="chatbubble-outline"
+            size={24}
+            color={colors.primary}
+          />
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -27,10 +37,15 @@ const styles = (colors: any) =>
       flex: 1,
       backgroundColor: colors.background,
     },
-    title: {
-      fontSize: 24,
-      fontWeight: "600",
-      marginStart: 20,
-      color: colors.textPrimary,
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginHorizontal: 20,
     },
+    logo: {
+      width: 50,
+      height: 50,
+    },
+    chatButton: {},
   });

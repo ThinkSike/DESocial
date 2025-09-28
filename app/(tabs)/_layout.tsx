@@ -16,7 +16,7 @@ export default function TabLayout() {
       <NativeTabs.Trigger name="forum">
         <Label hidden />
         <Icon
-          sf="bubble.left.and.bubble.right"
+          sf="person.3.sequence"
           drawable="custom_android_drawable"
         />
       </NativeTabs.Trigger>

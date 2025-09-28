@@ -1,3 +1,4 @@
+import { useThemeColors } from "@/constants/Colors";
 import { useRouter } from "expo-router";
 import {
   FlatList,
@@ -31,27 +32,38 @@ const mockChats = [
 
 export default function ChatListScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
 
   return (
-    <SafeAreaView style={[styles.safeArea, styles.container]}>
-      <Text style={styles.title}>Chats</Text>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: colors.background }]}
+    >
+      <View style={styles.container}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Chats</Text>
 
-      <FlatList
-        data={mockChats}
-        keyExtractor={(item) => item.username}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.chat}
-            onPress={() => router.push(`/chats/${item.username}` as any)}
-          >
-            <View style={styles.content}>
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.message}>{item.lastMessage}</Text>
-            </View>
-            <Text style={styles.time}>{item.timestamp}</Text>
-          </TouchableOpacity>
-        )}
-      />
+        <FlatList
+          data={mockChats}
+          keyExtractor={(item) => item.username}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[styles.chat, { backgroundColor: colors.surface }]}
+              onPress={() => router.push(`/chats/${item.username}` as any)}
+            >
+              <View style={styles.content}>
+                <Text style={[styles.name, { color: colors.textPrimary }]}>
+                  {item.name}
+                </Text>
+                <Text style={[styles.message, { color: colors.textSecondary }]}>
+                  {item.lastMessage}
+                </Text>
+              </View>
+              <Text style={[styles.time, { color: colors.textSecondary }]}>
+                {item.timestamp}
+              </Text>
+            </TouchableOpacity>
+          )}
+        />
+      </View>
     </SafeAreaView>
   );
 }
@@ -72,7 +84,6 @@ const styles = StyleSheet.create({
   chat: {
     flexDirection: "row",
     padding: 16,
-    backgroundColor: "#f5f5f5",
     marginBottom: 8,
     borderRadius: 8,
   },
@@ -85,10 +96,9 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   message: {
-    color: "#666",
+    fontSize: 14,
   },
   time: {
     fontSize: 12,
-    color: "#999",
   },
 });
