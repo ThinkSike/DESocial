@@ -19,7 +19,7 @@ export default function TabLayout() {
         <Label>Search</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile">
-        <Icon sf="person.fill" drawable="custom_profile_drawable" />
+        <Icon sf="person" drawable="custom_profile_drawable" />
         <Label>Profile</Label>
       </NativeTabs.Trigger>
     </NativeTabs>
