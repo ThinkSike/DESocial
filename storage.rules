@@ -1,0 +1,88 @@
+rules_version = '2';
+
+// Firebase Storage Security Rules for DESocial
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isValidImageFile() {
+      return request.resource.contentType.matches('image/.*') &&
+             request.resource.size < 10 * 1024 * 1024; // 10MB limit
+    }
+    
+    function isValidDocumentFile() {
+      return request.resource.contentType.matches('(image/.*|application/pdf|text/.*|application/msword|application/vnd.openxmlformats-officedocument.wordprocessingml.document)') &&
+             request.resource.size < 50 * 1024 * 1024; // 50MB limit
+    }
+
+    // User profile pictures
+    match /profile-pictures/{userId}/{allPaths=**} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && 
+                   isOwner(userId) && 
+                   isValidImageFile();
+      allow delete: if isOwner(userId);
+    }
+
+    // Post images
+    match /posts/{userId}/{allPaths=**} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && 
+                   isOwner(userId) && 
+                   isValidImageFile();
+      allow delete: if isOwner(userId);
+    }
+
+    // Lost and found item images
+    match /lost-found/{userId}/{allPaths=**} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && 
+                   isOwner(userId) && 
+                   isValidImageFile();
+      allow delete: if isOwner(userId);
+    }
+
+    // Tribe cover images and posts
+    match /tribes/{tribeId}/{allPaths=**} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isValidImageFile();
+      allow delete: if isSignedIn();
+    }
+
+    // Announcement attachments (admin only)
+    match /announcements/{allPaths=**} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && 
+                   isValidDocumentFile() &&
+                   // Additional check: verify user is admin (requires custom token claims)
+                   request.auth.token.admin == true;
+      allow delete: if request.auth.token.admin == true;
+    }
+
+    // Event images
+    match /events/{userId}/{allPaths=**} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && 
+                   isOwner(userId) && 
+                   isValidImageFile();
+      allow delete: if isOwner(userId);
+    }
+
+    // Temporary uploads (for processing)
+    match /temp/{userId}/{allPaths=**} {
+      allow read: if isOwner(userId);
+      allow write: if isSignedIn() && 
+                   isOwner(userId) && 
+                   (isValidImageFile() || isValidDocumentFile());
+      allow delete: if isOwner(userId);
+    }
+  }
+}

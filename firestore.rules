@@ -1,0 +1,223 @@
+// Firestore Security Rules for DESocial
+// Deploy these rules to your Firebase project
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    function isVerifiedUser() {
+      return isSignedIn() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isVerified == true;
+    }
+    
+    function isValidPRN(prn) {
+      return prn is string && prn.matches('^[0-9]{11}$');
+    }
+
+    // Users collection rules
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && 
+                   isOwner(userId) && 
+                   isValidPRN(resource.data.prn) &&
+                   resource.data.isAdmin == false &&
+                   resource.data.isVerified == false;
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Posts collection rules
+    match /posts/{postId} {
+      allow read: if isSignedIn();
+      allow create: if isVerifiedUser() && 
+                   isOwner(resource.data.authorId) &&
+                   resource.data.likes == [] &&
+                   resource.data.commentsCount == 0;
+      allow update: if isVerifiedUser() && 
+                   (isOwner(resource.data.authorId) || 
+                    // Allow users to update likes array
+                    (request.writeFields.hasOnly(['likes']) && 
+                     request.auth.uid in resource.data.likes || 
+                     !(request.auth.uid in resource.data.likes)));
+      allow delete: if isOwner(resource.data.authorId) || isAdmin();
+    }
+
+    // Comments collection rules
+    match /comments/{commentId} {
+      allow read: if isSignedIn();
+      allow create: if isVerifiedUser() && 
+                   isOwner(resource.data.authorId) &&
+                   resource.data.likes == [];
+      allow update: if isVerifiedUser() && 
+                   (isOwner(resource.data.authorId) || 
+                    // Allow users to update likes array
+                    (request.writeFields.hasOnly(['likes']) && 
+                     request.auth.uid in resource.data.likes || 
+                     !(request.auth.uid in resource.data.likes)));
+      allow delete: if isOwner(resource.data.authorId) || isAdmin();
+    }
+
+    // Forum posts collection rules
+    match /forumPosts/{postId} {
+      allow read: if isSignedIn();
+      allow create: if isVerifiedUser() && 
+                   isOwner(resource.data.authorId) &&
+                   resource.data.upvotes == [] &&
+                   resource.data.downvotes == [] &&
+                   resource.data.answersCount == 0 &&
+                   resource.data.isAnswered == false;
+      allow update: if isVerifiedUser() && 
+                   (isOwner(resource.data.authorId) || 
+                    // Allow voting
+                    request.writeFields.hasOnly(['upvotes', 'downvotes', 'updatedAt']) ||
+                    // Allow marking as answered (author only)
+                    (isOwner(resource.data.authorId) && 
+                     request.writeFields.hasOnly(['isAnswered', 'bestAnswerId', 'updatedAt'])) ||
+                    // Allow admin moderation
+                    (isAdmin() && request.writeFields.hasOnly(['isModerated'])));
+      allow delete: if isOwner(resource.data.authorId) || isAdmin();
+    }
+
+    // Forum answers collection rules
+    match /forumAnswers/{answerId} {
+      allow read: if isSignedIn();
+      allow create: if isVerifiedUser() && 
+                   isOwner(resource.data.authorId) &&
+                   resource.data.upvotes == [] &&
+                   resource.data.downvotes == [] &&
+                   resource.data.isBestAnswer == false;
+      allow update: if isVerifiedUser() && 
+                   (isOwner(resource.data.authorId) || 
+                    // Allow voting
+                    request.writeFields.hasOnly(['upvotes', 'downvotes', 'updatedAt']) ||
+                    // Allow marking as best answer
+                    request.writeFields.hasOnly(['isBestAnswer']) ||
+                    // Allow admin moderation
+                    (isAdmin() && request.writeFields.hasOnly(['isModerated'])));
+      allow delete: if isOwner(resource.data.authorId) || isAdmin();
+    }
+
+    // Announcements collection rules
+    match /announcements/{announcementId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isOwner(resource.data.authorId);
+      allow update: if isAdmin() && isOwner(resource.data.authorId);
+      allow delete: if isAdmin();
+    }
+
+    // Tribes collection rules
+    match /tribes/{tribeId} {
+      allow read: if isSignedIn();
+      allow create: if isVerifiedUser() && 
+                   isOwner(resource.data.adminIds[0]) &&
+                   resource.data.memberIds.hasAll([request.auth.uid]);
+      allow update: if isVerifiedUser() && 
+                   (request.auth.uid in resource.data.adminIds ||
+                    // Allow joining/leaving tribes
+                    request.writeFields.hasOnly(['memberIds', 'updatedAt']));
+      allow delete: if request.auth.uid in resource.data.adminIds || isAdmin();
+    }
+
+    // Tribe posts collection rules
+    match /tribePosts/{postId} {
+      allow read: if isSignedIn() && 
+                 request.auth.uid in get(/databases/$(database)/documents/tribes/$(resource.data.tribeId)).data.memberIds;
+      allow create: if isVerifiedUser() && 
+                   isOwner(resource.data.authorId) &&
+                   request.auth.uid in get(/databases/$(database)/documents/tribes/$(resource.data.tribeId)).data.memberIds;
+      allow update: if isVerifiedUser() && 
+                   request.auth.uid in get(/databases/$(database)/documents/tribes/$(resource.data.tribeId)).data.memberIds &&
+                   (isOwner(resource.data.authorId) || 
+                    // Allow voting on polls
+                    request.writeFields.hasOnly(['pollOptions', 'updatedAt']) ||
+                    // Allow joining meetups
+                    (resource.data.type == 'meetup' && 
+                     request.writeFields.hasOnly(['meetupDetails', 'updatedAt'])));
+      allow delete: if isOwner(resource.data.authorId) || isAdmin();
+    }
+
+    // Lost and Found collection rules
+    match /lostFound/{itemId} {
+      allow read: if isSignedIn();
+      allow create: if isVerifiedUser() && 
+                   isOwner(resource.data.authorId) &&
+                   resource.data.isClaimed == false;
+      allow update: if isVerifiedUser() && 
+                   (isOwner(resource.data.authorId) || 
+                    // Allow claiming items
+                    (!resource.data.isClaimed && 
+                     request.writeFields.hasOnly(['isClaimed', 'claimedBy', 'claimedAt'])));
+      allow delete: if isOwner(resource.data.authorId) || isAdmin();
+    }
+
+    // Map events collection rules
+    match /mapEvents/{eventId} {
+      allow read: if isSignedIn();
+      allow create: if isVerifiedUser() && 
+                   isOwner(resource.data.organizerId);
+      allow update: if isVerifiedUser() && 
+                   (isOwner(resource.data.organizerId) || 
+                    // Allow joining events
+                    request.writeFields.hasOnly(['attendees', 'updatedAt']));
+      allow delete: if isOwner(resource.data.organizerId) || isAdmin();
+    }
+
+    // Notifications collection rules
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && isOwner(resource.data.userId);
+      allow create: if isAdmin(); // Only system/admin can create notifications
+      allow update: if isOwner(resource.data.userId) && 
+                   request.writeFields.hasOnly(['isRead']);
+      allow delete: if isOwner(resource.data.userId);
+    }
+
+    // Reports collection rules
+    match /reports/{reportId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn() && isOwner(resource.data.reporterId);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Moderation queue rules
+    match /moderationQueue/{itemId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn(); // System creates these
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Chat messages (for tribes)
+    match /chats/{chatId}/messages/{messageId} {
+      allow read: if isSignedIn() && 
+                 request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+      allow create: if isSignedIn() && 
+                   isOwner(resource.data.senderId) &&
+                   request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+      allow update: if false; // Messages cannot be edited
+      allow delete: if isOwner(resource.data.senderId) || isAdmin();
+    }
+
+    // Chat metadata
+    match /chats/{chatId} {
+      allow read: if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow create: if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow update: if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow delete: if isAdmin();
+    }
+  }
+}

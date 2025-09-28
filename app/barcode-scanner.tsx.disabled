@@ -1,0 +1,223 @@
+// Barcode Scanner Screen for DESocial
+import { BarCodeScanner } from 'expo-barcode-scanner';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+export default function BarcodeScannerScreen() {
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [scanned, setScanned] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    const getBarCodeScannerPermissions = async () => {
+      const { status } = await BarCodeScanner.requestPermissionsAsync();
+      setHasPermission(status === 'granted');
+    };
+
+    getBarCodeScannerPermissions();
+  }, []);
+
+  const handleBarCodeScanned = ({ type, data }: { type: string; data: string }) => {
+    setScanned(true);
+    
+    try {
+      // Validate barcode data format
+      const barcodeData = JSON.parse(data);
+      
+      if (barcodeData.institution === 'DES' && barcodeData.prn) {
+        Alert.alert(
+          'Barcode Scanned Successfully',
+          `PRN: ${barcodeData.prn}\nValid DES Student ID`,
+          [
+            {
+              text: 'Use This Barcode',
+              onPress: () => {
+                // Navigate back with barcode data
+                router.back();
+                // In a real implementation, you would pass this data back
+                // to the registration screen
+              },
+            },
+            {
+              text: 'Scan Again',
+              onPress: () => setScanned(false),
+            },
+          ]
+        );
+      } else {
+        Alert.alert(
+          'Invalid Barcode',
+          'This does not appear to be a valid DES student ID barcode.',
+          [
+            {
+              text: 'Try Again',
+              onPress: () => setScanned(false),
+            },
+          ]
+        );
+      }
+    } catch (error) {
+      Alert.alert(
+        'Invalid Barcode Format',
+        'Unable to read barcode data. Please ensure you are scanning a valid DES student ID.',
+        [
+          {
+            text: 'Try Again',
+            onPress: () => setScanned(false),
+          },
+        ]
+      );
+    }
+  };
+
+  if (hasPermission === null) {
+    return (
+      <View style={styles.container}>
+        <Text>Requesting camera permission...</Text>
+      </View>
+    );
+  }
+
+  if (hasPermission === false) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.text}>No access to camera</Text>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.buttonText}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <BarCodeScanner
+        onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+        style={StyleSheet.absoluteFillObject}
+      />
+      
+      {/* Overlay */}
+      <View style={styles.overlay}>
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Scan Student ID Barcode</Text>
+          <Text style={styles.subText}>
+            Position your student ID barcode within the frame
+          </Text>
+        </View>
+        
+        {/* Scanning Frame */}
+        <View style={styles.scanFrame} />
+        
+        <View style={styles.footer}>
+          {scanned && (
+            <TouchableOpacity
+              style={styles.scanAgainButton}
+              onPress={() => setScanned(false)}
+            >
+              <Text style={styles.scanAgainText}>Tap to Scan Again</Text>
+            </TouchableOpacity>
+          )}
+          
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.cancelText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'black',
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'space-between',
+    paddingVertical: 60,
+    paddingHorizontal: 20,
+  },
+  header: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: 20,
+    borderRadius: 15,
+  },
+  headerText: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  subText: {
+    color: '#E5E7EB',
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  scanFrame: {
+    width: 250,
+    height: 150,
+    alignSelf: 'center',
+    borderWidth: 2,
+    borderColor: '#0091F5',
+    borderRadius: 10,
+    backgroundColor: 'transparent',
+  },
+  footer: {
+    alignItems: 'center',
+  },
+  scanAgainButton: {
+    backgroundColor: '#0091F5',
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 25,
+    marginBottom: 15,
+  },
+  scanAgainText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cancelButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  cancelText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  text: {
+    color: 'white',
+    fontSize: 18,
+    textAlign: 'center',
+  },
+  button: {
+    backgroundColor: '#0091F5',
+    padding: 15,
+    borderRadius: 10,
+    marginTop: 20,
+    marginHorizontal: 40,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+});
