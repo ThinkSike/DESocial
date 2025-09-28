@@ -1,27 +1,20 @@
 import { useRouter } from "expo-router";
-import { Button, StyleSheet, Text, View } from "react-native";
+import { Button, Text } from "react-native";
 import { useThemeColors } from "@/constants/Colors";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
   const router = useRouter();
   const colors = useThemeColors();
 
   return (
-    <View style={[{ backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: colors.textPrimary }]}>Home</Text>
+    <SafeAreaView style={[{ backgroundColor: colors.background }]}>
+      <Text style={[{ color: colors.textPrimary }]}>DESocial</Text>
       <Button
         title="Open Chat"
         onPress={() => router.push("/chats" as any)}
         color={colors.primary}
       />
-    </View>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  title: {
-    fontSize: 24,
-    fontWeight: "600",
-    marginBottom: 12,
-  },
-});
