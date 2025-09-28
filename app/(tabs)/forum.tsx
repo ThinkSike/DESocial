@@ -1,10 +1,10 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-export default function ChatScreen() {
+export default function ForumScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Chat</Text>
-      <Text>Welcome to the chat screen.</Text>
+      <Text style={styles.title}>Forum</Text>
+      <Text>Discuss and share ideas with the community.</Text>
     </View>
   );
 }

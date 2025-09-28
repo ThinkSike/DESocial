@@ -7,7 +7,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Home</Text>
-  <Button title="Open Chat" onPress={() => router.push('/home/chat' as any)} />
+      <Button title="Open Chat" onPress={() => router.push('/chats' as any)} />
     </View>
   );
 }
