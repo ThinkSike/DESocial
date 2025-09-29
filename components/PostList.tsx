@@ -1,8 +1,13 @@
-import Post from '@/components/Post';
-import { useThemeColors } from '@/constants/Colors';
-import { Post as PostType } from '@/types/post';
-import React, { useCallback } from 'react';
-import { FlatList, ListRenderItem, RefreshControl, StyleSheet } from 'react-native';
+import Post from "@/components/Post";
+import { useThemeColors } from "@/constants/Colors";
+import { Post as PostType } from "@/types/post";
+import React, { ComponentType, useCallback } from "react";
+import {
+  FlatList,
+  ListRenderItem,
+  RefreshControl,
+  StyleSheet,
+} from "react-native";
 
 interface PostListProps {
   posts: PostType[];
@@ -14,6 +19,11 @@ interface PostListProps {
   onRepost?: (postId: string) => void;
   onComment?: (postId: string) => void;
   onShare?: (postId: string) => void;
+  ListHeaderComponent?:
+    | ComponentType<any>
+    | React.ReactElement<any>
+    | null
+    | undefined;
 }
 
 export default function PostList({
@@ -26,6 +36,7 @@ export default function PostList({
   onRepost,
   onComment,
   onShare,
+  ListHeaderComponent,
 }: PostListProps) {
   const colors = useThemeColors();
 
@@ -58,6 +69,7 @@ export default function PostList({
       keyExtractor={keyExtractor}
       style={[styles.container, { backgroundColor: colors.background }]}
       showsVerticalScrollIndicator={false}
+      ListHeaderComponent={ListHeaderComponent}
       refreshControl={
         onRefresh ? (
           <RefreshControl
@@ -74,11 +86,15 @@ export default function PostList({
       maxToRenderPerBatch={10}
       windowSize={10}
       initialNumToRender={5}
-      getItemLayout={(data, index) => ({
-        length: 200, // Approximate item height
-        offset: 200 * index,
-        index,
-      })}
+      getItemLayout={
+        ListHeaderComponent
+          ? undefined
+          : (data, index) => ({
+              length: 200, // Approximate item height
+              offset: 200 * index,
+              index,
+            })
+      }
     />
   );
 }
