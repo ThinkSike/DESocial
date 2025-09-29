@@ -1,7 +1,9 @@
+import CreatePost from "@/components/CreatePost";
 import Logo from "@/components/Logo";
 import PostList from "@/components/PostList";
 import { useThemeColors } from "@/constants/Colors";
 import { mockPosts } from "@/data/mockData";
+import { Post, PostContent } from "@/types/post";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
@@ -60,6 +62,29 @@ export default function HomeScreen() {
     Alert.alert("Share", `Share functionality for post: ${postId}`);
   }, []);
 
+  const handleCreatePost = useCallback((content: PostContent) => {
+    // Create a new post with mock data
+    const newPost: Post = {
+      id: `post_${Date.now()}`,
+      user: {
+        id: 'current_user',
+        username: 'you',
+        displayName: 'You',
+        avatar: 'https://i.pravatar.cc/150?img=100',
+      },
+      content,
+      engagement: {
+        likes: 0,
+        reposts: 0,
+        comments: 0,
+        shares: 0,
+      },
+      timestamp: new Date(),
+    };
+    
+    setPosts(prevPosts => [newPost, ...prevPosts]);
+  }, []);
+
   return (
     <SafeAreaView style={styles(colors).container}>
       <View style={styles(colors).header}>
@@ -75,6 +100,7 @@ export default function HomeScreen() {
           />
         </TouchableOpacity>
       </View>
+      
       <PostList
         posts={posts}
         refreshing={refreshing}
@@ -84,6 +110,9 @@ export default function HomeScreen() {
         onRepost={handleRepost}
         onComment={handleComment}
         onShare={handleShare}
+        ListHeaderComponent={
+          <CreatePost onCreatePost={handleCreatePost} />
+        }
       />
     </SafeAreaView>
   );
