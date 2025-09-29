@@ -2,10 +2,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
-  Dimensions,
   FlatList,
   Modal,
   RefreshControl,
@@ -28,7 +28,7 @@ const COURSE_TAGS = [
   'Mobile Development', 'Computer Graphics', 'Cybersecurity'
 ];
 
-const { width } = Dimensions.get('window');
+// Removed unused Dimensions reference
 
 export default function ForumScreen() {
   const { user } = useAuth();
@@ -37,6 +37,7 @@ export default function ForumScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [posting, setPosting] = useState(false);
   const [newQuestion, setNewQuestion] = useState({
     title: '',
     content: '',
@@ -45,7 +46,7 @@ export default function ForumScreen() {
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'unanswered' | 'answered'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const loadQuestions = async () => {
+  const loadQuestions = useCallback(async () => {
     try {
       setLoading(true);
       const isAnswered = selectedFilter === 'answered' ? true : 
@@ -59,11 +60,11 @@ export default function ForumScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedFilter]);
 
   useEffect(() => {
     loadQuestions();
-  }, [selectedFilter]);
+  }, [loadQuestions]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -78,19 +79,27 @@ export default function ForumScreen() {
     }
 
     try {
+      setPosting(true);
       await forumService.createQuestion(
         newQuestion,
         user!.uid,
         user!.displayName
       );
 
+      // Reset form and close modal
       setNewQuestion({ title: '', content: '', courseTags: [] });
       setShowCreateModal(false);
       await loadQuestions();
-      Alert.alert('Success', 'Question posted successfully!');
+      
+      // Show success message after modal is closed
+      setTimeout(() => {
+        Alert.alert('Success', 'Question posted successfully!');
+      }, 300);
     } catch (error) {
       console.error('Error creating question:', error);
       Alert.alert('Error', 'Failed to post question');
+    } finally {
+      setPosting(false);
     }
   };
 
@@ -115,7 +124,14 @@ export default function ForumScreen() {
   };
 
   const renderQuestionCard = ({ item }: { item: ForumPost }) => (
-    <View style={{
+    <TouchableOpacity
+      onPress={() => {
+        // Auto-close the create modal if it's open when a discussion is clicked
+        if (showCreateModal) setShowCreateModal(false);
+        // TODO: Navigate to question details when implemented
+      }}
+      activeOpacity={0.9}
+      style={{
       backgroundColor: 'white',
       marginHorizontal: 16,
       marginVertical: 8,
@@ -239,7 +255,7 @@ export default function ForumScreen() {
           <Ionicons name="bookmark-outline" size={20} color="#6b7280" />
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   const renderHeader = () => (
@@ -388,6 +404,11 @@ export default function ForumScreen() {
         renderItem={renderQuestionCard}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={renderHeader}
+        ListFooterComponent={loading ? (
+          <View style={{ paddingVertical: 20 }}>
+            <ActivityIndicator color="#667eea" />
+          </View>
+        ) : null}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -430,6 +451,7 @@ export default function ForumScreen() {
         visible={showCreateModal}
         animationType="slide"
         presentationStyle="pageSheet"
+        onRequestClose={() => setShowCreateModal(false)}
       >
         <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
           <LinearGradient
@@ -448,14 +470,29 @@ export default function ForumScreen() {
               </Text>
               <TouchableOpacity
                 onPress={createQuestion}
+                disabled={posting}
                 style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  backgroundColor: posting ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)',
                   paddingHorizontal: 16,
                   paddingVertical: 8,
                   borderRadius: 16,
+                  flexDirection: 'row',
+                  alignItems: 'center',
                 }}
               >
-                <Text style={{ color: 'white', fontWeight: '600' }}>Post</Text>
+                {posting && (
+                  <ActivityIndicator 
+                    size="small" 
+                    color="white" 
+                    style={{ marginRight: 8 }} 
+                  />
+                )}
+                <Text style={{ 
+                  color: posting ? 'rgba(255, 255, 255, 0.7)' : 'white', 
+                  fontWeight: '600' 
+                }}>
+                  {posting ? 'Posting...' : 'Post'}
+                </Text>
               </TouchableOpacity>
             </View>
           </LinearGradient>

@@ -1,25 +1,22 @@
-// Chat Screen - Modern Instagram-like Messages UI
+// Chat Screen - Real-time Firebase Messaging
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-    FlatList,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '../../contexts/AuthContext';
+import { Chat, chatService } from '../../services/chatService';
 
-interface ChatMessage {
-  id: string;
-  text: string;
-  timestamp: Date;
-  isFromUser: boolean;
-  senderName: string;
-}
-
+// Local interface for UI-specific properties
 interface ChatRoom {
   id: string;
   name: string;
@@ -30,41 +27,82 @@ interface ChatRoom {
   avatar: string;
 }
 
-const mockChatRooms: ChatRoom[] = [
-  {
-    id: '1',
-    name: 'Web Dev Club',
-    lastMessage: 'Hey everyone! New React tutorial is up',
-    timestamp: new Date(),
-    unreadCount: 3,
-    isOnline: true,
-    avatar: 'W',
-  },
-  {
-    id: '2',
-    name: 'Study Group - CS',
-    lastMessage: 'Can someone share the notes?',
-    timestamp: new Date(Date.now() - 1000 * 60 * 30),
-    unreadCount: 1,
-    isOnline: false,
-    avatar: 'S',
-  },
-  {
-    id: '3',
-    name: 'Photography Club',
-    lastMessage: 'Amazing shots from yesterday!',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-    unreadCount: 0,
-    isOnline: true,
-    avatar: 'P',
-  },
-];
-
 export default function ChatScreen() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'chats' | 'groups'>('chats');
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [initialLoad, setInitialLoad] = useState(true);
 
-  const getTimeAgo = (date: Date) => {
+  // Load real-time chats from Firebase with optimized loading
+  useEffect(() => {
+    if (!user?.uid) {
+      setLoading(false);
+      setError('Please log in to view chats');
+      return;
+    }
+
+    setError(null);
+    
+    // Set a timeout to show loading state for minimum 500ms to prevent flicker
+    const minLoadingTime = setTimeout(() => {
+      setInitialLoad(false);
+    }, 500);
+
+    const unsubscribe = chatService.subscribeToUserChats((userChats) => {
+      setChats(userChats);
+      setLoading(false);
+      setError(null);
+      clearTimeout(minLoadingTime);
+      setInitialLoad(false);
+    });
+
+    return () => {
+      unsubscribe();
+      clearTimeout(minLoadingTime);
+    };
+  }, [user?.uid]);
+
+  // Convert Firebase Chat to UI ChatRoom format with memoization
+  const convertChatToRoom = useCallback((chat: Chat): ChatRoom => {
+    const currentUserId = user?.uid || '';
+    const otherParticipants = Object.keys(chat.participants).filter(id => id !== currentUserId);
+    const otherUserName = otherParticipants.length > 0 ? 
+      chat.participantNames[otherParticipants[0]] || 'Unknown User' : 
+      chat.groupName || 'Unknown Chat';
+
+    return {
+      id: chat.id,
+      name: chat.type === 'private' ? otherUserName : chat.groupName || 'Group Chat',
+      lastMessage: chat.lastMessage || 'No messages yet',
+      timestamp: new Date(chat.lastMessageTime),
+      unreadCount: chat.unreadCount[currentUserId] || 0,
+      isOnline: true, // You can implement online status later
+      avatar: chat.type === 'private' ? 
+        (otherParticipants.length > 0 ? (chat.participantAvatars[otherParticipants[0]] || otherUserName.charAt(0)) : 'U') :
+        (chat.groupName?.charAt(0) || 'G')
+    };
+  }, [user?.uid]);
+
+  // Memoize filtered chats to prevent unnecessary recalculations
+  const filteredChats = useMemo(() => {
+    return chats
+      .map(convertChatToRoom)
+      .filter(room => 
+        room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        room.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+  }, [chats, searchQuery, convertChatToRoom]);
+
+  // Memoize navigation handler to prevent unnecessary re-renders
+  const handleChatPress = useCallback((chatId: string) => {
+    router.push(`/home/conversation?chatId=${chatId}`);
+  }, [router]);
+
+  const getTimeAgo = useCallback((date: Date) => {
     const now = new Date();
     const diffInMs = now.getTime() - date.getTime();
     const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
@@ -74,18 +112,21 @@ export default function ChatScreen() {
     if (diffInMinutes < 60) return `${diffInMinutes}m`;
     if (diffInHours < 24) return `${diffInHours}h`;
     return date.toLocaleDateString();
-  };
+  }, []);
 
   const renderChatRoom = ({ item }: { item: ChatRoom }) => (
-    <TouchableOpacity style={{
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 20,
-      paddingVertical: 16,
-      backgroundColor: 'white',
-      borderBottomWidth: 1,
-      borderBottomColor: '#f3f4f6',
-    }}>
+    <TouchableOpacity 
+      onPress={() => handleChatPress(item.id)}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        backgroundColor: 'white',
+        borderBottomWidth: 1,
+        borderBottomColor: '#f3f4f6',
+      }}
+    >
       {/* Avatar */}
       <View style={{ position: 'relative', marginRight: 16 }}>
         <View style={{
@@ -251,12 +292,32 @@ export default function ChatScreen() {
       </LinearGradient>
 
       {/* Chat List */}
-      <FlatList
-        data={mockChatRooms}
-        renderItem={renderChatRoom}
-        keyExtractor={(item) => item.id}
-        style={{ flex: 1, backgroundColor: 'white' }}
-        showsVerticalScrollIndicator={false}
+      {initialLoad ? (
+        <View style={{ flex: 1, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ 
+            width: 40, 
+            height: 40, 
+            borderRadius: 20, 
+            borderWidth: 3, 
+            borderColor: '#667eea',
+            borderTopColor: 'transparent',
+            marginBottom: 16
+          }} />
+          <Text style={{ fontSize: 16, color: '#6b7280', fontWeight: '500' }}>Loading your chats...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filteredChats}
+          renderItem={renderChatRoom}
+          keyExtractor={(item) => item.id}
+          style={{ flex: 1, backgroundColor: 'white' }}
+          showsVerticalScrollIndicator={false}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          getItemLayout={(data, index) => (
+            { length: 82, offset: 82 * index, index }
+          )}
         ListEmptyComponent={() => (
           <View style={{
             flex: 1,
@@ -264,19 +325,63 @@ export default function ChatScreen() {
             justifyContent: 'center',
             paddingVertical: 60,
           }}>
-            <Ionicons name="chatbubbles-outline" size={64} color="#9CA3AF" />
-            <Text style={{ fontSize: 18, color: '#6b7280', fontWeight: '600', marginTop: 16 }}>
-              No messages yet
+            <Ionicons name={error ? "warning-outline" : "chatbubbles-outline"} size={64} color={error ? "#ef4444" : "#9CA3AF"} />
+            <Text style={{ fontSize: 18, color: error ? '#ef4444' : '#6b7280', fontWeight: '600', marginTop: 16 }}>
+              {loading ? 'Loading chats...' : error ? 'Connection Error' : 'No messages yet'}
             </Text>
             <Text style={{ fontSize: 14, color: '#9ca3af', textAlign: 'center', marginTop: 8, paddingHorizontal: 40 }}>
-              Start a conversation with your classmates and groups!
+              {loading ? 'Please wait while we load your conversations' : 
+               error ? error : 
+               'Start a conversation with your classmates and groups!'}
             </Text>
+            {error && (
+              <TouchableOpacity
+                onPress={() => {
+                  setError(null);
+                  setLoading(true);
+                  // Retry loading chats
+                  if (user?.uid) {
+                    chatService.subscribeToUserChats((userChats) => {
+                      setChats(userChats);
+                      setLoading(false);
+                      setError(null);
+                    });
+                  }
+                }}
+                style={{
+                  marginTop: 16,
+                  paddingHorizontal: 20,
+                  paddingVertical: 8,
+                  backgroundColor: '#667eea',
+                  borderRadius: 20,
+                }}
+              >
+                <Text style={{ color: 'white', fontWeight: '600' }}>Retry</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
-      />
+        />
+      )}
 
       {/* Floating Action Button */}
       <TouchableOpacity
+        onPress={async () => {
+          try {
+            // Create a test chat for demonstration
+            const chatId = await chatService.createPrivateChat(
+              'test-user-id', 
+              'Test User'
+            );
+            
+            // Send a test message
+            await chatService.sendMessage(chatId, 'Hello! This is a test message from Firebase 🔥');
+            
+            Alert.alert('Success', 'Test chat created and message sent!');
+          } catch (error) {
+            Alert.alert('Error', 'Failed to create chat: ' + (error as Error).message);
+          }
+        }}
         style={{
           position: 'absolute',
           bottom: 30,
