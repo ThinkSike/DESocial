@@ -102,5 +102,6 @@ export default function PostList({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingHorizontal: 0, // Remove padding since we handle it at parent level
   },
 });

@@ -10,6 +10,7 @@ export interface User {
 export interface PostContent {
   text?: string;
   images?: string[];
+  hashtags?: string[];
 }
 
 export interface PostEngagement {
@@ -25,6 +26,17 @@ export interface Post {
   content: PostContent;
   engagement: PostEngagement;
   timestamp: Date;
+  community?: {
+    id: string;
+    name: string;
+    icon: string;
+  };
+  event?: {
+    title: string;
+    date: Date;
+    locationId: string;
+    type: 'upcoming' | 'ongoing' | 'completed';
+  };
   // Firebase specific fields that can be added later
   createdAt?: any; // Firebase Timestamp
   updatedAt?: any; // Firebase Timestamp

@@ -2,8 +2,7 @@ import { useThemeColors } from "@/constants/Colors";
 import { UserProfile } from "@/types/profile";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import ProfileStats from "./ProfileStats";
+import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface ProfileHeaderProps {
   user: UserProfile;
@@ -17,6 +16,8 @@ interface ProfileHeaderProps {
   onSettingsPress?: () => void;
   isFollowing?: boolean;
 }
+
+const { width: screenWidth } = Dimensions.get('window');
 
 export default function ProfileHeader({
   user,
@@ -35,17 +36,33 @@ export default function ProfileHeader({
   const renderActionButtons = () => {
     if (isOwnProfile) {
       return (
-        <TouchableOpacity
-          style={styles(colors).editButton}
-          onPress={onEditProfile}
-        >
-          <Text style={styles(colors).editButtonText}>Edit Profile</Text>
-        </TouchableOpacity>
+        <View style={styles(colors).actionButtonsContainer}>
+          <TouchableOpacity
+            style={styles(colors).addProfileButton}
+            onPress={() => {}}
+          >
+            <Text style={styles(colors).addProfileButtonText}>Add profile section</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles(colors).enhanceProfileButton}
+            onPress={() => {}}
+          >
+            <Text style={styles(colors).enhanceProfileButtonText}>Enhance profile</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles(colors).resourcesButton}
+            onPress={() => {}}
+          >
+            <Text style={styles(colors).resourcesButtonText}>Resources</Text>
+          </TouchableOpacity>
+        </View>
       );
     }
 
     return (
-      <View style={styles(colors).actionButtons}>
+      <View style={styles(colors).actionButtonsContainer}>
         <TouchableOpacity
           style={[
             styles(colors).followButton,
@@ -67,150 +84,107 @@ export default function ProfileHeader({
           style={styles(colors).messageButton}
           onPress={onMessagePress}
         >
-          <Ionicons
-            name="chatbubble-outline"
-            size={20}
-            color={colors.textPrimary}
-          />
+          <Text style={styles(colors).messageButtonText}>Message</Text>
         </TouchableOpacity>
-      </View>
-    );
-  };
-
-  const renderBio = () => {
-    if (!user.bio) return null;
-
-    return <Text style={styles(colors).bio}>{user.bio}</Text>;
-  };
-
-  const renderLocation = () => {
-    if (!user.location) return null;
-
-    return (
-      <View style={styles(colors).infoRow}>
-        <Ionicons
-          name="location-outline"
-          size={16}
-          color={colors.textSecondary}
-        />
-        <Text style={styles(colors).infoText}>{user.location}</Text>
-      </View>
-    );
-  };
-
-  const renderWebsite = () => {
-    if (!user.website) return null;
-
-    return (
-      <View style={styles(colors).infoRow}>
-        <Ionicons name="link-outline" size={16} color={colors.textSecondary} />
-        <Text style={[styles(colors).infoText, styles(colors).link]}>
-          {user.website.replace(/^https?:\/\//, "")}
-        </Text>
-      </View>
-    );
-  };
-
-  const renderAcademicInfo = () => {
-    if (!user.department && !user.year) return null;
-
-    return (
-      <View style={styles(colors).infoRow}>
-        <Ionicons
-          name="school-outline"
-          size={16}
-          color={colors.textSecondary}
-        />
-        <Text style={styles(colors).infoText}>
-          {user.department} {user.year ? `• ${user.year}` : ""}
-        </Text>
-      </View>
-    );
-  };
-
-  const renderJoinedDate = () => {
-    const joinedMonth = user.joinedDate.toLocaleDateString("en-US", {
-      month: "long",
-      year: "numeric",
-    });
-
-    return (
-      <View style={styles(colors).infoRow}>
-        <Ionicons
-          name="calendar-outline"
-          size={16}
-          color={colors.textSecondary}
-        />
-        <Text style={styles(colors).infoText}>Joined {joinedMonth}</Text>
       </View>
     );
   };
 
   return (
     <View style={styles(colors).container}>
-      {/* Top section with avatar, name, and settings */}
-      <View style={styles(colors).topSection}>
-        <View style={styles(colors).leftSection}>
-          <Image source={{ uri: user.avatar }} style={styles(colors).avatar} />
-
-          <View style={styles(colors).nameSection}>
-            <View style={styles(colors).nameRow}>
-              <Text style={styles(colors).displayName}>{user.displayName}</Text>
-              {user.verified && (
-                <Ionicons
-                  name="checkmark-circle"
-                  size={20}
-                  color={colors.primary}
-                  style={styles(colors).verifiedIcon}
-                />
-              )}
-            </View>
-
-            <Text style={styles(colors).username}>@{user.username}</Text>
-
-            {/* PRN Display */}
-            <View style={styles(colors).prnContainer}>
-              <Text style={styles(colors).prnLabel}>PRN: </Text>
-              <Text style={styles(colors).prnValue}>{user.prn}</Text>
-            </View>
-          </View>
+      {/* Cover Photo Section */}
+      <View style={styles(colors).coverSection}>
+        <View style={styles(colors).coverPhoto}>
+          {/* You could add a cover image here */}
+        </View>
+        
+        {/* Profile Picture Overlay */}
+        <View style={styles(colors).profilePictureContainer}>
+          <Image source={{ uri: user.avatar }} style={styles(colors).profilePicture} />
+          {isOwnProfile && (
+            <TouchableOpacity style={styles(colors).editAvatarButton}>
+              <Ionicons name="camera" size={16} color="#FFFFFF" />
+            </TouchableOpacity>
+          )}
         </View>
 
-        {/* Settings button (only for own profile) */}
-        {isOwnProfile && onSettingsPress && (
+        {/* Edit Profile Button */}
+        {isOwnProfile && (
           <TouchableOpacity
-            style={styles(colors).settingsButton}
-            onPress={onSettingsPress}
-            activeOpacity={0.7}
+            style={styles(colors).editProfileButton}
+            onPress={onEditProfile}
           >
-            <Ionicons
-              name="settings-outline"
-              size={24}
-              color={colors.textPrimary}
-            />
+            <Ionicons name="pencil" size={16} color={colors.text} />
           </TouchableOpacity>
         )}
       </View>
 
-      {/* Bio and additional info */}
-      <View style={styles(colors).infoSection}>
-        {renderBio()}
-        {renderAcademicInfo()}
-        {renderLocation()}
-        {renderWebsite()}
-        {renderJoinedDate()}
+      {/* Profile Info Section */}
+      <View style={styles(colors).profileInfoSection}>
+        <View style={styles(colors).nameSection}>
+          <View style={styles(colors).nameRow}>
+            <Text style={styles(colors).displayName}>{user.displayName}</Text>
+            {user.verified && (
+              <Ionicons
+                name="checkmark-circle"
+                size={20}
+                color={colors.primary}
+                style={styles(colors).verifiedIcon}
+              />
+            )}
+          </View>
+          
+          <Text style={styles(colors).username}>@{user.username}</Text>
+          
+          {/* Professional Title */}
+          <Text style={styles(colors).title}>
+            {user.bio?.replace(/"/g, '') || 'Student'}
+          </Text>
+          
+          {/* Academic Info */}
+          <View style={styles(colors).academicInfo}>
+            <Ionicons name="school" size={14} color={colors.textSecondary} />
+            <Text style={styles(colors).academicText}>
+              {user.department} • {user.year}
+            </Text>
+          </View>
+          
+          {/* Location */}
+          <View style={styles(colors).locationInfo}>
+            <Ionicons name="location" size={14} color={colors.textSecondary} />
+            <Text style={styles(colors).locationText}>{user.location}</Text>
+          </View>
+          
+          {/* PRN */}
+          <View style={styles(colors).prnInfo}>
+            <Text style={styles(colors).prnLabel}>PRN: </Text>
+            <Text style={styles(colors).prnValue}>{user.prn}</Text>
+          </View>
+          
+          {/* Website */}
+          {user.website && (
+            <View style={styles(colors).websiteInfo}>
+              <Ionicons name="link" size={14} color={colors.primary} />
+              <Text style={styles(colors).websiteText}>
+                {user.website.replace(/^https?:\/\//, '')}
+              </Text>
+            </View>
+          )}
+          
+          {/* Followers count */}
+          <TouchableOpacity 
+            style={styles(colors).followersInfo}
+            onPress={onFollowersPress}
+          >
+            <Text style={styles(colors).followersText}>
+              {user.stats.followersCount.toLocaleString()} followers
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Action Buttons */}
+        {renderActionButtons()}
       </View>
-
-      {/* Action buttons */}
-      <View style={styles(colors).buttonSection}>{renderActionButtons()}</View>
-
-      {/* Stats */}
-      <ProfileStats
-        stats={user.stats}
-        onPostsPress={onPostsPress}
-        onFollowersPress={onFollowersPress}
-        onFollowingPress={onFollowingPress}
-      />
     </View>
   );
 }
@@ -218,64 +192,131 @@ export default function ProfileHeader({
 const styles = (colors: any) =>
   StyleSheet.create({
     container: {
-      backgroundColor: colors.background,
-    },
-    topSection: {
-      flexDirection: "row",
-      paddingHorizontal: 16,
-      paddingTop: 16,
-      marginBottom: 12,
-      justifyContent: "space-between",
-      alignItems: "flex-start",
-    },
-    leftSection: {
-      flexDirection: "row",
-      flex: 1,
-    },
-    avatar: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
-      marginRight: 16,
-    },
-    nameSection: {
-      flex: 1,
-      justifyContent: "center",
-    },
-    settingsButton: {
-      padding: 8,
-      borderRadius: 20,
-      backgroundColor: colors.surface,
-      shadowColor: colors.textPrimary,
+      backgroundColor: colors.surface || colors.background,
+      marginHorizontal: 16,
+      marginBottom: 16,
+      borderRadius: 12,
+      shadowColor: "#000",
       shadowOffset: {
         width: 0,
-        height: 1,
+        height: 2,
       },
       shadowOpacity: 0.1,
-      shadowRadius: 2,
-      elevation: 2,
+      shadowRadius: 3.84,
+      elevation: 5,
+      overflow: "hidden",
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    coverSection: {
+      position: "relative",
+      height: 200,
+    },
+    coverPhoto: {
+      width: "100%",
+      height: 200,
+      backgroundColor: "#4A90E2",
+      position: "relative",
+    },
+    profilePictureContainer: {
+      position: "absolute",
+      bottom: -60,
+      left: 24,
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+      borderWidth: 4,
+      borderColor: colors.cardBackground || colors.background,
+      overflow: "hidden",
+    },
+    profilePicture: {
+      width: 112,
+      height: 112,
+      borderRadius: 56,
+    },
+    editAvatarButton: {
+      position: "absolute",
+      bottom: 8,
+      right: 8,
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: "rgba(0,0,0,0.6)",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    editProfileButton: {
+      position: "absolute",
+      top: 16,
+      right: 16,
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: "rgba(255,255,255,0.9)",
+      justifyContent: "center",
+      alignItems: "center",
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    profileInfoSection: {
+      paddingTop: 70,
+      paddingHorizontal: 16,
+      paddingBottom: 20,
+    },
+    nameSection: {
+      marginBottom: 20,
     },
     nameRow: {
       flexDirection: "row",
       alignItems: "center",
+      marginBottom: 4,
     },
     displayName: {
-      fontSize: 22,
+      fontSize: 24,
       fontWeight: "700",
-      color: colors.textPrimary,
+      color: colors.text,
     },
     verifiedIcon: {
-      marginLeft: 6,
+      marginLeft: 8,
     },
     username: {
       fontSize: 16,
       color: colors.textSecondary,
-      marginTop: 4,
+      marginBottom: 8,
     },
-    prnContainer: {
+    title: {
+      fontSize: 16,
+      color: colors.text,
+      marginBottom: 8,
+      fontWeight: "500",
+    },
+    academicInfo: {
       flexDirection: "row",
       alignItems: "center",
-      marginTop: 4,
+      marginBottom: 6,
+    },
+    academicText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginLeft: 6,
+    },
+    locationInfo: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 6,
+    },
+    locationText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginLeft: 6,
+    },
+    prnInfo: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 6,
     },
     prnLabel: {
       fontSize: 14,
@@ -286,54 +327,75 @@ const styles = (colors: any) =>
       fontWeight: "600",
       color: colors.primary,
     },
-    infoSection: {
-      paddingHorizontal: 16,
-      marginBottom: 16,
-    },
-    bio: {
-      fontSize: 16,
-      lineHeight: 22,
-      color: colors.textPrimary,
-      marginBottom: 12,
-    },
-    infoRow: {
+    websiteInfo: {
       flexDirection: "row",
       alignItems: "center",
-      marginBottom: 8,
+      marginBottom: 6,
     },
-    infoText: {
+    websiteText: {
       fontSize: 14,
-      color: colors.textSecondary,
-      marginLeft: 8,
-    },
-    link: {
       color: colors.primary,
+      marginLeft: 6,
     },
-    buttonSection: {
-      paddingHorizontal: 16,
-      marginBottom: 16,
+    followersInfo: {
+      marginTop: 8,
     },
-    editButton: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      paddingVertical: 10,
-      alignItems: "center",
+    followersText: {
+      fontSize: 14,
+      color: colors.primary,
+      fontWeight: "500",
     },
-    editButtonText: {
-      fontSize: 16,
-      fontWeight: "600",
-      color: colors.textPrimary,
-    },
-    actionButtons: {
+    actionButtonsContainer: {
       flexDirection: "row",
       gap: 12,
+    },
+    addProfileButton: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      borderRadius: 24,
+      paddingVertical: 8,
+      paddingHorizontal: 16,
+      alignItems: "center",
+    },
+    addProfileButtonText: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: colors.primary,
+    },
+    enhanceProfileButton: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 24,
+      paddingVertical: 8,
+      paddingHorizontal: 16,
+      alignItems: "center",
+    },
+    enhanceProfileButtonText: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: colors.text,
+    },
+    resourcesButton: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 24,
+      paddingVertical: 8,
+      paddingHorizontal: 16,
+      alignItems: "center",
+    },
+    resourcesButtonText: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: colors.text,
     },
     followButton: {
       flex: 1,
       backgroundColor: colors.primary,
-      borderRadius: 8,
-      paddingVertical: 10,
+      borderRadius: 24,
+      paddingVertical: 8,
+      paddingHorizontal: 16,
       alignItems: "center",
     },
     followingButton: {
@@ -342,21 +404,24 @@ const styles = (colors: any) =>
       borderColor: colors.border,
     },
     followButtonText: {
-      fontSize: 16,
+      fontSize: 14,
       fontWeight: "600",
       color: colors.background,
     },
     followingButtonText: {
-      color: colors.textPrimary,
+      color: colors.text,
     },
     messageButton: {
-      backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.border,
-      borderRadius: 8,
-      paddingVertical: 10,
+      borderRadius: 24,
+      paddingVertical: 8,
       paddingHorizontal: 16,
       alignItems: "center",
-      justifyContent: "center",
+    },
+    messageButtonText: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: colors.text,
     },
   });
