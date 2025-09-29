@@ -1,0 +1,49 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="95" fill="#F4A460" opacity="0.15"/>
+  
+  <!-- Sun rays inspired by college logo -->
+  <g transform="translate(100, 100)">
+    <!-- Outer rays (8 directions) -->
+    <path d="M 0,-75 L -10,-55 L 10,-55 Z" fill="#D2691E"/>
+    <path d="M 0,-75 L -10,-55 L 10,-55 Z" fill="#D2691E" transform="rotate(45)"/>
+    <path d="M 0,-75 L -10,-55 L 10,-55 Z" fill="#D2691E" transform="rotate(90)"/>
+    <path d="M 0,-75 L -10,-55 L 10,-55 Z" fill="#D2691E" transform="rotate(135)"/>
+    <path d="M 0,-75 L -10,-55 L 10,-55 Z" fill="#D2691E" transform="rotate(180)"/>
+    <path d="M 0,-75 L -10,-55 L 10,-55 Z" fill="#D2691E" transform="rotate(225)"/>
+    <path d="M 0,-75 L -10,-55 L 10,-55 Z" fill="#D2691E" transform="rotate(270)"/>
+    <path d="M 0,-75 L -10,-55 L 10,-55 Z" fill="#D2691E" transform="rotate(315)"/>
+  </g>
+  
+  <!-- Central sun circle with gradient -->
+  <defs>
+    <radialGradient id="sunGradient">
+      <stop offset="0%" style="stop-color:#F4A460;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#D2691E;stop-opacity:1" />
+    </radialGradient>
+  </defs>
+  <circle cx="100" cy="100" r="50" fill="url(#sunGradient)"/>
+  
+  <!-- Social network connection design -->
+  <g transform="translate(100, 100)">
+    <!-- Open book pages -->
+    <path d="M -30,-18 Q -30,-28 -18,-28 L -3,-28 L -3,18 L -18,18 Q -30,18 -30,8 Z" fill="#fff" opacity="0.95"/>
+    <path d="M 30,-18 Q 30,-28 18,-28 L 3,-28 L 3,18 L 18,18 Q 30,18 30,8 Z" fill="#fff" opacity="0.95"/>
+    
+    <!-- Central spine -->
+    <rect x="-2" y="-28" width="4" height="46" fill="#fff" opacity="0.9"/>
+    
+    <!-- Network nodes -->
+    <circle cx="-15" cy="-8" r="3.5" fill="#D2691E"/>
+    <circle cx="15" cy="-8" r="3.5" fill="#D2691E"/>
+    <circle cx="-15" cy="8" r="3.5" fill="#D2691E"/>
+    <circle cx="15" cy="8" r="3.5" fill="#D2691E"/>
+    <circle cx="0" cy="0" r="4" fill="#D2691E"/>
+    
+    <!-- Connection lines forming social network -->
+    <line x1="-15" y1="-8" x2="0" y2="0" stroke="#D2691E" stroke-width="2" opacity="0.6"/>
+    <line x1="15" y1="-8" x2="0" y2="0" stroke="#D2691E" stroke-width="2" opacity="0.6"/>
+    <line x1="-15" y1="8" x2="0" y2="0" stroke="#D2691E" stroke-width="2" opacity="0.6"/>
+    <line x1="15" y1="8" x2="0" y2="0" stroke="#D2691E" stroke-width="2" opacity="0.6"/>
+  </g>
+</svg>
