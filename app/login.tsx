@@ -5,19 +5,17 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
 import '../global.css'; // NativeWind styles
-import { authService } from '../services/authService';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -61,22 +59,7 @@ export default function LoginScreen() {
     router.push('/register');
   };
 
-  const handleTestCredentials = async () => {
-    if (!email.trim() || !password) {
-      Alert.alert('Error', 'Please fill in all fields to test');
-      return;
-    }
 
-    try {
-      setLoading(true);
-      await authService.testCredentials(email.trim(), password);
-      Alert.alert('Success', 'Credentials are valid! Check console for details.');
-    } catch (error: any) {
-      Alert.alert('Test Failed', `Credentials test failed: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <>
@@ -92,24 +75,19 @@ export default function LoginScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={{ flex: 1 }}
           >
-            <ScrollView
-              contentContainerStyle={{ flexGrow: 1 }}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
-              <View style={{ flex: 1, paddingHorizontal: 24, paddingVertical: 32 }}>
+            <View style={{ flex: 1, paddingHorizontal: 24, paddingVertical: 32 }}>
                 {/* Animated Logo and Header */}
                 <View style={{ alignItems: 'center', marginBottom: 48, marginTop: 40 }}>
                   <View style={{
-                    width: 100,
-                    height: 100,
+                    width: 50,
+                    height: 50,
                     borderRadius: 50,
                     backgroundColor: 'rgba(255, 255, 255, 0.2)',
                     alignItems: 'center',
                     justifyContent: 'center',
                     marginBottom: 24,
                     shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 10 },
+                    shadowOffset: { width: 0, height: 5 },
                     shadowOpacity: 0.3,
                     shadowRadius: 20,
                     elevation: 8,
@@ -297,27 +275,7 @@ export default function LoginScreen() {
                     </Text>
                   </TouchableOpacity>
 
-                  {/* Debug Test Button */}
-                  <TouchableOpacity
-                    onPress={handleTestCredentials}
-                    disabled={loading}
-                    style={{
-                      backgroundColor: loading ? '#9ca3af' : '#f59e0b',
-                      borderRadius: 16,
-                      paddingVertical: 12,
-                      borderWidth: 2,
-                      borderColor: '#fbbf24',
-                    }}
-                  >
-                    <Text style={{
-                      color: '#ffffff',
-                      fontSize: 14,
-                      fontWeight: '600',
-                      textAlign: 'center',
-                    }}>
-                      🔍 Test Credentials (Debug)
-                    </Text>
-                  </TouchableOpacity>
+
                 </View>
 
                 {/* Sign Up Link */}
@@ -376,8 +334,7 @@ export default function LoginScreen() {
                     Login with your official PRN and password provided by the university
                   </Text>
                 </View>
-              </View>
-            </ScrollView>
+            </View>
           </KeyboardAvoidingView>
         </SafeAreaView>
       </LinearGradient>

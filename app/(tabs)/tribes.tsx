@@ -1,17 +1,22 @@
-// Tribes Screen for DESocial
+// Tribes Screen - Modern Instagram-like UI Design
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    Image,
-    Modal,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Dimensions,
+  FlatList,
+  Modal,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useThemeColors } from '../../constants/Colors';
 import { useAuth } from '../../contexts/AuthContext';
 import { Tribe } from '../../types';
 
@@ -20,11 +25,11 @@ const mockTribes: Tribe[] = [
   {
     id: '1',
     name: 'Web Development Club',
-    description: 'Learn modern web technologies, share projects, and collaborate on exciting web applications.',
+    description: 'Learn modern web technologies, share projects, and collaborate on exciting web applications. Join us for workshops, hackathons, and project collaborations.',
     category: 'Technology',
     coverImage: undefined,
     adminIds: ['admin1'],
-    memberIds: ['user1', 'user2', 'user3'],
+    memberIds: ['user1', 'user2', 'user3', 'user4', 'user5', 'user6'],
     isPrivate: false,
     maxMembers: 100,
     rules: ['Be respectful', 'Share knowledge', 'Help others learn'],
@@ -33,12 +38,12 @@ const mockTribes: Tribe[] = [
   },
   {
     id: '2',
-    name: 'Photography Enthusiasts',
-    description: 'Capture moments, share techniques, and explore the art of photography together.',
+    name: 'Photography Club',
+    description: 'Capture moments, share techniques, and explore the art of photography together. Weekly photo walks and contests.',
     category: 'Arts & Culture',
     coverImage: undefined,
     adminIds: ['admin2'],
-    memberIds: ['user1', 'user4', 'user5', 'user6'],
+    memberIds: ['user1', 'user4', 'user5', 'user6', 'user7', 'user8', 'user9'],
     isPrivate: false,
     maxMembers: 50,
     rules: ['Original content only', 'Constructive feedback', 'Respect copyrights'],
@@ -48,29 +53,50 @@ const mockTribes: Tribe[] = [
   {
     id: '3',
     name: 'Competitive Programming',
-    description: 'Solve algorithmic challenges, participate in contests, and improve problem-solving skills.',
+    description: 'Solve challenging problems, participate in contests, and enhance your algorithmic thinking skills.',
     category: 'Technology',
     coverImage: undefined,
     adminIds: ['admin3'],
-    memberIds: ['user2', 'user7', 'user8'],
+    memberIds: ['user2', 'user3', 'user10', 'user11'],
     isPrivate: false,
     maxMembers: 75,
-    rules: ['Share solutions after contests', 'Help beginners', 'Practice regularly'],
+    rules: ['Regular practice', 'Share solutions', 'Help beginners'],
     createdAt: new Date('2024-01-10'),
     updatedAt: new Date('2024-01-25'),
   },
+  {
+    id: '4',
+    name: 'Music & Arts Society',
+    description: 'Express your creativity through music, art, and cultural activities. Open to all forms of artistic expression.',
+    category: 'Arts & Culture',
+    coverImage: undefined,
+    adminIds: ['admin4'],
+    memberIds: ['user5', 'user6', 'user12', 'user13', 'user14'],
+    isPrivate: false,
+    maxMembers: 60,
+    rules: ['Respect all art forms', 'Encourage creativity', 'Collaborate respectfully'],
+    createdAt: new Date('2024-01-08'),
+    updatedAt: new Date('2024-01-22'),
+  },
 ];
 
-const TRIBE_CATEGORIES = [
-  'All', 'Technology', 'Arts & Culture', 'Sports', 'Academic', 'Social', 'Career'
-];
+const CATEGORY_COLORS = {
+  'Technology': { bg: '#dbeafe', text: '#1d4ed8', icon: 'code-slash' },
+  'Arts & Culture': { bg: '#fdf2f8', text: '#be185d', icon: 'color-palette' },
+  'Sports': { bg: '#ecfdf5', text: '#059669', icon: 'football' },
+  'Academic': { bg: '#fef3c7', text: '#d97706', icon: 'library' },
+  'Social': { bg: '#f3e8ff', text: '#7c3aed', icon: 'people' },
+};
+
+const { width } = Dimensions.get('window');
 
 export default function TribesScreen() {
   const { user } = useAuth();
+  const colors = useThemeColors();
   const [tribes, setTribes] = useState<Tribe[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTribe, setNewTribe] = useState({
     name: '',
@@ -80,6 +106,10 @@ export default function TribesScreen() {
     maxMembers: 50,
   });
 
+  const categories = [
+    'all', 'Technology', 'Arts & Culture', 'Sports', 'Academic', 'Social'
+  ];
+
   useEffect(() => {
     loadTribes();
   }, []);
@@ -88,6 +118,7 @@ export default function TribesScreen() {
     try {
       setLoading(true);
       // TODO: Replace with actual Firebase service call
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate loading
       setTribes(mockTribes);
     } catch (error) {
       console.error('Error loading tribes:', error);
@@ -97,13 +128,18 @@ export default function TribesScreen() {
     }
   };
 
-  const handleJoinTribe = async (tribeId: string) => {
-    if (!user) return;
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadTribes();
+    setRefreshing(false);
+  };
 
+  const joinTribe = async (tribeId: string) => {
+    if (!user) return;
+    
     try {
-      // TODO: Implement tribe join logic with Firebase
+      // TODO: Implement actual join functionality
       Alert.alert('Success', 'You have joined the tribe!');
-      // Refresh tribes to show updated member status
       await loadTribes();
     } catch (error) {
       console.error('Error joining tribe:', error);
@@ -111,42 +147,14 @@ export default function TribesScreen() {
     }
   };
 
-  const handleLeaveTribe = async (tribeId: string) => {
-    if (!user) return;
-
-    Alert.alert(
-      'Leave Tribe',
-      'Are you sure you want to leave this tribe?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Leave',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              // TODO: Implement tribe leave logic with Firebase
-              Alert.alert('Success', 'You have left the tribe');
-              await loadTribes();
-            } catch (error) {
-              console.error('Error leaving tribe:', error);
-              Alert.alert('Error', 'Failed to leave tribe');
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const handleCreateTribe = async () => {
+  const createTribe = async () => {
     if (!newTribe.name.trim() || !newTribe.description.trim()) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
 
-    if (!user) return;
-
     try {
-      // TODO: Implement create tribe logic with Firebase service
+      // TODO: Implement actual create functionality
       Alert.alert('Success', 'Tribe created successfully!');
       setNewTribe({
         name: '',
@@ -163,193 +171,369 @@ export default function TribesScreen() {
     }
   };
 
-  const filteredTribes = tribes.filter(tribe => {
-    const matchesCategory = selectedCategory === 'All' || tribe.category === selectedCategory;
-    const matchesSearch = searchQuery === '' || 
-      tribe.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tribe.description.toLowerCase().includes(searchQuery.toLowerCase());
+  const getMemberAvatars = (memberIds: string[]) => {
+    const displayCount = Math.min(memberIds.length, 3);
+    const colors = ['#667eea', '#f093fb', '#f59e0b', '#10b981', '#ef4444'];
     
-    return matchesCategory && matchesSearch;
-  });
+    return memberIds.slice(0, displayCount).map((memberId, index) => (
+      <View
+        key={memberId}
+        style={{
+          width: 24,
+          height: 24,
+          borderRadius: 12,
+          backgroundColor: colors[index % colors.length],
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginLeft: index > 0 ? -8 : 0,
+          borderWidth: 2,
+          borderColor: 'white',
+        }}
+      >
+        <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>
+          {memberId.charAt(0).toUpperCase()}
+        </Text>
+      </View>
+    ));
+  };
 
-  const renderTribe = (tribe: Tribe) => {
-    const isMember = tribe.memberIds.includes(user?.uid || '');
-    const isAdmin = tribe.adminIds.includes(user?.uid || '');
+  const filteredTribes = selectedCategory === 'all' 
+    ? tribes 
+    : tribes.filter(t => t.category === selectedCategory);
+
+  const renderTribeCard = ({ item }: { item: Tribe }) => {
+    const categoryStyle = CATEGORY_COLORS[item.category as keyof typeof CATEGORY_COLORS] || CATEGORY_COLORS.Technology;
+    const isJoined = user && item.memberIds.includes(user.uid);
+    const isFull = item.memberIds.length >= (item.maxMembers ?? 0);
 
     return (
-      <View key={tribe.id} className="bg-white mb-4 mx-4 rounded-xl shadow-soft">
-        {/* Tribe Cover */}
-        <View className="h-32 bg-gradient-to-r from-primary-400 to-primary-600 rounded-t-xl justify-center items-center">
-          {tribe.coverImage ? (
-            <Image
-              source={{ uri: tribe.coverImage }}
-              className="w-full h-full rounded-t-xl"
-              resizeMode="cover"
-            />
-          ) : (
-            <View className="items-center">
-              <Ionicons name="people" size={40} color="white" />
-              <Text className="text-white text-lg font-semibold mt-2">
-                {tribe.name}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        <View className="p-4">
-          {/* Tribe Info */}
-          <View className="mb-3">
-            <View className="flex-row items-center justify-between mb-2">
-              <Text className="text-lg font-semibold text-gray-900 flex-1">
-                {tribe.name}
-              </Text>
-              <View className="flex-row items-center">
-                {tribe.isPrivate && (
-                  <Ionicons name="lock-closed" size={16} color="#6B7280" className="mr-2" />
-                )}
-                <Text className="text-primary-500 text-sm font-medium">
-                  {tribe.category}
-                </Text>
-              </View>
-            </View>
-            
-            <Text className="text-gray-600 text-base leading-relaxed mb-3">
-              {tribe.description}
+      <View style={{
+        backgroundColor: 'white',
+        marginHorizontal: 16,
+        marginVertical: 8,
+        borderRadius: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        elevation: 5,
+        overflow: 'hidden',
+      }}>
+        {/* Cover Image or Gradient */}
+        <LinearGradient
+          colors={['#667eea', '#764ba2']}
+          style={{
+            height: 120,
+            justifyContent: 'flex-end',
+            padding: 20,
+          }}
+        >
+          <View style={{
+            backgroundColor: categoryStyle.bg,
+            alignSelf: 'flex-start',
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}>
+            <Ionicons name={categoryStyle.icon as any} size={14} color={categoryStyle.text} />
+            <Text style={{ 
+              color: categoryStyle.text, 
+              fontSize: 12, 
+              fontWeight: '600',
+              marginLeft: 4,
+            }}>
+              {item.category}
             </Text>
+          </View>
+        </LinearGradient>
 
-            {/* Stats */}
-            <View className="flex-row items-center space-x-4">
-              <View className="flex-row items-center">
-                <Ionicons name="people-outline" size={16} color="#6B7280" />
-                <Text className="text-gray-600 text-sm ml-1">
-                  {tribe.memberIds.length}{tribe.maxMembers ? `/${tribe.maxMembers}` : ''} members
+        <View style={{ padding: 20 }}>
+          {/* Tribe Info */}
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
+            <View style={{ flex: 1, marginRight: 12 }}>
+              <Text style={{
+                fontSize: 20,
+                fontWeight: '800',
+                color: '#111827',
+                marginBottom: 6,
+                lineHeight: 24,
+              }}>
+                {item.name}
+              </Text>
+            </View>
+
+            {item.isPrivate && (
+              <View style={{
+                backgroundColor: '#fee2e2',
+                paddingHorizontal: 8,
+                paddingVertical: 4,
+                borderRadius: 12,
+              }}>
+                <Text style={{ color: '#dc2626', fontSize: 10, fontWeight: '600' }}>
+                  PRIVATE
                 </Text>
               </View>
-              
-              {isAdmin && (
-                <View className="bg-primary-100 px-2 py-1 rounded-md">
-                  <Text className="text-primary-700 text-xs font-medium">Admin</Text>
-                </View>
-              )}
-            </View>
-          </View>
-
-          {/* Action Buttons */}
-          <View className="flex-row items-center justify-between pt-3 border-t border-gray-100">
-            <View className="flex-row items-center space-x-3">
-              <TouchableOpacity className="flex-row items-center">
-                <Ionicons name="chatbubble-outline" size={18} color="#6B7280" />
-                <Text className="ml-1 text-gray-600 text-sm">Chat</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity className="flex-row items-center">
-                <Ionicons name="calendar-outline" size={18} color="#6B7280" />
-                <Text className="ml-1 text-gray-600 text-sm">Events</Text>
-              </TouchableOpacity>
-            </View>
-
-            {isMember ? (
-              <TouchableOpacity
-                onPress={() => handleLeaveTribe(tribe.id)}
-                className="bg-gray-200 px-4 py-2 rounded-lg"
-              >
-                <Text className="text-gray-700 text-sm font-medium">Leave</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                onPress={() => handleJoinTribe(tribe.id)}
-                className="bg-primary-500 px-4 py-2 rounded-lg"
-              >
-                <Text className="text-white text-sm font-medium">Join</Text>
-              </TouchableOpacity>
             )}
           </View>
+
+          <Text style={{
+            fontSize: 14,
+            color: '#4b5563',
+            lineHeight: 20,
+            marginBottom: 16,
+          }}>
+            {item.description}
+          </Text>
+
+          {/* Members */}
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 16,
+          }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                {getMemberAvatars(item.memberIds)}
+              </View>
+              <Text style={{ marginLeft: 12, color: '#6b7280', fontSize: 14 }}>
+                {item.memberIds.length} / {item.maxMembers} members
+              </Text>
+            </View>
+
+            {isFull && (
+              <View style={{
+                backgroundColor: '#fef3c7',
+                paddingHorizontal: 8,
+                paddingVertical: 4,
+                borderRadius: 12,
+              }}>
+                <Text style={{ color: '#d97706', fontSize: 10, fontWeight: '600' }}>
+                  FULL
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Progress Bar */}
+          <View style={{
+            height: 4,
+            backgroundColor: '#f3f4f6',
+            borderRadius: 2,
+            marginBottom: 16,
+            overflow: 'hidden',
+          }}>
+            <View style={{
+              height: '100%',
+              width: `${(item.memberIds.length / (item.maxMembers ?? 1)) * 100}%`,
+              backgroundColor: isFull ? '#f59e0b' : '#10b981',
+              borderRadius: 2,
+            }} />
+          </View>
+
+          {/* Action Button */}
+          <TouchableOpacity
+            onPress={() => joinTribe(item.id)}
+            disabled={isJoined || isFull}
+            style={{
+              backgroundColor: isJoined ? '#10b981' : (isFull ? '#9ca3af' : '#667eea'),
+              borderRadius: 16,
+              paddingVertical: 14,
+              alignItems: 'center',
+              flexDirection: 'row',
+              justifyContent: 'center',
+            }}
+          >
+            <Ionicons 
+              name={isJoined ? 'checkmark-circle' : (isFull ? 'close-circle' : 'add-circle')} 
+              size={20} 
+              color="white" 
+            />
+            <Text style={{
+              color: 'white',
+              fontSize: 16,
+              fontWeight: '700',
+              marginLeft: 8,
+            }}>
+              {isJoined ? 'Joined' : (isFull ? 'Full' : 'Join Tribe')}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
   };
 
-  return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+  const renderHeader = () => (
+    <View>
       {/* Header */}
-      <View className="bg-white px-4 py-3 border-b border-gray-200">
-        <View className="flex-row items-center justify-between mb-3">
-          <Text className="text-2xl font-bold text-gray-900">Tribes</Text>
-          <TouchableOpacity onPress={() => setShowCreateModal(true)}>
-            <Ionicons name="add-circle" size={28} color="#0091F5" />
-          </TouchableOpacity>
-        </View>
+      <LinearGradient
+        colors={['#10b981', '#059669']}
+        style={{
+          paddingTop: 20,
+          paddingHorizontal: 20,
+          paddingBottom: 30,
+        }}
+      >
+        <Text style={{
+          fontSize: 32,
+          fontWeight: '800',
+          color: 'white',
+          marginBottom: 8,
+        }}>
+          Groups
+        </Text>
+        <Text style={{
+          fontSize: 16,
+          color: 'rgba(255, 255, 255, 0.8)',
+          marginBottom: 20,
+        }}>
+          Join communities, make connections
+        </Text>
 
-        {/* Search Bar */}
-        <View className="flex-row items-center bg-gray-100 rounded-lg px-3 py-2">
-          <Ionicons name="search" size={20} color="#6B7280" />
-          <TextInput
-            className="flex-1 ml-2 text-gray-900 text-base"
-            placeholder="Search tribes..."
-            placeholderTextColor="#9CA3AF"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={20} color="#6B7280" />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-
-      {/* Categories */}
-      <View className="bg-white px-4 py-2 border-b border-gray-200">
+        {/* Category Filter */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {TRIBE_CATEGORIES.map((category) => (
-            <TouchableOpacity
-              key={category}
-              onPress={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-full mr-3 ${
-                selectedCategory === category
-                  ? 'bg-primary-500'
-                  : 'bg-gray-100'
-              }`}
-            >
-              <Text
-                className={`text-sm font-medium ${
-                  selectedCategory === category
-                    ? 'text-white'
-                    : 'text-gray-600'
-                }`}
+          <View style={{ flexDirection: 'row', paddingBottom: 4 }}>
+            {categories.map((category) => (
+              <TouchableOpacity
+                key={category}
+                onPress={() => setSelectedCategory(category)}
+                style={{
+                  paddingVertical: 10,
+                  paddingHorizontal: 16,
+                  borderRadius: 20,
+                  backgroundColor: selectedCategory === category ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.1)',
+                  marginRight: 8,
+                }}
               >
-                {category}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <Text style={{
+                  color: selectedCategory === category ? 'white' : 'rgba(255, 255, 255, 0.8)',
+                  fontWeight: selectedCategory === category ? '700' : '500',
+                  fontSize: 14,
+                }}>
+                  {category === 'all' ? 'All Groups' : category}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </ScrollView>
-      </View>
+      </LinearGradient>
 
-      {/* Tribes List */}
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="py-4">
-          {loading ? (
-            <View className="flex-1 justify-center items-center py-20">
-              <Text className="text-gray-500 text-lg">Loading tribes...</Text>
-            </View>
-          ) : filteredTribes.length === 0 ? (
-            <View className="flex-1 justify-center items-center py-20">
-              <Ionicons name="people-outline" size={64} color="#9CA3AF" />
-              <Text className="text-gray-500 text-lg mt-4 text-center">
-                {searchQuery ? 'No tribes found' : 'No tribes available'}
-              </Text>
-              <Text className="text-gray-400 text-sm text-center mt-2 px-8">
-                {searchQuery 
-                  ? 'Try a different search term'
-                  : 'Create the first tribe to get started!'
-                }
-              </Text>
-            </View>
-          ) : (
-            filteredTribes.map(renderTribe)
-          )}
+      {/* Stats Cards */}
+      <View style={{
+        flexDirection: 'row',
+        marginHorizontal: 16,
+        marginTop: -15,
+        marginBottom: 20,
+      }}>
+        <View style={{
+          flex: 1,
+          backgroundColor: 'white',
+          borderRadius: 16,
+          padding: 16,
+          marginRight: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.08,
+          shadowRadius: 8,
+          elevation: 4,
+        }}>
+          <Text style={{ fontSize: 24, fontWeight: '700', color: '#10b981' }}>
+            {filteredTribes.length}
+          </Text>
+          <Text style={{ fontSize: 12, color: '#6b7280', fontWeight: '500' }}>
+            Available Groups
+          </Text>
         </View>
-      </ScrollView>
+
+        <View style={{
+          flex: 1,
+          backgroundColor: 'white',
+          borderRadius: 16,
+          padding: 16,
+          marginLeft: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.08,
+          shadowRadius: 8,
+          elevation: 4,
+        }}>
+          <Text style={{ fontSize: 24, fontWeight: '700', color: '#667eea' }}>
+            {user ? tribes.filter(t => t.memberIds.includes(user.uid)).length : 0}
+          </Text>
+          <Text style={{ fontSize: 12, color: '#6b7280', fontWeight: '500' }}>
+            Joined Groups
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#f9fafb' }}>
+      <StatusBar style="light" />
+      
+      <FlatList
+        data={filteredTribes}
+        renderItem={renderTribeCard}
+        keyExtractor={(item) => item.id}
+        ListHeaderComponent={renderHeader}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#10b981']}
+            tintColor="#10b981"
+          />
+        }
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingBottom: 100,
+        }}
+        ListEmptyComponent={() => (
+          <View style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingVertical: 40,
+          }}>
+            <Ionicons name="people-outline" size={64} color="#9CA3AF" />
+            <Text style={{ fontSize: 18, color: '#6b7280', fontWeight: '600', marginTop: 16 }}>
+              No groups found
+            </Text>
+            <Text style={{ fontSize: 14, color: '#9ca3af', textAlign: 'center', marginTop: 8, paddingHorizontal: 40 }}>
+              Try selecting a different category or create a new group!
+            </Text>
+          </View>
+        )}
+      />
+
+      {/* Floating Action Button */}
+      {!showCreateModal && (
+        <TouchableOpacity
+          onPress={() => setShowCreateModal(true)}
+          style={{
+            position: 'absolute',
+            bottom: 120, // Increased to account for tab bar
+            right: 20,
+            width: 60,
+            height: 60,
+            borderRadius: 30,
+            backgroundColor: '#10b981',
+            alignItems: 'center',
+            justifyContent: 'center',
+            shadowColor: '#10b981',
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.3,
+            shadowRadius: 16,
+            elevation: 12,
+            zIndex: 1000,
+          }}
+        >
+          <Ionicons name="add" size={28} color="white" />
+        </TouchableOpacity>
+      )}
 
       {/* Create Tribe Modal */}
       <Modal
@@ -357,127 +541,163 @@ export default function TribesScreen() {
         animationType="slide"
         presentationStyle="pageSheet"
       >
-        <SafeAreaView className="flex-1 bg-white">
-          {/* Modal Header */}
-          <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-200">
-            <TouchableOpacity onPress={() => setShowCreateModal(false)}>
-              <Text className="text-primary-500 text-base font-medium">Cancel</Text>
-            </TouchableOpacity>
-            <Text className="text-lg font-semibold text-gray-900">Create Tribe</Text>
-            <TouchableOpacity onPress={handleCreateTribe}>
-              <Text className="text-primary-500 text-base font-medium">Create</Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView className="flex-1 px-4 py-4">
-            {/* Name Input */}
-            <View className="mb-4">
-              <Text className="text-sm font-medium text-gray-700 mb-2">Tribe Name *</Text>
-              <TextInput
-                className="border border-gray-300 rounded-lg p-3 text-base text-gray-900"
-                placeholder="Enter tribe name"
-                placeholderTextColor="#9CA3AF"
-                value={newTribe.name}
-                onChangeText={(text) => setNewTribe(prev => ({ ...prev, name: text }))}
-              />
+        <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
+          <LinearGradient
+            colors={['#10b981', '#059669']}
+            style={{
+              paddingHorizontal: 20,
+              paddingVertical: 20,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <TouchableOpacity onPress={() => setShowCreateModal(false)}>
+                <Ionicons name="close" size={24} color="white" />
+              </TouchableOpacity>
+              <Text style={{ fontSize: 18, fontWeight: '700', color: 'white' }}>
+                Create Group
+              </Text>
+              <TouchableOpacity
+                onPress={createTribe}
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  borderRadius: 16,
+                }}
+              >
+                <Text style={{ color: 'white', fontWeight: '600' }}>Create</Text>
+              </TouchableOpacity>
             </View>
+          </LinearGradient>
 
-            {/* Description Input */}
-            <View className="mb-4">
-              <Text className="text-sm font-medium text-gray-700 mb-2">Description *</Text>
-              <TextInput
-                className="border border-gray-300 rounded-lg p-3 text-base text-gray-900"
-                placeholder="Describe what your tribe is about..."
-                placeholderTextColor="#9CA3AF"
-                value={newTribe.description}
-                onChangeText={(text) => setNewTribe(prev => ({ ...prev, description: text }))}
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-              />
-            </View>
+          <ScrollView style={{ flex: 1, padding: 20 }} contentContainerStyle={{ paddingBottom: 100 }}>
+            {/* Group Name */}
+            <Text style={{ fontSize: 16, fontWeight: '600', color: '#1f2937', marginBottom: 8 }}>
+              Group Name *
+            </Text>
+            <TextInput
+              value={newTribe.name}
+              onChangeText={(text) => setNewTribe(prev => ({ ...prev, name: text }))}
+              placeholder="Enter group name..."
+              style={{
+                borderWidth: 2,
+                borderColor: '#e5e7eb',
+                borderRadius: 16,
+                padding: 16,
+                fontSize: 16,
+                marginBottom: 20,
+                backgroundColor: '#f9fafb',
+              }}
+            />
 
-            {/* Category Selection */}
-            <View className="mb-4">
-              <Text className="text-sm font-medium text-gray-700 mb-2">Category</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {TRIBE_CATEGORIES.slice(1).map((category) => (
-                  <TouchableOpacity
-                    key={category}
-                    onPress={() => setNewTribe(prev => ({ ...prev, category }))}
-                    className={`px-4 py-2 rounded-full mr-3 ${
-                      newTribe.category === category
-                        ? 'bg-primary-500'
-                        : 'bg-gray-100'
-                    }`}
-                  >
-                    <Text
-                      className={`text-sm font-medium ${
-                        newTribe.category === category
-                          ? 'text-white'
-                          : 'text-gray-600'
-                      }`}
-                    >
-                      {category}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+            {/* Description */}
+            <Text style={{ fontSize: 16, fontWeight: '600', color: '#1f2937', marginBottom: 8 }}>
+              Description *
+            </Text>
+            <TextInput
+              value={newTribe.description}
+              onChangeText={(text) => setNewTribe(prev => ({ ...prev, description: text }))}
+              placeholder="Describe your group..."
+              style={{
+                borderWidth: 2,
+                borderColor: '#e5e7eb',
+                borderRadius: 16,
+                padding: 16,
+                fontSize: 16,
+                height: 100,
+                marginBottom: 20,
+                backgroundColor: '#f9fafb',
+                textAlignVertical: 'top',
+              }}
+              multiline
+            />
+
+            {/* Category */}
+            <Text style={{ fontSize: 16, fontWeight: '600', color: '#1f2937', marginBottom: 12 }}>
+              Category
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20 }}>
+              {categories.slice(1).map((category) => (
+                <TouchableOpacity
+                  key={category}
+                  onPress={() => setNewTribe(prev => ({ ...prev, category }))}
+                  style={{
+                    paddingHorizontal: 16,
+                    paddingVertical: 8,
+                    borderRadius: 20,
+                    marginRight: 8,
+                    marginBottom: 8,
+                    backgroundColor: newTribe.category === category ? '#10b981' : '#f3f4f6',
+                  }}
+                >
+                  <Text style={{
+                    color: newTribe.category === category ? 'white' : '#6b7280',
+                    fontWeight: '500',
+                    fontSize: 14,
+                  }}>
+                    {category}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
 
             {/* Max Members */}
-            <View className="mb-4">
-              <Text className="text-sm font-medium text-gray-700 mb-2">Max Members</Text>
-              <TextInput
-                className="border border-gray-300 rounded-lg p-3 text-base text-gray-900"
-                placeholder="50"
-                placeholderTextColor="#9CA3AF"
-                value={newTribe.maxMembers.toString()}
-                onChangeText={(text) => setNewTribe(prev => ({ 
-                  ...prev, 
-                  maxMembers: parseInt(text) || 50 
-                }))}
-                keyboardType="numeric"
-              />
-            </View>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: '#1f2937', marginBottom: 8 }}>
+              Maximum Members
+            </Text>
+            <TextInput
+              value={newTribe.maxMembers.toString()}
+              onChangeText={(text) => setNewTribe(prev => ({ ...prev, maxMembers: parseInt(text) || 50 }))}
+              placeholder="50"
+              keyboardType="numeric"
+              style={{
+                borderWidth: 2,
+                borderColor: '#e5e7eb',
+                borderRadius: 16,
+                padding: 16,
+                fontSize: 16,
+                marginBottom: 20,
+                backgroundColor: '#f9fafb',
+              }}
+            />
 
-            {/* Privacy Setting */}
-            <View className="mb-4">
-              <Text className="text-sm font-medium text-gray-700 mb-2">Privacy</Text>
-              <View className="flex-row">
-                <TouchableOpacity
-                  onPress={() => setNewTribe(prev => ({ ...prev, isPrivate: false }))}
-                  className={`flex-1 py-3 px-4 rounded-l-lg border ${
-                    !newTribe.isPrivate
-                      ? 'bg-primary-500 border-primary-500'
-                      : 'bg-white border-gray-300'
-                  }`}
-                >
-                  <Text
-                    className={`text-center font-medium ${
-                      !newTribe.isPrivate ? 'text-white' : 'text-gray-700'
-                    }`}
-                  >
-                    Public
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setNewTribe(prev => ({ ...prev, isPrivate: true }))}
-                  className={`flex-1 py-3 px-4 rounded-r-lg border ${
-                    newTribe.isPrivate
-                      ? 'bg-primary-500 border-primary-500'
-                      : 'bg-white border-gray-300'
-                  }`}
-                >
-                  <Text
-                    className={`text-center font-medium ${
-                      newTribe.isPrivate ? 'text-white' : 'text-gray-700'
-                    }`}
-                  >
-                    Private
-                  </Text>
-                </TouchableOpacity>
+            {/* Privacy Toggle */}
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              backgroundColor: '#f9fafb',
+              padding: 16,
+              borderRadius: 16,
+              marginBottom: 20,
+            }}>
+              <View>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: '#1f2937' }}>
+                  Private Group
+                </Text>
+                <Text style={{ fontSize: 14, color: '#6b7280', marginTop: 2 }}>
+                  Requires approval to join
+                </Text>
               </View>
+              <TouchableOpacity
+                onPress={() => setNewTribe(prev => ({ ...prev, isPrivate: !prev.isPrivate }))}
+                style={{
+                  width: 50,
+                  height: 30,
+                  borderRadius: 15,
+                  backgroundColor: newTribe.isPrivate ? '#10b981' : '#d1d5db',
+                  justifyContent: 'center',
+                  paddingHorizontal: 2,
+                }}
+              >
+                <View style={{
+                  width: 26,
+                  height: 26,
+                  borderRadius: 13,
+                  backgroundColor: 'white',
+                  alignSelf: newTribe.isPrivate ? 'flex-end' : 'flex-start',
+                }} />
+              </TouchableOpacity>
             </View>
           </ScrollView>
         </SafeAreaView>

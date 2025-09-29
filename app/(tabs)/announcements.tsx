@@ -1,15 +1,19 @@
-// Announcements Screen for DESocial
+// Announcements Screen - Modern Instagram-like UI Design
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import {
     Alert,
+    Dimensions,
+    FlatList,
     RefreshControl,
-    ScrollView,
     Text,
     TouchableOpacity,
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useThemeColors } from '../../constants/Colors';
 import { useAuth } from '../../contexts/AuthContext';
 import { Announcement } from '../../types';
 
@@ -45,29 +49,55 @@ const mockAnnouncements: Announcement[] = [
     eventDate: new Date('2024-11-01'),
     eventLocation: 'Tech Auditorium',
   },
+  {
+    id: '3',
+    authorId: 'admin3',
+    authorName: 'Placement Cell',
+    title: 'Placement Drive - Microsoft',
+    content: 'Microsoft is visiting our campus for recruitment! Eligible students from CSE, IT, and ECE can apply. Minimum CGPA: 7.5. Last date to apply: October 5th.',
+    category: 'placement',
+    priority: 'high',
+    targetAudience: 'all',
+    isActive: true,
+    createdAt: new Date('2024-01-12'),
+    updatedAt: new Date('2024-01-12'),
+    eventDate: new Date('2024-10-20'),
+    eventLocation: 'Placement Cell',
+  },
 ];
 
 const PRIORITY_COLORS = {
-  low: 'bg-gray-100 text-gray-700',
-  medium: 'bg-yellow-100 text-yellow-700',
-  high: 'bg-orange-100 text-orange-700',
-  urgent: 'bg-red-100 text-red-700',
+  high: { bg: '#fee2e2', text: '#dc2626', border: '#fca5a5' },
+  medium: { bg: '#fef3c7', text: '#d97706', border: '#fcd34d' },
+  low: { bg: '#ecfdf5', text: '#059669', border: '#6ee7b7' },
 };
 
 const CATEGORY_ICONS = {
-  general: 'information-circle',
-  academic: 'school',
-  events: 'calendar',
-  clubs: 'people',
-  placement: 'briefcase',
-} as const;
+  academic: 'school-outline',
+  events: 'calendar-outline',
+  placements: 'briefcase-outline',
+  general: 'information-circle-outline',
+  sports: 'football-outline',
+  cultural: 'musical-notes-outline',
+};
+
+const { width } = Dimensions.get('window');
 
 export default function AnnouncementsScreen() {
   const { user } = useAuth();
+  const colors = useThemeColors();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  const categories = [
+    { key: 'all', label: 'All', icon: 'grid-outline' },
+    { key: 'academic', label: 'Academic', icon: 'school-outline' },
+    { key: 'events', label: 'Events', icon: 'calendar-outline' },
+    { key: 'placements', label: 'Placements', icon: 'briefcase-outline' },
+    { key: 'sports', label: 'Sports', icon: 'football-outline' },
+  ];
 
   useEffect(() => {
     loadAnnouncements();
@@ -77,6 +107,7 @@ export default function AnnouncementsScreen() {
     try {
       setLoading(true);
       // TODO: Replace with actual Firebase service call
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate loading
       setAnnouncements(mockAnnouncements);
     } catch (error) {
       console.error('Error loading announcements:', error);
@@ -92,161 +123,354 @@ export default function AnnouncementsScreen() {
     setRefreshing(false);
   };
 
-  const filteredAnnouncements = announcements.filter(announcement => {
-    if (selectedCategory === 'all') return true;
-    return announcement.category === selectedCategory;
-  });
+  const getTimeAgo = (date: Date) => {
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInHours / 24);
 
-  const renderAnnouncement = (announcement: Announcement) => (
-    <View key={announcement.id} className="bg-white mb-4 mx-4 rounded-xl shadow-soft">
-      <View className="p-4">
-        {/* Announcement Header */}
-        <View className="flex-row items-start justify-between mb-3">
-          <View className="flex-1 mr-3">
-            <View className="flex-row items-center mb-2">
-              <Ionicons
-                name={CATEGORY_ICONS[announcement.category as keyof typeof CATEGORY_ICONS] || 'information-circle'}
-                size={18}
-                color="#0091F5"
-              />
-              <Text className="text-primary-500 text-sm font-medium ml-2 capitalize">
-                {announcement.category}
-              </Text>
-            </View>
-            <Text className="text-lg font-semibold text-gray-900 mb-2">
-              {announcement.title}
-            </Text>
-            <View className="flex-row items-center">
-              <Text className="text-gray-600 text-sm">
-                by {announcement.authorName}
-              </Text>
-              <Text className="text-gray-400 text-sm ml-2">
-                • {new Date(announcement.createdAt).toLocaleDateString()}
-              </Text>
-            </View>
+    if (diffInDays > 0) return `${diffInDays}d ago`;
+    if (diffInHours > 0) return `${diffInHours}h ago`;
+    return 'Just now';
+  };
+
+  const formatEventDate = (date: Date) => {
+    return date.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
+  const filteredAnnouncements = selectedCategory === 'all' 
+    ? announcements 
+    : announcements.filter(a => a.category === selectedCategory);
+
+  const renderAnnouncementCard = ({ item }: { item: Announcement }) => {
+    const priorityStyle = PRIORITY_COLORS[item.priority as keyof typeof PRIORITY_COLORS];
+    const categoryIcon = CATEGORY_ICONS[item.category as keyof typeof CATEGORY_ICONS] || 'information-circle-outline';
+
+    return (
+      <View style={{
+        backgroundColor: 'white',
+        marginHorizontal: 16,
+        marginVertical: 8,
+        borderRadius: 20,
+        padding: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        elevation: 5,
+      }}>
+        {/* Header */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+          <View style={{
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            backgroundColor: '#667eea',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginRight: 12,
+          }}>
+            <Ionicons name={categoryIcon as any} size={22} color="white" />
           </View>
           
-          <View className={`px-2 py-1 rounded-md ${PRIORITY_COLORS[announcement.priority]}`}>
-            <Text className="text-xs font-medium capitalize">
-              {announcement.priority}
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontWeight: '700', fontSize: 16, color: '#1f2937' }}>
+              {item.authorName}
+            </Text>
+            <Text style={{ color: '#6b7280', fontSize: 12 }}>
+              {getTimeAgo(item.createdAt)}
+            </Text>
+          </View>
+
+          <View style={{
+            backgroundColor: priorityStyle.bg,
+            paddingHorizontal: 10,
+            paddingVertical: 4,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: priorityStyle.border,
+          }}>
+            <Text style={{ 
+              color: priorityStyle.text, 
+              fontSize: 10, 
+              fontWeight: '700',
+              textTransform: 'uppercase'
+            }}>
+              {item.priority}
             </Text>
           </View>
         </View>
 
-        {/* Announcement Content */}
-        <Text className="text-gray-700 text-base leading-relaxed mb-3">
-          {announcement.content}
+        {/* Title */}
+        <Text style={{
+          fontSize: 20,
+          fontWeight: '800',
+          color: '#111827',
+          marginBottom: 8,
+          lineHeight: 26,
+        }}>
+          {item.title}
+        </Text>
+
+        {/* Content */}
+        <Text style={{
+          fontSize: 15,
+          color: '#4b5563',
+          lineHeight: 22,
+          marginBottom: 16,
+        }}>
+          {item.content}
         </Text>
 
         {/* Event Details */}
-        {announcement.eventDate && (
-          <View className="bg-primary-50 p-3 rounded-lg mb-3">
-            <View className="flex-row items-center mb-1">
-              <Ionicons name="calendar" size={16} color="#0091F5" />
-              <Text className="text-primary-700 text-sm font-medium ml-2">
-                Event Date: {new Date(announcement.eventDate).toLocaleDateString()}
-              </Text>
-            </View>
-            {announcement.eventLocation && (
-              <View className="flex-row items-center">
-                <Ionicons name="location" size={16} color="#0091F5" />
-                <Text className="text-primary-700 text-sm ml-2">
-                  Location: {announcement.eventLocation}
+        {(item.eventDate || item.eventLocation) && (
+          <View style={{
+            backgroundColor: '#f3f4f6',
+            borderRadius: 12,
+            padding: 12,
+            marginBottom: 16,
+          }}>
+            {item.eventDate && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                <Ionicons name="calendar-outline" size={16} color="#6b7280" />
+                <Text style={{ marginLeft: 8, color: '#374151', fontSize: 14, fontWeight: '500' }}>
+                  {formatEventDate(item.eventDate)}
+                </Text>
+              </View>
+            )}
+            {item.eventLocation && (
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="location-outline" size={16} color="#6b7280" />
+                <Text style={{ marginLeft: 8, color: '#374151', fontSize: 14, fontWeight: '500' }}>
+                  {item.eventLocation}
                 </Text>
               </View>
             )}
           </View>
         )}
 
-        {/* Actions */}
-        <View className="flex-row items-center justify-between pt-3 border-t border-gray-100">
-          <TouchableOpacity className="flex-row items-center">
-            <Ionicons name="bookmark-outline" size={18} color="#6B7280" />
-            <Text className="ml-2 text-gray-600 text-sm">Save</Text>
-          </TouchableOpacity>
+        {/* Category Badge */}
+        <View style={{
+          alignSelf: 'flex-start',
+          backgroundColor: '#e0e7ff',
+          paddingHorizontal: 12,
+          paddingVertical: 6,
+          borderRadius: 16,
+        }}>
+          <Text style={{ color: '#3730a3', fontSize: 12, fontWeight: '600', textTransform: 'capitalize' }}>
+            {item.category}
+          </Text>
+        </View>
 
-          <TouchableOpacity className="flex-row items-center">
-            <Ionicons name="share-outline" size={18} color="#6B7280" />
-            <Text className="ml-2 text-gray-600 text-sm">Share</Text>
-          </TouchableOpacity>
-
-          {announcement.eventDate && (
-            <TouchableOpacity className="bg-primary-500 px-4 py-2 rounded-lg">
-              <Text className="text-white text-sm font-medium">Add to Calendar</Text>
+        {/* Action Buttons */}
+        <View style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginTop: 16,
+          paddingTop: 16,
+          borderTopWidth: 1,
+          borderTopColor: '#f3f4f6',
+        }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TouchableOpacity style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: '#f3f4f6',
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              borderRadius: 20,
+              marginRight: 12,
+            }}>
+              <Ionicons name="heart-outline" size={16} color="#6b7280" />
+              <Text style={{ marginLeft: 4, color: '#6b7280', fontSize: 12, fontWeight: '500' }}>
+                Like
+              </Text>
             </TouchableOpacity>
-          )}
+            
+            <TouchableOpacity style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: '#f3f4f6',
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              borderRadius: 20,
+            }}>
+              <Ionicons name="share-outline" size={16} color="#6b7280" />
+              <Text style={{ marginLeft: 4, color: '#6b7280', fontSize: 12, fontWeight: '500' }}>
+                Share
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity>
+            <Ionicons name="bookmark-outline" size={20} color="#6b7280" />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
+
+  const renderHeader = () => (
+    <View>
+      {/* Header */}
+      <LinearGradient
+        colors={['#f59e0b', '#d97706']}
+        style={{
+          paddingTop: 20,
+          paddingHorizontal: 20,
+          paddingBottom: 30,
+        }}
+      >
+        <Text style={{
+          fontSize: 32,
+          fontWeight: '800',
+          color: 'white',
+          marginBottom: 8,
+        }}>
+          Announcements
+        </Text>
+        <Text style={{
+          fontSize: 16,
+          color: 'rgba(255, 255, 255, 0.8)',
+          marginBottom: 20,
+        }}>
+          Stay updated with latest news
+        </Text>
+
+        {/* Category Filter */}
+        <View style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.15)',
+          borderRadius: 16,
+          padding: 4,
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+        }}>
+          {categories.map((category) => (
+            <TouchableOpacity
+              key={category.key}
+              onPress={() => setSelectedCategory(category.key)}
+              style={{
+                paddingVertical: 8,
+                paddingHorizontal: 12,
+                borderRadius: 12,
+                backgroundColor: selectedCategory === category.key ? 'rgba(255, 255, 255, 0.25)' : 'transparent',
+                marginRight: 4,
+                marginBottom: 4,
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}
+            >
+              <Ionicons 
+                name={category.icon as any} 
+                size={16} 
+                color={selectedCategory === category.key ? 'white' : 'rgba(255, 255, 255, 0.8)'} 
+              />
+              <Text style={{
+                marginLeft: 6,
+                color: selectedCategory === category.key ? 'white' : 'rgba(255, 255, 255, 0.8)',
+                fontWeight: selectedCategory === category.key ? '700' : '500',
+                fontSize: 13,
+              }}>
+                {category.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </LinearGradient>
+
+      {/* Stats Cards */}
+      <View style={{
+        flexDirection: 'row',
+        marginHorizontal: 16,
+        marginTop: -15,
+        marginBottom: 20,
+      }}>
+        <View style={{
+          flex: 1,
+          backgroundColor: 'white',
+          borderRadius: 16,
+          padding: 16,
+          marginRight: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.08,
+          shadowRadius: 8,
+          elevation: 4,
+        }}>
+          <Text style={{ fontSize: 24, fontWeight: '700', color: '#f59e0b' }}>
+            {filteredAnnouncements.length}
+          </Text>
+          <Text style={{ fontSize: 12, color: '#6b7280', fontWeight: '500' }}>
+            Total Announcements
+          </Text>
+        </View>
+
+        <View style={{
+          flex: 1,
+          backgroundColor: 'white',
+          borderRadius: 16,
+          padding: 16,
+          marginLeft: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.08,
+          shadowRadius: 8,
+          elevation: 4,
+        }}>
+          <Text style={{ fontSize: 24, fontWeight: '700', color: '#dc2626' }}>
+            {announcements.filter(a => a.priority === 'high').length}
+          </Text>
+          <Text style={{ fontSize: 12, color: '#6b7280', fontWeight: '500' }}>
+            High Priority
+          </Text>
         </View>
       </View>
     </View>
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      {/* Header */}
-      <View className="bg-white px-4 py-3 border-b border-gray-200">
-        <View className="flex-row items-center justify-between">
-          <Text className="text-2xl font-bold text-gray-900">Announcements</Text>
-          <TouchableOpacity>
-            <Ionicons name="notifications-outline" size={24} color="#6B7280" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Category Filter */}
-      <View className="bg-white px-4 py-2 border-b border-gray-200">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {['all', 'general', 'academic', 'events', 'clubs', 'placement'].map((category) => (
-            <TouchableOpacity
-              key={category}
-              onPress={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-full mr-3 ${
-                selectedCategory === category
-                  ? 'bg-primary-500'
-                  : 'bg-gray-100'
-              }`}
-            >
-              <Text
-                className={`text-sm font-medium capitalize ${
-                  selectedCategory === category
-                    ? 'text-white'
-                    : 'text-gray-600'
-                }`}
-              >
-                {category === 'all' ? 'All' : category}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* Announcements List */}
-      <ScrollView
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#f9fafb' }}>
+      <StatusBar style="light" />
+      
+      <FlatList
+        data={filteredAnnouncements}
+        renderItem={renderAnnouncementCard}
+        keyExtractor={(item) => item.id}
+        ListHeaderComponent={renderHeader}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#f59e0b']}
+            tintColor="#f59e0b"
+          />
         }
-      >
-        <View className="py-4">
-          {loading ? (
-            <View className="flex-1 justify-center items-center py-20">
-              <Text className="text-gray-500 text-lg">Loading announcements...</Text>
-            </View>
-          ) : filteredAnnouncements.length === 0 ? (
-            <View className="flex-1 justify-center items-center py-20">
-              <Ionicons name="megaphone-outline" size={64} color="#9CA3AF" />
-              <Text className="text-gray-500 text-lg mt-4 text-center">
-                No announcements
-              </Text>
-              <Text className="text-gray-400 text-sm text-center mt-2 px-8">
-                Check back later for important updates from the university
-              </Text>
-            </View>
-          ) : (
-            filteredAnnouncements.map(renderAnnouncement)
-          )}
-        </View>
-      </ScrollView>
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingBottom: 100,
+        }}
+        ListEmptyComponent={() => (
+          <View style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingVertical: 40,
+          }}>
+            <Ionicons name="megaphone-outline" size={64} color="#9CA3AF" />
+            <Text style={{ fontSize: 18, color: '#6b7280', fontWeight: '600', marginTop: 16 }}>
+              No announcements
+            </Text>
+            <Text style={{ fontSize: 14, color: '#9ca3af', textAlign: 'center', marginTop: 8, paddingHorizontal: 40 }}>
+              There are no announcements in this category yet. Check back later!
+            </Text>
+          </View>
+        )}
+      />
     </SafeAreaView>
   );
 }

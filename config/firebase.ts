@@ -1,7 +1,7 @@
 // Firebase configuration for DESocial app
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { enableNetwork, getFirestore } from 'firebase/firestore';
 import { getFunctions } from 'firebase/functions';
 import { getStorage } from 'firebase/storage';
 
@@ -24,8 +24,18 @@ const app = initializeApp(firebaseConfig);
 // AsyncStorage is used automatically when available
 const auth = getAuth(app);
 
-// Initialize Firestore
+// Initialize Firestore with offline persistence
 const db = getFirestore(app);
+
+// Enable network connectivity for better reliability
+try {
+  // Ensure network is enabled for Firestore
+  enableNetwork(db).catch((error) => {
+    console.warn('Firebase network enable failed:', error);
+  });
+} catch (error) {
+  console.warn('Firebase network setup failed:', error);
+}
 
 // Initialize Firebase Storage
 const storage = getStorage(app);

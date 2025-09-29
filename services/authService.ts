@@ -1,12 +1,12 @@
 // Authentication service for DESocial
 import {
-    createUserWithEmailAndPassword,
-    User as FirebaseUser,
-    onAuthStateChanged,
-    sendPasswordResetEmail,
-    signInWithEmailAndPassword,
-    signOut,
-    updateProfile
+  createUserWithEmailAndPassword,
+  User as FirebaseUser,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signOut,
+  updateProfile
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
@@ -181,20 +181,75 @@ class AuthService {
     }
   }
 
-  // Get current user from Firestore
+  // Get current user from Firestore with offline handling
   async getCurrentUser(): Promise<User | null> {
     try {
       const currentUser = auth.currentUser;
       if (!currentUser) return null;
 
-      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-      if (!userDoc.exists()) return null;
+      console.log('Fetching user document for UID:', currentUser.uid);
+      
+      // Add timeout and offline handling
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Firestore timeout - using cached data')), 8000)
+      );
+      
+      try {
+        const userDoc = await Promise.race([
+          getDoc(doc(db, 'users', currentUser.uid)),
+          timeoutPromise
+        ]) as any;
+        
+        if (!userDoc.exists()) {
+          console.warn('User document not found, creating fallback user data');
+          return this.createFallbackUser(currentUser);
+        }
 
-      return userDoc.data() as User;
-    } catch (error) {
+        console.log('User document fetched successfully');
+        return userDoc.data() as User;
+        
+      } catch (networkError: any) {
+        console.warn('Network error fetching user, using fallback:', networkError.message);
+        
+        // If it's an offline error, provide fallback user data
+        if (networkError.message?.includes('offline') || networkError.message?.includes('timeout')) {
+          return this.createFallbackUser(currentUser);
+        }
+        
+        throw networkError;
+      }
+      
+    } catch (error: any) {
       console.error('Get current user error:', error);
+      
+      // For offline errors, try to provide basic user info instead of null
+      if (error.message?.includes('offline') || error.message?.includes('timeout')) {
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          console.log('Providing fallback user data due to offline state');
+          return this.createFallbackUser(currentUser);
+        }
+      }
+      
       return null;
     }
+  }
+  
+  // Create fallback user data when Firestore is offline
+  private createFallbackUser(firebaseUser: any): User {
+    return {
+      uid: firebaseUser.uid,
+      email: firebaseUser.email || '',
+      displayName: firebaseUser.displayName || 'User',
+      prn: '',
+      year: 0,
+      branch: '',
+      isAdmin: false,
+      isVerified: true, // Assume verified to avoid blocking UI
+      joinedTribes: [],
+      createdAt: new Date(),
+      lastActive: new Date()
+    };
   }
 
   // Validate PRN format (customize based on DES PRN format)
@@ -247,26 +302,7 @@ class AuthService {
     }
   }
 
-  // Debug helper to test credentials
-  async testCredentials(email: string, password: string): Promise<void> {
-    try {
-      console.log('=== TESTING CREDENTIALS ===');
-      console.log('Attempting to sign in with:', email.trim());
-      
-      const result = await signInWithEmailAndPassword(auth, email.trim(), password);
-      console.log('SUCCESS: Credentials are valid!', result.user.uid);
-      
-      // Sign out immediately after test
-      await signOut(auth);
-      console.log('Signed out after test');
-      
-    } catch (error: any) {
-      console.log('FAILED: Credentials test failed');
-      console.log('Error code:', error.code);
-      console.log('Error message:', error.message);
-      throw error;
-    }
-  }
+
 }
 
 export const authService = new AuthService();

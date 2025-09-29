@@ -1,16 +1,22 @@
 // Forum Screen - Modern Instagram-like UI Design
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    Modal,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  Dimensions,
+  FlatList,
+  Modal,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useThemeColors } from '../../constants/Colors';
 import { useAuth } from '../../contexts/AuthContext';
 import { forumService } from '../../services/forumService';
 import { ForumPost } from '../../types';
@@ -22,10 +28,14 @@ const COURSE_TAGS = [
   'Mobile Development', 'Computer Graphics', 'Cybersecurity'
 ];
 
+const { width } = Dimensions.get('window');
+
 export default function ForumScreen() {
   const { user } = useAuth();
+  const colors = useThemeColors();
   const [questions, setQuestions] = useState<ForumPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newQuestion, setNewQuestion] = useState({
     title: '',
@@ -33,10 +43,7 @@ export default function ForumScreen() {
     courseTags: [] as string[],
   });
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'unanswered' | 'answered'>('all');
-
-  useEffect(() => {
-    loadQuestions();
-  }, [selectedFilter]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const loadQuestions = async () => {
     try {
@@ -54,23 +61,27 @@ export default function ForumScreen() {
     }
   };
 
-  const handleCreateQuestion = async () => {
+  useEffect(() => {
+    loadQuestions();
+  }, [selectedFilter]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadQuestions();
+    setRefreshing(false);
+  };
+
+  const createQuestion = async () => {
     if (!newQuestion.title.trim() || !newQuestion.content.trim()) {
-      Alert.alert('Error', 'Please fill in both title and content');
+      Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
-    if (!user) return;
-
     try {
       await forumService.createQuestion(
-        {
-          title: newQuestion.title.trim(),
-          content: newQuestion.content.trim(),
-          courseTags: newQuestion.courseTags,
-        },
-        user.uid,
-        user.displayName
+        newQuestion,
+        user!.uid,
+        user!.displayName
       );
 
       setNewQuestion({ title: '', content: '', courseTags: [] });
@@ -83,18 +94,7 @@ export default function ForumScreen() {
     }
   };
 
-  const handleVote = async (questionId: string, voteType: 'upvote' | 'downvote') => {
-    if (!user) return;
-
-    try {
-      await forumService.voteQuestion(questionId, user.uid, voteType);
-      await loadQuestions(); // Refresh to show updated votes
-    } catch (error) {
-      console.error('Error voting:', error);
-    }
-  };
-
-  const toggleTag = (tag: string) => {
+  const toggleCourseTag = (tag: string) => {
     setNewQuestion(prev => ({
       ...prev,
       courseTags: prev.courseTags.includes(tag)
@@ -103,164 +103,327 @@ export default function ForumScreen() {
     }));
   };
 
-  const renderQuestion = (question: ForumPost) => {
-    const score = question.upvotes.length - question.downvotes.length;
-    const hasUpvoted = question.upvotes.includes(user?.uid || '');
-    const hasDownvoted = question.downvotes.includes(user?.uid || '');
+  const getTimeAgo = (date: Date) => {
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInHours / 24);
 
-    return (
-      <View key={question.id} className="bg-white mb-4 mx-4 rounded-xl shadow-soft">
-        <View className="p-4">
-          {/* Question Header */}
-          <View className="flex-row items-start justify-between mb-3">
-            <View className="flex-1 mr-3">
-              <Text className="text-lg font-semibold text-gray-900 mb-2">
-                {question.title}
-              </Text>
-              <View className="flex-row items-center">
-                <Text className="text-gray-600 text-sm">
-                  by {question.authorName}
-                </Text>
-                <Text className="text-gray-400 text-sm ml-2">
-                  • {new Date(question.createdAt).toLocaleDateString()}
-                </Text>
-              </View>
-            </View>
-            
-            {question.isAnswered && (
-              <View className="bg-success-100 px-2 py-1 rounded-md">
-                <Text className="text-success-700 text-xs font-medium">
-                  Answered
-                </Text>
-              </View>
-            )}
-          </View>
-
-          {/* Question Content */}
-          <Text className="text-gray-700 text-base leading-relaxed mb-3">
-            {question.content}
-          </Text>
-
-          {/* Course Tags */}
-          {question.courseTags.length > 0 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-3">
-              {question.courseTags.map((tag, index) => (
-                <View key={index} className="bg-primary-100 px-3 py-1 rounded-full mr-2">
-                  <Text className="text-primary-700 text-xs font-medium">{tag}</Text>
-                </View>
-              ))}
-            </ScrollView>
-          )}
-
-          {/* Question Actions */}
-          <View className="flex-row items-center justify-between pt-3 border-t border-gray-100">
-            <View className="flex-row items-center space-x-4">
-              {/* Voting */}
-              <View className="flex-row items-center">
-                <TouchableOpacity
-                  onPress={() => handleVote(question.id, 'upvote')}
-                  className="mr-1"
-                >
-                  <Ionicons
-                    name={hasUpvoted ? 'arrow-up' : 'arrow-up-outline'}
-                    size={20}
-                    color={hasUpvoted ? '#22C55E' : '#6B7280'}
-                  />
-                </TouchableOpacity>
-                <Text className="text-gray-700 font-medium text-sm min-w-6 text-center">
-                  {score}
-                </Text>
-                <TouchableOpacity
-                  onPress={() => handleVote(question.id, 'downvote')}
-                  className="ml-1"
-                >
-                  <Ionicons
-                    name={hasDownvoted ? 'arrow-down' : 'arrow-down-outline'}
-                    size={20}
-                    color={hasDownvoted ? '#EF4444' : '#6B7280'}
-                  />
-                </TouchableOpacity>
-              </View>
-
-              {/* Answer Count */}
-              <View className="flex-row items-center">
-                <Ionicons name="chatbubble-outline" size={18} color="#6B7280" />
-                <Text className="ml-1 text-gray-600 text-sm">
-                  {question.answersCount} {question.answersCount === 1 ? 'answer' : 'answers'}
-                </Text>
-              </View>
-            </View>
-
-            <TouchableOpacity className="bg-primary-500 px-4 py-2 rounded-lg">
-              <Text className="text-white text-sm font-medium">Answer</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    );
+    if (diffInDays > 0) return `${diffInDays}d ago`;
+    if (diffInHours > 0) return `${diffInHours}h ago`;
+    return 'Just now';
   };
 
-  return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      {/* Header */}
-      <View className="bg-white px-4 py-3 border-b border-gray-200">
-        <View className="flex-row items-center justify-between">
-          <Text className="text-2xl font-bold text-gray-900">Q&A Forum</Text>
-          <TouchableOpacity onPress={() => setShowCreateModal(true)}>
-            <Ionicons name="add-circle" size={28} color="#0091F5" />
-          </TouchableOpacity>
+  const renderQuestionCard = ({ item }: { item: ForumPost }) => (
+    <View style={{
+      backgroundColor: 'white',
+      marginHorizontal: 16,
+      marginVertical: 8,
+      borderRadius: 20,
+      padding: 20,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 12,
+      elevation: 5,
+    }}>
+      {/* Question Header */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+        <View style={{
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: '#667eea',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginRight: 12,
+        }}>
+          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
+            {item.authorName?.charAt(0).toUpperCase() || 'U'}
+          </Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontWeight: '600', fontSize: 16, color: colors.textPrimary }}>
+            {item.authorName || 'Anonymous'}
+          </Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
+            {getTimeAgo(new Date(item.createdAt))}
+          </Text>
+        </View>
+        <View style={{
+          backgroundColor: item.isAnswered ? '#10b981' : '#f59e0b',
+          paddingHorizontal: 8,
+          paddingVertical: 4,
+          borderRadius: 12,
+        }}>
+          <Text style={{ color: 'white', fontSize: 10, fontWeight: '600' }}>
+            {item.isAnswered ? 'ANSWERED' : 'OPEN'}
+          </Text>
         </View>
       </View>
 
-      {/* Filter Tabs */}
-      <View className="bg-white px-4 py-2 border-b border-gray-200">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {['all', 'unanswered', 'answered'].map((filter) => (
+      {/* Question Content */}
+      <Text style={{
+        fontSize: 18,
+        fontWeight: '700',
+        color: colors.textPrimary,
+        marginBottom: 8,
+        lineHeight: 24,
+      }}>
+        {item.title}
+      </Text>
+      
+      <Text style={{
+        fontSize: 14,
+        color: colors.textSecondary,
+        lineHeight: 20,
+        marginBottom: 16,
+      }}>
+        {item.content}
+      </Text>
+
+      {/* Course Tags */}
+      {item.courseTags && item.courseTags.length > 0 && (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 }}>
+          {item.courseTags.map((tag, index) => (
+            <View key={index} style={{
+              backgroundColor: '#e0e7ff',
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              borderRadius: 16,
+              marginRight: 8,
+              marginBottom: 4,
+            }}>
+              <Text style={{ color: '#3730a3', fontSize: 12, fontWeight: '500' }}>
+                {tag}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {/* Interaction Bar */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: '#f3f4f6',
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            borderRadius: 20,
+            marginRight: 12,
+          }}>
+            <Ionicons name="thumbs-up-outline" size={16} color="#6b7280" />
+            <Text style={{ marginLeft: 4, color: '#6b7280', fontSize: 12, fontWeight: '500' }}>
+              {item.upvotes || 0}
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: '#f3f4f6',
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            borderRadius: 20,
+          }}>
+            <Ionicons name="chatbubble-outline" size={16} color="#6b7280" />
+            <Text style={{ marginLeft: 4, color: '#6b7280', fontSize: 12, fontWeight: '500' }}>
+              {item.answersCount || 0}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity>
+          <Ionicons name="bookmark-outline" size={20} color="#6b7280" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const renderHeader = () => (
+    <View>
+      {/* Header */}
+      <LinearGradient
+        colors={['#667eea', '#764ba2']}
+        style={{
+          paddingTop: 20,
+          paddingHorizontal: 20,
+          paddingBottom: 30,
+        }}
+      >
+        <Text style={{
+          fontSize: 32,
+          fontWeight: '800',
+          color: 'white',
+          marginBottom: 8,
+        }}>
+          Discussions
+        </Text>
+        <Text style={{
+          fontSize: 16,
+          color: 'rgba(255, 255, 255, 0.8)',
+          marginBottom: 20,
+        }}>
+          Ask questions, share knowledge
+        </Text>
+
+        {/* Search Bar */}
+        <View style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.2)',
+          borderRadius: 20,
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          marginBottom: 20,
+        }}>
+          <Ionicons name="search" size={20} color="rgba(255, 255, 255, 0.8)" />
+          <TextInput
+            placeholder="Search discussions..."
+            placeholderTextColor="rgba(255, 255, 255, 0.8)"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            style={{
+              flex: 1,
+              marginLeft: 12,
+              color: 'white',
+              fontSize: 16,
+            }}
+          />
+        </View>
+
+        {/* Filter Buttons */}
+        <View style={{
+          flexDirection: 'row',
+          backgroundColor: 'rgba(255, 255, 255, 0.15)',
+          borderRadius: 16,
+          padding: 4,
+        }}>
+          {[
+            { key: 'all', label: 'All' },
+            { key: 'unanswered', label: 'Open' },
+            { key: 'answered', label: 'Solved' },
+          ].map((filter) => (
             <TouchableOpacity
-              key={filter}
-              onPress={() => setSelectedFilter(filter as any)}
-              className={`px-4 py-2 rounded-full mr-3 ${
-                selectedFilter === filter
-                  ? 'bg-primary-500'
-                  : 'bg-gray-100'
-              }`}
+              key={filter.key}
+              onPress={() => setSelectedFilter(filter.key as any)}
+              style={{
+                flex: 1,
+                paddingVertical: 10,
+                borderRadius: 12,
+                backgroundColor: selectedFilter === filter.key ? 'rgba(255, 255, 255, 0.25)' : 'transparent',
+              }}
             >
-              <Text
-                className={`text-sm font-medium capitalize ${
-                  selectedFilter === filter
-                    ? 'text-white'
-                    : 'text-gray-600'
-                }`}
-              >
-                {filter}
+              <Text style={{
+                textAlign: 'center',
+                color: selectedFilter === filter.key ? 'white' : 'rgba(255, 255, 255, 0.8)',
+                fontWeight: selectedFilter === filter.key ? '700' : '500',
+                fontSize: 14,
+              }}>
+                {filter.label}
               </Text>
             </TouchableOpacity>
           ))}
-        </ScrollView>
-      </View>
-
-      {/* Questions List */}
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="py-4">
-          {loading ? (
-            <View className="flex-1 justify-center items-center py-20">
-              <Text className="text-gray-500 text-lg">Loading questions...</Text>
-            </View>
-          ) : questions.length === 0 ? (
-            <View className="flex-1 justify-center items-center py-20">
-              <Ionicons name="help-circle-outline" size={64} color="#9CA3AF" />
-              <Text className="text-gray-500 text-lg mt-4 text-center">
-                No questions yet
-              </Text>
-              <Text className="text-gray-400 text-sm text-center mt-2 px-8">
-                Be the first to ask a question!
-              </Text>
-            </View>
-          ) : (
-            questions.map(renderQuestion)
-          )}
         </View>
-      </ScrollView>
+      </LinearGradient>
+
+      {/* Stats Cards */}
+      <View style={{
+        flexDirection: 'row',
+        marginHorizontal: 16,
+        marginTop: -15,
+        marginBottom: 20,
+      }}>
+        <View style={{
+          flex: 1,
+          backgroundColor: 'white',
+          borderRadius: 16,
+          padding: 16,
+          marginRight: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.08,
+          shadowRadius: 8,
+          elevation: 4,
+        }}>
+          <Text style={{ fontSize: 24, fontWeight: '700', color: '#667eea' }}>
+            {questions.length}
+          </Text>
+          <Text style={{ fontSize: 12, color: '#6b7280', fontWeight: '500' }}>
+            Total Questions
+          </Text>
+        </View>
+
+        <View style={{
+          flex: 1,
+          backgroundColor: 'white',
+          borderRadius: 16,
+          padding: 16,
+          marginLeft: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.08,
+          shadowRadius: 8,
+          elevation: 4,
+        }}>
+          <Text style={{ fontSize: 24, fontWeight: '700', color: '#10b981' }}>
+            {questions.filter(q => q.isAnswered).length}
+          </Text>
+          <Text style={{ fontSize: 12, color: '#6b7280', fontWeight: '500' }}>
+            Solved
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#f9fafb' }}>
+      <StatusBar style="light" />
+      
+      <FlatList
+        data={questions}
+        renderItem={renderQuestionCard}
+        keyExtractor={(item) => item.id}
+        ListHeaderComponent={renderHeader}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#667eea']}
+            tintColor="#667eea"
+          />
+        }
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingBottom: 100,
+        }}
+      />
+
+      {/* Floating Action Button */}
+      <TouchableOpacity
+        onPress={() => setShowCreateModal(true)}
+        style={{
+          position: 'absolute',
+          bottom: 30,
+          right: 20,
+          width: 60,
+          height: 60,
+          borderRadius: 30,
+          backgroundColor: '#667eea',
+          alignItems: 'center',
+          justifyContent: 'center',
+          shadowColor: '#667eea',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.3,
+          shadowRadius: 16,
+          elevation: 12,
+        }}
+      >
+        <Ionicons name="add" size={28} color="white" />
+      </TouchableOpacity>
 
       {/* Create Question Modal */}
       <Modal
@@ -268,72 +431,105 @@ export default function ForumScreen() {
         animationType="slide"
         presentationStyle="pageSheet"
       >
-        <SafeAreaView className="flex-1 bg-white">
-          {/* Modal Header */}
-          <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-200">
-            <TouchableOpacity onPress={() => setShowCreateModal(false)}>
-              <Text className="text-primary-500 text-base font-medium">Cancel</Text>
-            </TouchableOpacity>
-            <Text className="text-lg font-semibold text-gray-900">Ask Question</Text>
-            <TouchableOpacity onPress={handleCreateQuestion}>
-              <Text className="text-primary-500 text-base font-medium">Post</Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView className="flex-1 px-4 py-4">
-            {/* Title Input */}
-            <View className="mb-4">
-              <Text className="text-sm font-medium text-gray-700 mb-2">Question Title</Text>
-              <TextInput
-                className="border border-gray-300 rounded-lg p-3 text-base text-gray-900"
-                placeholder="What's your question?"
-                placeholderTextColor="#9CA3AF"
-                value={newQuestion.title}
-                onChangeText={(text) => setNewQuestion(prev => ({ ...prev, title: text }))}
-              />
+        <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
+          <LinearGradient
+            colors={['#667eea', '#764ba2']}
+            style={{
+              paddingHorizontal: 20,
+              paddingVertical: 20,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <TouchableOpacity onPress={() => setShowCreateModal(false)}>
+                <Ionicons name="close" size={24} color="white" />
+              </TouchableOpacity>
+              <Text style={{ fontSize: 18, fontWeight: '700', color: 'white' }}>
+                Ask Question
+              </Text>
+              <TouchableOpacity
+                onPress={createQuestion}
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  borderRadius: 16,
+                }}
+              >
+                <Text style={{ color: 'white', fontWeight: '600' }}>Post</Text>
+              </TouchableOpacity>
             </View>
+          </LinearGradient>
 
-            {/* Content Input */}
-            <View className="mb-4">
-              <Text className="text-sm font-medium text-gray-700 mb-2">Question Details</Text>
-              <TextInput
-                className="border border-gray-300 rounded-lg p-3 text-base text-gray-900"
-                placeholder="Provide more details about your question..."
-                placeholderTextColor="#9CA3AF"
-                value={newQuestion.content}
-                onChangeText={(text) => setNewQuestion(prev => ({ ...prev, content: text }))}
-                multiline
-                numberOfLines={6}
-                textAlignVertical="top"
-              />
-            </View>
+          <ScrollView style={{ flex: 1, padding: 20 }} contentContainerStyle={{ paddingBottom: 100 }}>
+            {/* Question Title */}
+            <Text style={{ fontSize: 16, fontWeight: '600', color: '#1f2937', marginBottom: 8 }}>
+              Question Title
+            </Text>
+            <TextInput
+              value={newQuestion.title}
+              onChangeText={(text) => setNewQuestion(prev => ({ ...prev, title: text }))}
+              placeholder="What's your question?"
+              style={{
+                borderWidth: 2,
+                borderColor: '#e5e7eb',
+                borderRadius: 16,
+                padding: 16,
+                fontSize: 16,
+                marginBottom: 20,
+                backgroundColor: '#f9fafb',
+              }}
+              multiline
+            />
+
+            {/* Question Content */}
+            <Text style={{ fontSize: 16, fontWeight: '600', color: '#1f2937', marginBottom: 8 }}>
+              Description
+            </Text>
+            <TextInput
+              value={newQuestion.content}
+              onChangeText={(text) => setNewQuestion(prev => ({ ...prev, content: text }))}
+              placeholder="Provide more details about your question..."
+              style={{
+                borderWidth: 2,
+                borderColor: '#e5e7eb',
+                borderRadius: 16,
+                padding: 16,
+                fontSize: 16,
+                height: 120,
+                marginBottom: 20,
+                backgroundColor: '#f9fafb',
+                textAlignVertical: 'top',
+              }}
+              multiline
+            />
 
             {/* Course Tags */}
-            <View className="mb-4">
-              <Text className="text-sm font-medium text-gray-700 mb-2">Course Tags</Text>
-              <View className="flex-row flex-wrap">
-                {COURSE_TAGS.map((tag) => (
-                  <TouchableOpacity
-                    key={tag}
-                    onPress={() => toggleTag(tag)}
-                    className={`px-3 py-2 rounded-full mr-2 mb-2 ${
-                      newQuestion.courseTags.includes(tag)
-                        ? 'bg-primary-500'
-                        : 'bg-gray-100'
-                    }`}
-                  >
-                    <Text
-                      className={`text-sm font-medium ${
-                        newQuestion.courseTags.includes(tag)
-                          ? 'text-white'
-                          : 'text-gray-600'
-                      }`}
-                    >
-                      {tag}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: '#1f2937', marginBottom: 12 }}>
+              Select Subjects
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+              {COURSE_TAGS.map((tag) => (
+                <TouchableOpacity
+                  key={tag}
+                  onPress={() => toggleCourseTag(tag)}
+                  style={{
+                    paddingHorizontal: 16,
+                    paddingVertical: 8,
+                    borderRadius: 20,
+                    marginRight: 8,
+                    marginBottom: 8,
+                    backgroundColor: newQuestion.courseTags.includes(tag) ? '#667eea' : '#f3f4f6',
+                  }}
+                >
+                  <Text style={{
+                    color: newQuestion.courseTags.includes(tag) ? 'white' : '#6b7280',
+                    fontWeight: '500',
+                    fontSize: 14,
+                  }}>
+                    {tag}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
           </ScrollView>
         </SafeAreaView>

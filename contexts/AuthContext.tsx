@@ -32,11 +32,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       if (firebaseUser) {
         try {
+          console.log('AuthContext: Fetching user data for:', firebaseUser.uid);
           const userData = await authService.getCurrentUser();
-          setUser(userData);
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-          setUser(null);
+          
+          if (userData) {
+            console.log('AuthContext: User data fetched successfully:', userData.displayName);
+            setUser(userData);
+          } else {
+            console.warn('AuthContext: No user data returned, user might be offline');
+            setUser(null);
+          }
+        } catch (error: any) {
+          console.error('AuthContext: Error fetching user data:', error);
+          
+          // Don't set user to null if it's just a network error
+          if (error.message?.includes('offline') || error.message?.includes('network')) {
+            console.log('AuthContext: Network error, keeping existing user state');
+            // Keep existing user state, don't clear it
+          } else {
+            setUser(null);
+          }
         }
       } else {
         setUser(null);
@@ -49,18 +64,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    try {
-      console.log('AuthContext: Starting login process');
-      setLoading(true);
-      const userData = await authService.loginWithEmail({ email, password });
-      console.log('AuthContext: Login successful, setting user data');
-      setUser(userData);
-      setLoading(false);
-      console.log('AuthContext: User data set, login complete');
-    } catch (error) {
-      console.log('AuthContext: Login failed, resetting loading state');
-      setLoading(false);
-      throw error;
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    while (retryCount < maxRetries) {
+      try {
+        console.log(`AuthContext: Starting login process (attempt ${retryCount + 1}/${maxRetries})`);
+        setLoading(true);
+        const userData = await authService.loginWithEmail({ email, password });
+        console.log('AuthContext: Login successful, setting user data');
+        setUser(userData);
+        setLoading(false);
+        console.log('AuthContext: User data set, login complete');
+        return; // Success, exit retry loop
+      } catch (error: any) {
+        console.log(`AuthContext: Login attempt ${retryCount + 1} failed:`, error.message);
+        retryCount++;
+        
+        // If it's a network/offline error and we have retries left, wait and retry
+        if ((error.message?.includes('offline') || error.message?.includes('network') || error.message?.includes('timeout')) && retryCount < maxRetries) {
+          console.log(`AuthContext: Network error, retrying in ${retryCount * 1000}ms...`);
+          await new Promise(resolve => setTimeout(resolve, retryCount * 1000));
+          continue;
+        }
+        
+        // If it's not a network error or we're out of retries, throw the error
+        console.log('AuthContext: Login failed, resetting loading state');
+        setLoading(false);
+        throw error;
+      }
     }
   };
 

@@ -5,16 +5,18 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    Image,
-    RefreshControl,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  Image,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
+import { GestureHandlerRootView, PanGestureHandler, State } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useThemeColors } from '../../constants/Colors';
 import { useAuth } from '../../contexts/AuthContext';
 import '../../global.css';
 import { postService } from '../../services/postService';
@@ -23,11 +25,24 @@ import { Post } from '../../types';
 export default function HomeScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const colors = useThemeColors();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [newPostContent, setNewPostContent] = useState('');
   const [showCreatePost, setShowCreatePost] = useState(false);
+
+  // Handle swipe gesture
+  const onSwipeGesture = (event: any) => {
+    const { translationX, velocityX, state } = event.nativeEvent;
+    
+    if (state === State.END) {
+      // Swipe right with sufficient velocity or distance
+      if (translationX > 100 || velocityX > 500) {
+        router.push('/home/chat');
+      }
+    }
+  };
 
   useEffect(() => {
     loadPosts();
@@ -158,14 +173,14 @@ export default function HomeScreen() {
           <Text style={{
             fontSize: 17,
             fontWeight: '700',
-            color: '#1f2937',
+            color: colors.textPrimary,
             marginBottom: 2,
           }}>
             {post.authorName}
           </Text>
           <Text style={{
             fontSize: 14,
-            color: '#6b7280',
+            color: colors.textSecondary,
           }}>
             {new Date(post.createdAt).toLocaleDateString('en-US', {
               month: 'short',
@@ -178,9 +193,9 @@ export default function HomeScreen() {
         <TouchableOpacity style={{
           padding: 8,
           borderRadius: 20,
-          backgroundColor: '#f3f4f6',
+          backgroundColor: colors.surface,
         }}>
-          <Ionicons name="ellipsis-horizontal" size={18} color="#6b7280" />
+          <Ionicons name="ellipsis-horizontal" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
@@ -189,7 +204,7 @@ export default function HomeScreen() {
         <Text style={{
           fontSize: 16,
           lineHeight: 24,
-          color: '#374151',
+          color: colors.textPrimary,
           letterSpacing: 0.2,
         }}>
           {post.content}
@@ -238,9 +253,9 @@ export default function HomeScreen() {
         justifyContent: 'space-between',
         paddingHorizontal: 20,
         paddingVertical: 16,
-        backgroundColor: '#f8fafc',
+        backgroundColor: colors.surface,
         borderTopWidth: 1,
-        borderTopColor: '#e5e7eb',
+        borderTopColor: colors.border,
       }}>
         <TouchableOpacity
           style={{
@@ -256,13 +271,13 @@ export default function HomeScreen() {
           <Ionicons
             name={post.likes.includes(user?.uid || '') ? 'heart' : 'heart-outline'}
             size={22}
-            color={post.likes.includes(user?.uid || '') ? '#ef4444' : '#6b7280'}
+            color={post.likes.includes(user?.uid || '') ? colors.accent : colors.textSecondary}
           />
           <Text style={{
             marginLeft: 8,
             fontSize: 14,
             fontWeight: '600',
-            color: post.likes.includes(user?.uid || '') ? '#ef4444' : '#6b7280',
+            color: post.likes.includes(user?.uid || '') ? colors.accent : colors.textSecondary,
           }}>
             {post.likes.length}
           </Text>
@@ -275,12 +290,12 @@ export default function HomeScreen() {
           paddingVertical: 8,
           borderRadius: 20,
         }}>
-          <Ionicons name="chatbubble-outline" size={22} color="#6b7280" />
+          <Ionicons name="chatbubble-outline" size={22} color={colors.textSecondary} />
           <Text style={{
             marginLeft: 8,
             fontSize: 14,
             fontWeight: '600',
-            color: '#6b7280',
+            color: colors.textSecondary,
           }}>
             {post.commentsCount}
           </Text>
@@ -293,12 +308,12 @@ export default function HomeScreen() {
           paddingVertical: 8,
           borderRadius: 20,
         }}>
-          <Ionicons name="share-outline" size={22} color="#6b7280" />
+          <Ionicons name="share-outline" size={22} color={colors.textSecondary} />
           <Text style={{
             marginLeft: 8,
             fontSize: 14,
             fontWeight: '600',
-            color: '#6b7280',
+            color: colors.textSecondary,
           }}>
             Share
           </Text>
@@ -308,18 +323,19 @@ export default function HomeScreen() {
   );
 
   return (
-    <>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar style="dark" />
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#f1f5f9' }}>
+      <PanGestureHandler onGestureEvent={onSwipeGesture} onHandlerStateChange={onSwipeGesture}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
         {/* Beautiful Header */}
         <LinearGradient
-          colors={['#667eea', '#764ba2']}
+          colors={[colors.primary, colors.secondary]}
           start={{ x: 0.0, y: 0.0 }}
           end={{ x: 1.0, y: 1.0 }}
           style={{
             paddingHorizontal: 20,
             paddingVertical: 20,
-            shadowColor: '#000',
+            shadowColor: colors.primary,
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.15,
             shadowRadius: 12,
@@ -564,7 +580,7 @@ export default function HomeScreen() {
         <ScrollView
           style={{ flex: 1 }}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingTop: 16, paddingBottom: 32 }}
+          contentContainerStyle={{ paddingTop: 16, paddingBottom: 100 }}
           refreshControl={
             <RefreshControl 
               refreshing={refreshing} 
@@ -674,7 +690,8 @@ export default function HomeScreen() {
             posts.map(renderPost)
           )}
         </ScrollView>
-      </SafeAreaView>
-    </>
+        </SafeAreaView>
+      </PanGestureHandler>
+    </GestureHandlerRootView>
   );
 }
