@@ -11,21 +11,18 @@ export default function TabLayout() {
     >
       <NativeTabs.Trigger name="index">
         <Label hidden />
-        <Icon sf="house" drawable="custom_android_drawable" />
+        <Icon sf="house" drawable="ic_menu_home" />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="forum">
         <Label hidden />
-        <Icon
-          sf="person.3.sequence"
-          drawable="custom_android_drawable"
-        />
+        <Icon sf="person.3.sequence" drawable="ic_dialog_email" />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="search">
-        <Icon sf="magnifyingglass" drawable="custom_search_drawable" />
+        <Icon sf="magnifyingglass" drawable="ic_menu_search" />
         <Label hidden />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile">
-        <Icon sf="person" drawable="custom_profile_drawable" />
+        <Icon sf="person" drawable="ic_menu_myplaces" />
         <Label hidden />
       </NativeTabs.Trigger>
     </NativeTabs>
