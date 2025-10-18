@@ -37,7 +37,7 @@ export default function CreatePost({ onCreatePost }: CreatePostProps) {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: "images", // Fixed: Using string value instead of deprecated enum
+        mediaTypes: "images",
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
@@ -47,7 +47,7 @@ export default function CreatePost({ onCreatePost }: CreatePostProps) {
 
       if (!result.canceled && result.assets) {
         const imageUris = result.assets.map((asset) => asset.uri);
-        setSelectedImages((prev) => [...prev, ...imageUris].slice(0, 4)); // Limit to 4 images
+        setSelectedImages((prev) => [...prev, ...imageUris].slice(0, 4));
       }
     } catch (error) {
       Alert.alert("Error", "Failed to pick image");
@@ -66,7 +66,7 @@ export default function CreatePost({ onCreatePost }: CreatePostProps) {
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: "images", // Fixed: Using string value instead of deprecated enum
+        mediaTypes: "images",
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
@@ -119,6 +119,21 @@ export default function CreatePost({ onCreatePost }: CreatePostProps) {
 
   const canPost =
     (text.trim().length > 0 || selectedImages.length > 0) && !isPosting;
+
+  const postButtonStyle = StyleSheet.flatten([
+    styles(colors).postButton,
+    {
+      backgroundColor: canPost ? colors.primary : "transparent",
+      borderColor: canPost ? colors.primary : colors.border,
+    },
+  ]);
+
+  const postButtonTextStyle = StyleSheet.flatten([
+    styles(colors).postButtonText,
+    {
+      color: canPost ? colors.background : colors.textSecondary,
+    },
+  ]);
 
   return (
     <View style={styles(colors).container}>
@@ -181,23 +196,11 @@ export default function CreatePost({ onCreatePost }: CreatePostProps) {
         <Text style={styles(colors).characterCount}>{text.length}/280</Text>
 
         <TouchableOpacity
-          style={[
-            styles(colors).postButton,
-            canPost
-              ? styles(colors).postButtonActive
-              : styles(colors).postButtonDisabled,
-          ]}
+          style={postButtonStyle}
           onPress={handlePost}
           disabled={!canPost}
         >
-          <Text
-            style={[
-              styles(colors).postButtonText,
-              canPost
-                ? styles(colors).postButtonTextActive
-                : styles(colors).postButtonTextDisabled,
-            ]}
-          >
+          <Text style={postButtonTextStyle}>
             {isPosting ? "Posting..." : "Post"}
           </Text>
         </TouchableOpacity>
@@ -216,7 +219,6 @@ const styles = (colors: any) =>
       padding: 12,
       borderWidth: 1,
       borderColor: colors.border,
-      overflow: "hidden",
     },
     inputContainer: {
       flexDirection: "row",
@@ -279,22 +281,8 @@ const styles = (colors: any) =>
       borderRadius: 20,
       borderWidth: 1,
     },
-    postButtonActive: {
-      backgroundColor: colors.primary,
-      borderColor: colors.primary,
-    },
-    postButtonDisabled: {
-      backgroundColor: "transparent",
-      borderColor: colors.border,
-    },
     postButtonText: {
       fontSize: 14,
       fontWeight: "600",
-    },
-    postButtonTextActive: {
-      color: colors.background,
-    },
-    postButtonTextDisabled: {
-      color: colors.textSecondary,
     },
   });
