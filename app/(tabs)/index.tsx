@@ -4,10 +4,9 @@ import PostList from "@/components/PostList";
 import { useThemeColors } from "@/constants/Colors";
 import { mockPosts } from "@/data/mockData";
 import { Post, PostContent } from "@/types/post";
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
@@ -67,10 +66,10 @@ export default function HomeScreen() {
     const newPost: Post = {
       id: `post_${Date.now()}`,
       user: {
-        id: 'current_user',
-        username: 'you',
-        displayName: 'You',
-        avatar: 'https://i.pravatar.cc/150?img=100',
+        id: "current_user",
+        username: "you",
+        displayName: "You",
+        avatar: "https://i.pravatar.cc/150?img=100",
       },
       content,
       engagement: {
@@ -81,26 +80,12 @@ export default function HomeScreen() {
       },
       timestamp: new Date(),
     };
-    
-    setPosts(prevPosts => [newPost, ...prevPosts]);
+
+    setPosts((prevPosts) => [newPost, ...prevPosts]);
   }, []);
 
   return (
     <SafeAreaView style={styles(colors).container}>
-      <View style={styles(colors).header}>
-        <Logo width={50} height={50} />
-        <TouchableOpacity
-          onPress={() => router.push("/chats" as any)}
-          style={styles(colors).chatButton}
-        >
-          <Ionicons
-            name="chatbubble-outline"
-            size={24}
-            color={colors.primary}
-          />
-        </TouchableOpacity>
-      </View>
-      
       <PostList
         posts={posts}
         refreshing={refreshing}
@@ -110,9 +95,7 @@ export default function HomeScreen() {
         onRepost={handleRepost}
         onComment={handleComment}
         onShare={handleShare}
-        ListHeaderComponent={
-          <CreatePost onCreatePost={handleCreatePost} />
-        }
+        ListHeaderComponent={<CreatePost onCreatePost={handleCreatePost} />}
       />
     </SafeAreaView>
   );

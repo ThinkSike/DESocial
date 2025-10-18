@@ -1,13 +1,8 @@
 import Post from "@/components/Post";
 import { useThemeColors } from "@/constants/Colors";
 import { Post as PostType } from "@/types/post";
-import React, { ComponentType, useCallback } from "react";
-import {
-  FlatList,
-  ListRenderItem,
-  RefreshControl,
-  StyleSheet,
-} from "react-native";
+import React from "react";
+import { FlatList, RefreshControl, StyleSheet } from "react-native";
 
 interface PostListProps {
   posts: PostType[];
@@ -19,11 +14,7 @@ interface PostListProps {
   onRepost?: (postId: string) => void;
   onComment?: (postId: string) => void;
   onShare?: (postId: string) => void;
-  ListHeaderComponent?:
-    | ComponentType<any>
-    | React.ReactElement<any>
-    | null
-    | undefined;
+  ListHeaderComponent?: React.ReactNode;
 }
 
 export default function PostList({
@@ -40,61 +31,35 @@ export default function PostList({
 }: PostListProps) {
   const colors = useThemeColors();
 
-  const renderPost: ListRenderItem<PostType> = useCallback(
-    ({ item }) => (
-      <Post
-        post={item}
-        onUserPress={onUserPress}
-        onLike={onLike}
-        onRepost={onRepost}
-        onComment={onComment}
-        onShare={onShare}
-      />
-    ),
-    [onUserPress, onLike, onRepost, onComment, onShare]
-  );
-
-  const keyExtractor = useCallback((item: PostType) => item.id, []);
-
-  const handleEndReached = useCallback(() => {
-    if (onLoadMore) {
-      onLoadMore();
-    }
-  }, [onLoadMore]);
-
   return (
     <FlatList
       data={posts}
-      renderItem={renderPost}
-      keyExtractor={keyExtractor}
+      renderItem={({ item }) => (
+        <Post
+          post={item}
+          onUserPress={onUserPress}
+          onLike={onLike}
+          onRepost={onRepost}
+          onComment={onComment}
+          onShare={onShare}
+        />
+      )}
+      keyExtractor={(item) => item.id}
       style={[styles.container, { backgroundColor: colors.background }]}
       showsVerticalScrollIndicator={false}
-      ListHeaderComponent={ListHeaderComponent}
+      ListHeaderComponent={ListHeaderComponent as React.ReactElement<any> | undefined}
       refreshControl={
-        onRefresh ? (
+        onRefresh && (
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor={colors.primary}
             colors={[colors.primary]}
           />
-        ) : undefined
+        )
       }
-      onEndReached={handleEndReached}
+      onEndReached={onLoadMore}
       onEndReachedThreshold={0.1}
-      removeClippedSubviews={true}
-      maxToRenderPerBatch={10}
-      windowSize={10}
-      initialNumToRender={5}
-      getItemLayout={
-        ListHeaderComponent
-          ? undefined
-          : (data, index) => ({
-              length: 200, // Approximate item height
-              offset: 200 * index,
-              index,
-            })
-      }
     />
   );
 }

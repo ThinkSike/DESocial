@@ -9,7 +9,6 @@ export default function ChatsLayout() {
           headerShown: false,
         }}
       />
-      <Stack.Screen name="[username]" options={{ headerShown: false }} />
     </Stack>
   );
 }
