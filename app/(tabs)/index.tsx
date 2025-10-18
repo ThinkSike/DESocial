@@ -1,12 +1,11 @@
 import CreatePost from "@/components/CreatePost";
-import Logo from "@/components/Logo";
 import PostList from "@/components/PostList";
 import { useThemeColors } from "@/constants/Colors";
 import { mockPosts } from "@/data/mockData";
 import { Post, PostContent } from "@/types/post";
 import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { Alert, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
