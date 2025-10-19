@@ -10,34 +10,28 @@ import { useAuthStore } from "@/store/auth";
 
 export default function RootLayout() {
   const { user, initializing, bootstrap } = useAuthStore();
-
   useEffect(() => bootstrap(), [bootstrap]);
 
-  if (initializing) {
-    return (
-      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-        <StatusBar style="auto" />
+  return (
+    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+      <StatusBar style="auto" />
+      {initializing ? (
         <View
           style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
         >
           <ActivityIndicator />
         </View>
-      </SafeAreaProvider>
-    );
-  }
-
-  return (
-    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-      <StatusBar style="auto" />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Protected guard={!user}>
-          <Stack.Screen name="(auth)" />
-        </Stack.Protected>
-        <Stack.Protected guard={!!user}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="settings" />
-        </Stack.Protected>
-      </Stack>
+      ) : (
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Protected guard={!user}>
+            <Stack.Screen name="(auth)" />
+          </Stack.Protected>
+          <Stack.Protected guard={!!user}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="settings" />
+          </Stack.Protected>
+        </Stack>
+      )}
     </SafeAreaProvider>
   );
 }
