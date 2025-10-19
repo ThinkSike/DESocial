@@ -7,15 +7,31 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useThemeColors } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
+import { useAuthStore } from "@/store/auth";
 
 export default function LoginScreen() {
   const colors = useThemeColors();
+  const { signIn, error, clearError } = useAuthStore();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const handleLogin = async () => {
+    if (!email || !password || busy) return;
+    clearError();
+    setBusy(true);
+    try {
+      await signIn(email, password);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -34,6 +50,8 @@ export default function LoginScreen() {
           ]}
           placeholder="Email"
           placeholderTextColor={colors.textSecondary}
+          autoCapitalize="none"
+          keyboardType="email-address"
           value={email}
           onChangeText={setEmail}
         />
@@ -58,14 +76,37 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </Link>
 
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: colors.primary }]}
-          onPress={() => console.log("Login pressed")}
-        >
-          <Ionicons name="log-in-outline" size={20} color={colors.surface} />
-          <Text style={[styles.buttonText, { color: colors.surface }]}>
-            Login
+        {error ? (
+          <Text style={{ color: "#ef4444", alignSelf: "flex-start" }}>
+            {String(error)}
           </Text>
+        ) : null}
+
+        <TouchableOpacity
+          style={[
+            styles.button,
+            {
+              backgroundColor: colors.primary,
+              opacity: busy || !email || !password ? 0.6 : 1,
+            },
+          ]}
+          onPress={handleLogin}
+          disabled={busy || !email || !password}
+        >
+          {busy ? (
+            <ActivityIndicator color={colors.surface} />
+          ) : (
+            <>
+              <Ionicons
+                name="log-in-outline"
+                size={20}
+                color={colors.surface}
+              />
+              <Text style={[styles.buttonText, { color: colors.surface }]}>
+                Login
+              </Text>
+            </>
+          )}
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>

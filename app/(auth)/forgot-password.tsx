@@ -9,10 +9,14 @@ import {
 import { useThemeColors } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "@/config/firebase";
 
 export default function ForgotPasswordScreen() {
   const colors = useThemeColors();
   const [email, setEmail] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
+  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -34,9 +38,34 @@ export default function ForgotPasswordScreen() {
         onChangeText={setEmail}
       />
 
+      {message ? (
+        <Text
+          style={{
+            alignSelf: "flex-start",
+            color: status === "error" ? "#ef4444" : colors.accent,
+            marginBottom: 8,
+          }}
+        >
+          {message}
+        </Text>
+      ) : null}
       <TouchableOpacity
         style={[styles.button, { backgroundColor: colors.primary }]}
-        onPress={() => console.log("Reset link sent")}
+        onPress={async () => {
+          if (!email) {
+            setStatus("error");
+            setMessage("Please enter your email.");
+            return;
+          }
+          try {
+            await sendPasswordResetEmail(auth, email.trim());
+            setStatus("success");
+            setMessage("Reset email sent. Check your inbox.");
+          } catch (e: any) {
+            setStatus("error");
+            setMessage(e?.message ?? "Failed to send reset email");
+          }
+        }}
       >
         <Ionicons name="mail-outline" size={20} color={colors.surface} />
         <Text style={[styles.buttonText, { color: colors.surface }]}>
