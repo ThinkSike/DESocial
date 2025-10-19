@@ -3,9 +3,16 @@ import { StyleSheet, Text, Button, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthStore } from "@/store/auth";
 
+const UserInfo = ({ email, colors }) =>
+  email ? (
+    <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>
+      Signed in as {email}
+    </Text>
+  ) : null;
+
 export default function SettingsScreen() {
-  const colors = useThemeColors();
   const { signOut, user } = useAuthStore();
+  const colors = useThemeColors();
 
   return (
     <SafeAreaView
@@ -14,13 +21,7 @@ export default function SettingsScreen() {
       <Text style={[styles.title, { color: colors.textPrimary }]}>
         Settings
       </Text>
-
-      {user?.email ? (
-        <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>
-          Signed in as {user.email}
-        </Text>
-      ) : null}
-
+      <UserInfo email={user?.email} colors={colors} />
       <View style={styles.buttonContainer}>
         <Button title="Logout" color="#ef4444" onPress={signOut} />
       </View>
@@ -29,16 +30,7 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "600",
-    marginBottom: 8,
-  },
-  buttonContainer: {
-    marginTop: 24,
-  },
+  container: { flex: 1, padding: 16 },
+  title: { fontSize: 24, fontWeight: "600", marginBottom: 8 },
+  buttonContainer: { marginTop: 24 },
 });
