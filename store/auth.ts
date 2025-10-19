@@ -1,12 +1,11 @@
-import { create } from "zustand";
 import { auth } from "@/config/firebase";
 import {
+  signOut as firebaseSignOut,
   onAuthStateChanged,
   signInWithEmailAndPassword,
-  signOut as firebaseSignOut,
   type User,
-  type Unsubscribe,
 } from "firebase/auth";
+import { create } from "zustand";
 
 type AuthState = {
   user: User | null;
@@ -22,7 +21,6 @@ type AuthActions = {
 };
 
 let listenerAttached = false;
-let unsubscribeAuth: Unsubscribe | null = null;
 
 export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   user: null,
@@ -33,7 +31,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     if (listenerAttached) return;
     listenerAttached = true;
 
-    unsubscribeAuth = onAuthStateChanged(auth, (u) => {
+    onAuthStateChanged(auth, (u) => {
       set({ user: u, initializing: false, error: null });
     });
   },
