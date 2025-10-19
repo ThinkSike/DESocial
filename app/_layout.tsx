@@ -35,6 +35,7 @@ export default function RootLayout() {
         </Stack.Protected>
         <Stack.Protected guard={!!user}>
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="settings" />
         </Stack.Protected>
       </Stack>
     </SafeAreaProvider>
