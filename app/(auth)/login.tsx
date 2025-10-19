@@ -42,7 +42,6 @@ export default function LoginScreen() {
         <Text style={[styles.title, { color: colors.primary }]}>
           Lets get going!
         </Text>
-
         <TextInput
           style={[
             styles.input,
@@ -55,7 +54,6 @@ export default function LoginScreen() {
           value={email}
           onChangeText={setEmail}
         />
-
         <TextInput
           style={[
             styles.input,
@@ -67,7 +65,6 @@ export default function LoginScreen() {
           value={password}
           onChangeText={setPassword}
         />
-
         <Link href="/(auth)/forgot-password" asChild>
           <TouchableOpacity>
             <Text style={[styles.forgotText, { color: colors.accent }]}>
@@ -75,13 +72,11 @@ export default function LoginScreen() {
             </Text>
           </TouchableOpacity>
         </Link>
-
-        {error ? (
+        {error && (
           <Text style={{ color: "#ef4444", alignSelf: "flex-start" }}>
             {String(error)}
           </Text>
-        ) : null}
-
+        )}
         <TouchableOpacity
           style={[
             styles.button,
