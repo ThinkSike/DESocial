@@ -12,7 +12,6 @@ type AuthState = {
   initializing: boolean;
   error: string | null;
 };
-
 type AuthActions = {
   bootstrap: () => void;
   signIn: (email: string, password: string) => Promise<void>;
@@ -26,30 +25,24 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   user: null,
   initializing: true,
   error: null,
-
   bootstrap: () => {
     if (listenerAttached) return;
     listenerAttached = true;
-
-    onAuthStateChanged(auth, (u) => {
-      set({ user: u, initializing: false, error: null });
-    });
+    onAuthStateChanged(auth, (u) =>
+      set({ user: u, initializing: false, error: null }),
+    );
   },
-
   signIn: async (email, password) => {
     set({ error: null });
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
     } catch (e: any) {
-      const message = e?.message ?? "Sign-in failed";
-      set({ error: message });
+      set({ error: e?.message ?? "Sign-in failed" });
       throw e;
     }
   },
-
   signOut: async () => {
     await firebaseSignOut(auth);
   },
-
   clearError: () => set({ error: null }),
 }));
