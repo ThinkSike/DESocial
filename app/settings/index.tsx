@@ -3,13 +3,6 @@ import { StyleSheet, Text, Button, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthStore } from "@/store/auth";
 
-const UserInfo = ({ email, colors }) =>
-  email ? (
-    <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>
-      Signed in as {email}
-    </Text>
-  ) : null;
-
 export default function SettingsScreen() {
   const { signOut, user } = useAuthStore();
   const colors = useThemeColors();
@@ -21,7 +14,11 @@ export default function SettingsScreen() {
       <Text style={[styles.title, { color: colors.textPrimary }]}>
         Settings
       </Text>
-      <UserInfo email={user?.email} colors={colors} />
+      {user?.email && (
+        <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>
+          Signed in as {user.email}
+        </Text>
+      )}
       <View style={styles.buttonContainer}>
         <Button title="Logout" color="#ef4444" onPress={signOut} />
       </View>
