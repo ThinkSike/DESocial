@@ -55,12 +55,3 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
   clearError: () => set({ error: null }),
 }));
-
-// Optional: call this to detach the listener if you ever need to tear down manually.
-export function detachAuthListener() {
-  if (unsubscribeAuth) {
-    unsubscribeAuth();
-    unsubscribeAuth = null;
-    listenerAttached = false;
-  }
-}

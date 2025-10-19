@@ -31,7 +31,7 @@ export interface Post {
 }
 
 export enum PostType {
-  TEXT = 'text',
-  IMAGE = 'image',
-  MIXED = 'mixed'
+  TEXT = "text",
+  IMAGE = "image",
+  MIXED = "mixed",
 }

@@ -1,5 +1,5 @@
 // Profile-specific types extending the base User type
-import { User } from './post';
+import { User } from "./post";
 
 export interface UserProfile extends User {
   prn: string; // Primary Registration Number - unique college identifier
@@ -30,7 +30,7 @@ export interface FollowRelation {
 }
 
 // For Firebase integration
-export interface UserProfileFirestore extends Omit<UserProfile, 'joinedDate'> {
+export interface UserProfileFirestore extends Omit<UserProfile, "joinedDate"> {
   joinedDate: any; // Firebase Timestamp
 }
 
