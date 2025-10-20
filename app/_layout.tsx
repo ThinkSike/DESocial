@@ -4,13 +4,11 @@ import {
   SafeAreaProvider,
   initialWindowMetrics,
 } from "react-native-safe-area-context";
-import { useEffect } from "react";
 import { View, ActivityIndicator } from "react-native";
 import { useAuthStore } from "@/store/auth";
 
 export default function RootLayout() {
-  const { user, initializing, bootstrap } = useAuthStore();
-  useEffect(() => bootstrap(), [bootstrap]);
+  const { user, initializing } = useAuthStore();
 
   return (
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
