@@ -47,7 +47,9 @@ export default function PostList({
       keyExtractor={(item) => item.id}
       style={[styles.container, { backgroundColor: colors.background }]}
       showsVerticalScrollIndicator={false}
-      ListHeaderComponent={ListHeaderComponent as React.ReactElement<any> | undefined}
+      ListHeaderComponent={
+        ListHeaderComponent as React.ReactElement<any> | undefined
+      }
       refreshControl={
         onRefresh && (
           <RefreshControl

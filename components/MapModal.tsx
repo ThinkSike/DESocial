@@ -1,18 +1,18 @@
-import { useThemeColors } from '@/constants/Colors';
-import { CampusLocation } from '@/data/campusLocations';
-import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import { useThemeColors } from "@/constants/Colors";
+import { CampusLocation } from "@/data/campusLocations";
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
 import {
-    Dimensions,
-    Modal,
-    Platform,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
-} from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import { SafeAreaView } from 'react-native-safe-area-context';
+  Dimensions,
+  Modal,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface MapModalProps {
   visible: boolean;
@@ -21,43 +21,48 @@ interface MapModalProps {
   eventTitle?: string;
 }
 
-export default function MapModal({ visible, onClose, location, eventTitle }: MapModalProps) {
+export default function MapModal({
+  visible,
+  onClose,
+  location,
+  eventTitle,
+}: MapModalProps) {
   const colors = useThemeColors();
-  const { width, height } = Dimensions.get('window');
+  const { width, height } = Dimensions.get("window");
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
-      case 'academic':
-        return 'school';
-      case 'sports':
-        return 'fitness';
-      case 'event':
-        return 'calendar';
-      case 'dining':
-        return 'restaurant';
-      case 'library':
-        return 'library';
-      case 'admin':
-        return 'business';
+      case "academic":
+        return "school";
+      case "sports":
+        return "fitness";
+      case "event":
+        return "calendar";
+      case "dining":
+        return "restaurant";
+      case "library":
+        return "library";
+      case "admin":
+        return "business";
       default:
-        return 'location';
+        return "location";
     }
   };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'academic':
-        return '#3B82F6'; // Blue
-      case 'sports':
-        return '#10B981'; // Green
-      case 'event':
-        return '#F59E0B'; // Orange
-      case 'dining':
-        return '#EF4444'; // Red
-      case 'library':
-        return '#8B5CF6'; // Purple
-      case 'admin':
-        return '#6B7280'; // Gray
+      case "academic":
+        return "#3B82F6"; // Blue
+      case "sports":
+        return "#10B981"; // Green
+      case "event":
+        return "#F59E0B"; // Orange
+      case "dining":
+        return "#EF4444"; // Red
+      case "library":
+        return "#8B5CF6"; // Purple
+      case "admin":
+        return "#6B7280"; // Gray
       default:
         return colors.primary;
     }
@@ -77,17 +82,29 @@ export default function MapModal({ visible, onClose, location, eventTitle }: Map
       presentationStyle="fullScreen"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.background }]}
+      >
         {/* Header */}
-        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+        <View
+          style={[
+            styles.header,
+            {
+              backgroundColor: colors.cardBackground,
+              borderBottomColor: colors.border,
+            },
+          ]}
+        >
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Ionicons name="close" size={24} color={colors.text} />
           </TouchableOpacity>
           <View style={styles.headerContent}>
             <Text style={[styles.headerTitle, { color: colors.text }]}>
-              {eventTitle || 'Event Location'}
+              {eventTitle || "Event Location"}
             </Text>
-            <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
+            <Text
+              style={[styles.headerSubtitle, { color: colors.textSecondary }]}
+            >
               {location.name}
             </Text>
           </View>
@@ -100,7 +117,7 @@ export default function MapModal({ visible, onClose, location, eventTitle }: Map
         <View style={styles.mapContainer}>
           <MapView
             style={styles.map}
-            provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+            provider={Platform.OS === "android" ? PROVIDER_GOOGLE : undefined}
             region={mapRegion}
             showsUserLocation={true}
             showsMyLocationButton={true}
@@ -113,11 +130,16 @@ export default function MapModal({ visible, onClose, location, eventTitle }: Map
               description={location.description}
               pinColor={getCategoryColor(location.category)}
             >
-              <View style={[styles.markerContainer, { backgroundColor: getCategoryColor(location.category) }]}>
-                <Ionicons 
-                  name={getCategoryIcon(location.category) as any} 
-                  size={20} 
-                  color="white" 
+              <View
+                style={[
+                  styles.markerContainer,
+                  { backgroundColor: getCategoryColor(location.category) },
+                ]}
+              >
+                <Ionicons
+                  name={getCategoryIcon(location.category) as any}
+                  size={20}
+                  color="white"
                 />
               </View>
             </Marker>
@@ -125,29 +147,55 @@ export default function MapModal({ visible, onClose, location, eventTitle }: Map
         </View>
 
         {/* Location Info Card */}
-        <View style={[styles.infoCard, { backgroundColor: colors.cardBackground }]}>
+        <View
+          style={[styles.infoCard, { backgroundColor: colors.cardBackground }]}
+        >
           <View style={styles.infoHeader}>
-            <View style={[styles.categoryBadge, { backgroundColor: getCategoryColor(location.category) + '20' }]}>
-              <Ionicons 
-                name={getCategoryIcon(location.category) as any} 
-                size={16} 
-                color={getCategoryColor(location.category)} 
+            <View
+              style={[
+                styles.categoryBadge,
+                { backgroundColor: getCategoryColor(location.category) + "20" },
+              ]}
+            >
+              <Ionicons
+                name={getCategoryIcon(location.category) as any}
+                size={16}
+                color={getCategoryColor(location.category)}
               />
-              <Text style={[styles.categoryText, { color: getCategoryColor(location.category) }]}>
-                {location.category.charAt(0).toUpperCase() + location.category.slice(1)}
+              <Text
+                style={[
+                  styles.categoryText,
+                  { color: getCategoryColor(location.category) },
+                ]}
+              >
+                {location.category.charAt(0).toUpperCase() +
+                  location.category.slice(1)}
               </Text>
             </View>
           </View>
 
-          <Text style={[styles.locationName, { color: colors.text }]}>{location.name}</Text>
-          <Text style={[styles.locationDescription, { color: colors.textSecondary }]}>
+          <Text style={[styles.locationName, { color: colors.text }]}>
+            {location.name}
+          </Text>
+          <Text
+            style={[
+              styles.locationDescription,
+              { color: colors.textSecondary },
+            ]}
+          >
             {location.description}
           </Text>
 
           <View style={styles.locationDetails}>
             <View style={styles.detailRow}>
-              <Ionicons name="business" size={16} color={colors.textSecondary} />
-              <Text style={[styles.detailText, { color: colors.textSecondary }]}>
+              <Ionicons
+                name="business"
+                size={16}
+                color={colors.textSecondary}
+              />
+              <Text
+                style={[styles.detailText, { color: colors.textSecondary }]}
+              >
                 {location.building}
                 {location.room && ` - ${location.room}`}
               </Text>
@@ -155,8 +203,14 @@ export default function MapModal({ visible, onClose, location, eventTitle }: Map
 
             {location.capacity && (
               <View style={styles.detailRow}>
-                <Ionicons name="people" size={16} color={colors.textSecondary} />
-                <Text style={[styles.detailText, { color: colors.textSecondary }]}>
+                <Ionicons
+                  name="people"
+                  size={16}
+                  color={colors.textSecondary}
+                />
+                <Text
+                  style={[styles.detailText, { color: colors.textSecondary }]}
+                >
                   Capacity: {location.capacity} people
                 </Text>
               </View>
@@ -164,9 +218,15 @@ export default function MapModal({ visible, onClose, location, eventTitle }: Map
 
             {location.facilities && location.facilities.length > 0 && (
               <View style={styles.detailRow}>
-                <Ionicons name="checkmark-circle" size={16} color={colors.textSecondary} />
-                <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-                  {location.facilities.join(', ')}
+                <Ionicons
+                  name="checkmark-circle"
+                  size={16}
+                  color={colors.textSecondary}
+                />
+                <Text
+                  style={[styles.detailText, { color: colors.textSecondary }]}
+                >
+                  {location.facilities.join(", ")}
                 </Text>
               </View>
             )}
@@ -174,7 +234,7 @@ export default function MapModal({ visible, onClose, location, eventTitle }: Map
 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.actionButton, { backgroundColor: colors.primary }]}
               onPress={() => {
                 // Open in external maps app
@@ -183,22 +243,30 @@ export default function MapModal({ visible, onClose, location, eventTitle }: Map
                   android: `geo:${location.coordinates.latitude},${location.coordinates.longitude}`,
                 });
                 // In a real app, you'd use Linking.openURL(url)
-                console.log('Open external maps:', url);
+                console.log("Open external maps:", url);
               }}
             >
               <Ionicons name="map" size={18} color="white" />
               <Text style={styles.actionButtonText}>Open in Maps</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={[styles.actionButton, styles.secondaryButton, { borderColor: colors.border }]}
+            <TouchableOpacity
+              style={[
+                styles.actionButton,
+                styles.secondaryButton,
+                { borderColor: colors.border },
+              ]}
               onPress={() => {
                 // Share location
-                console.log('Share location:', location.name);
+                console.log("Share location:", location.name);
               }}
             >
               <Ionicons name="share" size={18} color={colors.primary} />
-              <Text style={[styles.actionButtonText, { color: colors.primary }]}>Share Location</Text>
+              <Text
+                style={[styles.actionButtonText, { color: colors.primary }]}
+              >
+                Share Location
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -212,8 +280,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
@@ -227,7 +295,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   headerSubtitle: {
     fontSize: 14,
@@ -246,9 +314,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -258,7 +326,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -268,9 +336,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   categoryBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -278,11 +346,11 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   locationName: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 8,
   },
   locationDescription: {
@@ -295,8 +363,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
   },
   detailText: {
@@ -304,26 +372,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   actionButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
   },
   actionButton: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
     gap: 8,
   },
   secondaryButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     borderWidth: 1,
   },
   actionButtonText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: 'white',
+    fontWeight: "600",
+    color: "white",
   },
 });

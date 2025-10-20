@@ -34,12 +34,20 @@ interface NewsSidebarProps {
 // Function to generate headlines from community posts
 const generateCommunityHeadlines = (): NewsItem[] => {
   const joinedCommunities = getJoinedCommunities();
-  const joinedCommunityIds = joinedCommunities.map(c => c.id);
-  
+  const joinedCommunityIds = joinedCommunities.map((c) => c.id);
+
   // Filter posts from joined communities and sort by engagement
   const joinedCommunityPosts = mockCommunityPosts
-    .filter(post => post.community && joinedCommunityIds.includes(post.community.id))
-    .sort((a, b) => b.engagement.likes + b.engagement.comments - (a.engagement.likes + a.engagement.comments));
+    .filter(
+      (post) =>
+        post.community && joinedCommunityIds.includes(post.community.id),
+    )
+    .sort(
+      (a, b) =>
+        b.engagement.likes +
+        b.engagement.comments -
+        (a.engagement.likes + a.engagement.comments),
+    );
 
   const headlines: NewsItem[] = [
     {
@@ -50,7 +58,7 @@ const generateCommunityHeadlines = (): NewsItem[] => {
       community: "Computer Science Club",
     },
     {
-      id: "h2", 
+      id: "h2",
       title: "Basketball Team Prepares for Championship Match",
       timeAgo: "4h ago",
       readers: "45 likes",
@@ -59,7 +67,7 @@ const generateCommunityHeadlines = (): NewsItem[] => {
     {
       id: "h3",
       title: "Music Society Announces Acoustic Night Event",
-      timeAgo: "6h ago", 
+      timeAgo: "6h ago",
       readers: "67 likes",
       community: "Music Society",
     },
@@ -67,7 +75,7 @@ const generateCommunityHeadlines = (): NewsItem[] => {
       id: "h4",
       title: "AI Ethics Debate Draws Large Campus Crowd",
       timeAgo: "8h ago",
-      readers: "32 likes", 
+      readers: "32 likes",
       community: "Debate Society",
     },
     {
@@ -90,14 +98,14 @@ const defaultPuzzles: PuzzleItem[] = [
     connections: "CS Club challenge",
   },
   {
-    id: "2", 
+    id: "2",
     name: "Photo Contest #196",
     icon: "camera",
     connections: "20 submissions received",
   },
   {
     id: "3",
-    name: "Music Quiz #357", 
+    name: "Music Quiz #357",
     icon: "musical-notes",
     connections: "5 participants joined",
   },
@@ -139,11 +147,7 @@ export default function NewsSidebar({
   const renderPuzzleItem = (item: PuzzleItem) => (
     <TouchableOpacity key={item.id} style={styles(colors).puzzleItem}>
       <View style={styles(colors).puzzleIconContainer}>
-        <Ionicons
-          name={item.icon as any}
-          size={20}
-          color={colors.primary}
-        />
+        <Ionicons name={item.icon as any} size={20} color={colors.primary} />
       </View>
       <View style={styles(colors).puzzleContent}>
         <Text style={styles(colors).puzzleName}>{item.name}</Text>
@@ -159,19 +163,32 @@ export default function NewsSidebar({
       <View style={styles(colors).section}>
         <View style={styles(colors).sectionHeader}>
           <Text style={styles(colors).sectionTitle}>Community Highlights</Text>
-          <Ionicons name="information-circle" size={16} color={colors.textSecondary} />
-        </View>
-        
-        <View style={styles(colors).subSectionHeader}>
-          <Text style={styles(colors).subSectionTitle}>Trending from your communities</Text>
+          <Ionicons
+            name="information-circle"
+            size={16}
+            color={colors.textSecondary}
+          />
         </View>
 
-        <ScrollView style={styles(colors).newsContainer} showsVerticalScrollIndicator={false}>
+        <View style={styles(colors).subSectionHeader}>
+          <Text style={styles(colors).subSectionTitle}>
+            Trending from your communities
+          </Text>
+        </View>
+
+        <ScrollView
+          style={styles(colors).newsContainer}
+          showsVerticalScrollIndicator={false}
+        >
           {news.map(renderNewsItem)}
-          
+
           <TouchableOpacity style={styles(colors).showMoreButton}>
             <Text style={styles(colors).showMoreText}>Show more</Text>
-            <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
+            <Ionicons
+              name="chevron-down"
+              size={16}
+              color={colors.textSecondary}
+            />
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -182,12 +199,19 @@ export default function NewsSidebar({
           <Text style={styles(colors).sectionTitle}>Community Activities</Text>
         </View>
 
-        <ScrollView style={styles(colors).puzzlesContainer} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={styles(colors).puzzlesContainer}
+          showsVerticalScrollIndicator={false}
+        >
           {puzzles.map(renderPuzzleItem)}
-          
+
           <TouchableOpacity style={styles(colors).showMoreButton}>
             <Text style={styles(colors).showMoreText}>Show more</Text>
-            <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
+            <Ionicons
+              name="chevron-down"
+              size={16}
+              color={colors.textSecondary}
+            />
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -195,26 +219,38 @@ export default function NewsSidebar({
       {/* Footer Links */}
       <View style={styles(colors).footerSection}>
         <View style={styles(colors).footerLinks}>
-          <TouchableOpacity><Text style={styles(colors).footerLink}>About</Text></TouchableOpacity>
-          <TouchableOpacity><Text style={styles(colors).footerLink}>Accessibility</Text></TouchableOpacity>
-          <TouchableOpacity><Text style={styles(colors).footerLink}>Help Center</Text></TouchableOpacity>
+          <TouchableOpacity>
+            <Text style={styles(colors).footerLink}>About</Text>
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <Text style={styles(colors).footerLink}>Accessibility</Text>
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <Text style={styles(colors).footerLink}>Help Center</Text>
+          </TouchableOpacity>
         </View>
         <View style={styles(colors).footerLinks}>
-          <TouchableOpacity><Text style={styles(colors).footerLink}>Privacy & Terms</Text></TouchableOpacity>
-          <TouchableOpacity><Text style={styles(colors).footerLink}>Ad Choices</Text></TouchableOpacity>
+          <TouchableOpacity>
+            <Text style={styles(colors).footerLink}>Privacy & Terms</Text>
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <Text style={styles(colors).footerLink}>Ad Choices</Text>
+          </TouchableOpacity>
         </View>
         {/* <View style={styles(colors).footerLinks}>
           <TouchableOpacity><Text style={styles(colors).footerLink}>Advertising</Text></TouchableOpacity>
           <TouchableOpacity><Text style={styles(colors).footerLink}>Business Services</Text></TouchableOpacity>
         </View> */}
         <View style={styles(colors).footerLinks}>
-          <TouchableOpacity><Text style={styles(colors).footerLink}>Get the DESocial app</Text></TouchableOpacity>
-          <TouchableOpacity><Text style={styles(colors).footerLink}>More</Text></TouchableOpacity>
+          <TouchableOpacity>
+            <Text style={styles(colors).footerLink}>Get the DESocial app</Text>
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <Text style={styles(colors).footerLink}>More</Text>
+          </TouchableOpacity>
         </View>
-        
-        <Text style={styles(colors).footerCopyright}>
-          DESocial © 2025
-        </Text>
+
+        <Text style={styles(colors).footerCopyright}>DESocial © 2025</Text>
       </View>
     </View>
   );

@@ -68,7 +68,7 @@ export default function ProfileFeed({
   };
 
   return (
-    <ScrollView 
+    <ScrollView
       style={styles(colors).container}
       contentContainerStyle={styles(colors).contentContainer}
       showsVerticalScrollIndicator={false}

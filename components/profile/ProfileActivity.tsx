@@ -2,7 +2,13 @@ import { useThemeColors } from "@/constants/Colors";
 import { Post as PostType } from "@/types/post";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 interface ProfileActivityProps {
   posts: PostType[];
@@ -38,9 +44,11 @@ export default function ProfileActivity({
         return posts;
       case "comments":
         // Filter posts that are replies/comments
-        return posts.filter(post => post.content.text?.includes("@"));
+        return posts.filter((post) => post.content.text?.includes("@"));
       case "images":
-        return posts.filter(post => post.content.images && post.content.images.length > 0);
+        return posts.filter(
+          (post) => post.content.images && post.content.images.length > 0,
+        );
       case "documents":
         // In a real app, you'd filter for document attachments
         return posts.slice(0, 2);
@@ -113,15 +121,18 @@ export default function ProfileActivity({
 
       {isOwnProfile && (
         <View style={styles(colors).createPostSection}>
-          <TouchableOpacity style={styles(colors).createPostButton} onPress={onCreatePost}>
+          <TouchableOpacity
+            style={styles(colors).createPostButton}
+            onPress={onCreatePost}
+          >
             <Text style={styles(colors).createPostText}>Create a post</Text>
           </TouchableOpacity>
         </View>
       )}
 
       <View style={styles(colors).tabsContainer}>
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles(colors).tabsScrollContent}
         >
@@ -155,26 +166,30 @@ export default function ProfileActivity({
                 </View>
               </View>
             ))}
-            
+
             <TouchableOpacity style={styles(colors).showAllButton}>
               <Text style={styles(colors).showAllText}>
                 Show all {activeTab} ({filteredPosts.length})
               </Text>
-              <Ionicons name="arrow-forward" size={16} color={colors.textSecondary} />
+              <Ionicons
+                name="arrow-forward"
+                size={16}
+                color={colors.textSecondary}
+              />
             </TouchableOpacity>
           </View>
         ) : (
           <View style={styles(colors).emptyState}>
-            <Ionicons 
-              name={getTabIcon(activeTab) as any} 
-              size={48} 
-              color={colors.textSecondary} 
+            <Ionicons
+              name={getTabIcon(activeTab) as any}
+              size={48}
+              color={colors.textSecondary}
             />
             <Text style={styles(colors).emptyStateText}>
               No {activeTab} yet
             </Text>
             {isOwnProfile && activeTab === "posts" && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles(colors).emptyStateButton}
                 onPress={onCreatePost}
               >

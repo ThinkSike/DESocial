@@ -34,9 +34,7 @@ export default function ProfileAnalytics({
           <Ionicons name="analytics" size={20} color={colors.text} />
           <Text style={styles(colors).title}>Analytics</Text>
         </View>
-        <Text style={styles(colors).subtitle}>
-          Private to you
-        </Text>
+        <Text style={styles(colors).subtitle}>Private to you</Text>
       </View>
 
       <View style={styles(colors).metricsContainer}>
@@ -55,7 +53,11 @@ export default function ProfileAnalytics({
 
         <View style={styles(colors).metric}>
           <View style={styles(colors).metricHeader}>
-            <Ionicons name="trending-up" size={16} color={colors.textSecondary} />
+            <Ionicons
+              name="trending-up"
+              size={16}
+              color={colors.textSecondary}
+            />
             <Text style={styles(colors).metricValue}>
               {formatNumber(analytics.postImpressions)}
             </Text>
@@ -80,7 +82,10 @@ export default function ProfileAnalytics({
         </View>
       </View>
 
-      <TouchableOpacity style={styles(colors).viewAllButton} onPress={onViewAll}>
+      <TouchableOpacity
+        style={styles(colors).viewAllButton}
+        onPress={onViewAll}
+      >
         <Text style={styles(colors).viewAllText}>Show all analytics</Text>
         <Ionicons name="arrow-forward" size={16} color={colors.textSecondary} />
       </TouchableOpacity>

@@ -110,7 +110,7 @@ export default function PostCreator({
               <Ionicons name="happy" size={16} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
-          
+
           <TouchableOpacity
             style={[
               styles(colors).postButton,

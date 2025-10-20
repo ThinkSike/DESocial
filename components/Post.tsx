@@ -1,8 +1,8 @@
-import { useThemeColors } from '@/constants/Colors';
-import { formatEngagementNumber, getTimeAgo } from '@/data/mockData';
-import { Post as PostType } from '@/types/post';
-import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import { useThemeColors } from "@/constants/Colors";
+import { formatEngagementNumber, getTimeAgo } from "@/data/mockData";
+import { Post as PostType } from "@/types/post";
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
 import {
   Dimensions,
   Image,
@@ -10,7 +10,7 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
+} from "react-native";
 
 interface PostProps {
   post: PostType;
@@ -21,7 +21,7 @@ interface PostProps {
   onShare?: (postId: string) => void;
 }
 
-const { width: screenWidth } = Dimensions.get('window');
+const { width: screenWidth } = Dimensions.get("window");
 const imageWidth = screenWidth - 80; // Account for margins and padding
 
 export default function Post({
@@ -156,7 +156,11 @@ export default function Post({
           style={styles.engagementButton}
           onPress={() => onRepost?.(post.id)}
         >
-          <Ionicons name="repeat-outline" size={18} color={colors.textSecondary} />
+          <Ionicons
+            name="repeat-outline"
+            size={18}
+            color={colors.textSecondary}
+          />
           <Text style={styles.engagementText}>
             {formatEngagementNumber(post.engagement.reposts)}
           </Text>
@@ -166,7 +170,11 @@ export default function Post({
           style={styles.engagementButton}
           onPress={() => onLike?.(post.id)}
         >
-          <Ionicons name="heart-outline" size={18} color={colors.textSecondary} />
+          <Ionicons
+            name="heart-outline"
+            size={18}
+            color={colors.textSecondary}
+          />
           <Text style={styles.engagementText}>
             {formatEngagementNumber(post.engagement.likes)}
           </Text>
@@ -209,13 +217,13 @@ const createStyles = (colors: any) =>
       elevation: 5,
     },
     header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
       marginBottom: 8,
     },
     userInfo: {
-      flexDirection: 'row',
+      flexDirection: "row",
       flex: 1,
     },
     avatar: {
@@ -228,12 +236,12 @@ const createStyles = (colors: any) =>
       flex: 1,
     },
     nameRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
     },
     displayName: {
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: "600",
       color: colors.textPrimary,
     },
     verifiedIcon: {
@@ -266,7 +274,7 @@ const createStyles = (colors: any) =>
       borderRadius: 12,
     },
     imageRow: {
-      flexDirection: 'row',
+      flexDirection: "row",
       gap: 4,
     },
     doubleImage: {
@@ -275,7 +283,7 @@ const createStyles = (colors: any) =>
       borderRadius: 8,
     },
     multiImageContainer: {
-      flexDirection: 'row',
+      flexDirection: "row",
       gap: 4,
       height: 200,
     },
@@ -290,33 +298,33 @@ const createStyles = (colors: any) =>
     sideImage: {
       flex: 1,
       borderRadius: 8,
-      position: 'relative',
+      position: "relative",
     },
     overlay: {
-      position: 'absolute',
+      position: "absolute",
       top: 0,
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      backgroundColor: "rgba(0, 0, 0, 0.6)",
       borderRadius: 8,
-      justifyContent: 'center',
-      alignItems: 'center',
+      justifyContent: "center",
+      alignItems: "center",
     },
     overlayText: {
-      color: 'white',
+      color: "white",
       fontSize: 18,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     engagement: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
+      flexDirection: "row",
+      justifyContent: "space-between",
     },
     engagementButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       flex: 1,
-      justifyContent: 'center',
+      justifyContent: "center",
       paddingVertical: 8,
     },
     engagementText: {

@@ -1,13 +1,7 @@
 import { useThemeColors } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import {
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface UserProfileSidebarProps {
   user?: {
@@ -37,12 +31,9 @@ export default function UserProfileSidebar({
       {/* Profile Section */}
       <View style={styles(colors).profileSection}>
         <View style={styles(colors).coverPhoto}>
-          <Image
-            source={{ uri: user.avatar }}
-            style={styles(colors).avatar}
-          />
+          <Image source={{ uri: user.avatar }} style={styles(colors).avatar} />
         </View>
-        
+
         <View style={styles(colors).profileInfo}>
           <Text style={styles(colors).name}>{user.name}</Text>
           <Text style={styles(colors).title}>{user.title}</Text>
@@ -70,7 +61,9 @@ export default function UserProfileSidebar({
           </Text>
           <View style={styles(colors).premiumBadge}>
             <Ionicons name="diamond" size={16} color="#DBA41C" />
-            <Text style={styles(colors).premiumBadgeText}>Try Premium for ₹0</Text>
+            <Text style={styles(colors).premiumBadgeText}>
+              Try Premium for ₹0
+            </Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -81,17 +74,17 @@ export default function UserProfileSidebar({
           <Ionicons name="bookmark" size={20} color={colors.text} />
           <Text style={styles(colors).quickAccessText}>Saved items</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles(colors).quickAccessItem}>
           <Ionicons name="people" size={20} color={colors.text} />
           <Text style={styles(colors).quickAccessText}>Groups</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles(colors).quickAccessItem}>
           <Ionicons name="newspaper" size={20} color={colors.text} />
           <Text style={styles(colors).quickAccessText}>Newsletters</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles(colors).quickAccessItem}>
           <Ionicons name="calendar" size={20} color={colors.text} />
           <Text style={styles(colors).quickAccessText}>Events</Text>

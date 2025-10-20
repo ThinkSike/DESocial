@@ -2,7 +2,14 @@ import { useThemeColors } from "@/constants/Colors";
 import { UserProfile } from "@/types/profile";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Dimensions,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 interface ProfileHeaderProps {
   user: UserProfile;
@@ -17,7 +24,7 @@ interface ProfileHeaderProps {
   isFollowing?: boolean;
 }
 
-const { width: screenWidth } = Dimensions.get('window');
+const { width: screenWidth } = Dimensions.get("window");
 
 export default function ProfileHeader({
   user,
@@ -41,16 +48,20 @@ export default function ProfileHeader({
             style={styles(colors).addProfileButton}
             onPress={() => {}}
           >
-            <Text style={styles(colors).addProfileButtonText}>Add profile section</Text>
+            <Text style={styles(colors).addProfileButtonText}>
+              Add profile section
+            </Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={styles(colors).enhanceProfileButton}
             onPress={() => {}}
           >
-            <Text style={styles(colors).enhanceProfileButtonText}>Enhance profile</Text>
+            <Text style={styles(colors).enhanceProfileButtonText}>
+              Enhance profile
+            </Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={styles(colors).resourcesButton}
             onPress={() => {}}
@@ -97,10 +108,13 @@ export default function ProfileHeader({
         <View style={styles(colors).coverPhoto}>
           {/* You could add a cover image here */}
         </View>
-        
+
         {/* Profile Picture Overlay */}
         <View style={styles(colors).profilePictureContainer}>
-          <Image source={{ uri: user.avatar }} style={styles(colors).profilePicture} />
+          <Image
+            source={{ uri: user.avatar }}
+            style={styles(colors).profilePicture}
+          />
           {isOwnProfile && (
             <TouchableOpacity style={styles(colors).editAvatarButton}>
               <Ionicons name="camera" size={16} color="#FFFFFF" />
@@ -133,14 +147,14 @@ export default function ProfileHeader({
               />
             )}
           </View>
-          
+
           <Text style={styles(colors).username}>@{user.username}</Text>
-          
+
           {/* Professional Title */}
           <Text style={styles(colors).title}>
-            {user.bio?.replace(/"/g, '') || 'Student'}
+            {user.bio?.replace(/"/g, "") || "Student"}
           </Text>
-          
+
           {/* Academic Info */}
           <View style={styles(colors).academicInfo}>
             <Ionicons name="school" size={14} color={colors.textSecondary} />
@@ -148,31 +162,31 @@ export default function ProfileHeader({
               {user.department} • {user.year}
             </Text>
           </View>
-          
+
           {/* Location */}
           <View style={styles(colors).locationInfo}>
             <Ionicons name="location" size={14} color={colors.textSecondary} />
             <Text style={styles(colors).locationText}>{user.location}</Text>
           </View>
-          
+
           {/* PRN */}
           <View style={styles(colors).prnInfo}>
             <Text style={styles(colors).prnLabel}>PRN: </Text>
             <Text style={styles(colors).prnValue}>{user.prn}</Text>
           </View>
-          
+
           {/* Website */}
           {user.website && (
             <View style={styles(colors).websiteInfo}>
               <Ionicons name="link" size={14} color={colors.primary} />
               <Text style={styles(colors).websiteText}>
-                {user.website.replace(/^https?:\/\//, '')}
+                {user.website.replace(/^https?:\/\//, "")}
               </Text>
             </View>
           )}
-          
+
           {/* Followers count */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles(colors).followersInfo}
             onPress={onFollowersPress}
           >

@@ -245,7 +245,9 @@ export const mockCommunityPosts: Post[] = [
 
 // Function to get posts from specific community
 export const getPostsByCommunity = (communityId: string): Post[] => {
-  return mockCommunityPosts.filter(post => post.community?.id === communityId);
+  return mockCommunityPosts.filter(
+    (post) => post.community?.id === communityId,
+  );
 };
 
 // Function to get all community posts
@@ -254,8 +256,10 @@ export const getAllCommunityPosts = (): Post[] => {
 };
 
 // Function to get posts from joined communities
-export const getJoinedCommunitiesPosts = (joinedCommunityIds: string[]): Post[] => {
-  return mockCommunityPosts.filter(post => 
-    post.community && joinedCommunityIds.includes(post.community.id)
+export const getJoinedCommunitiesPosts = (
+  joinedCommunityIds: string[],
+): Post[] => {
+  return mockCommunityPosts.filter(
+    (post) => post.community && joinedCommunityIds.includes(post.community.id),
   );
 };
