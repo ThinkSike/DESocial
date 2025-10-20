@@ -4,12 +4,12 @@ import { Post as PostType } from '@/types/post';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
-    Dimensions,
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 interface PostProps {
@@ -193,11 +193,20 @@ export default function Post({
 const createStyles = (colors: any) =>
   StyleSheet.create({
     container: {
-      backgroundColor: colors.background,
+      backgroundColor: colors.surface || colors.background,
+      marginHorizontal: 16,
+      marginBottom: 16,
+      borderRadius: 12,
       paddingHorizontal: 16,
       paddingVertical: 12,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
+      shadowColor: "#000",
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 3.84,
+      elevation: 5,
     },
     header: {
       flexDirection: 'row',

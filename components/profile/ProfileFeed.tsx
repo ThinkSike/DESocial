@@ -1,10 +1,11 @@
-import PostList from "@/components/PostList";
 import { useThemeColors } from "@/constants/Colors";
 import { Post as PostType } from "@/types/post";
 import { UserProfile } from "@/types/profile";
-import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React from "react";
+import { RefreshControl, ScrollView, StyleSheet } from "react-native";
+import ProfileAbout from "./ProfileAbout";
+import ProfileActivity from "./ProfileActivity";
+import ProfileAnalytics from "./ProfileAnalytics";
 import ProfileHeader from "./ProfileHeader";
 
 interface ProfileFeedProps {
@@ -25,8 +26,6 @@ interface ProfileFeedProps {
   refreshing?: boolean;
 }
 
-type FeedType = "posts" | "replies" | "media" | "likes";
-
 export default function ProfileFeed({
   user,
   posts,
@@ -45,64 +44,46 @@ export default function ProfileFeed({
   refreshing = false,
 }: ProfileFeedProps) {
   const colors = useThemeColors();
-  const [selectedFeed, setSelectedFeed] = useState<FeedType>("posts");
 
-  const filterPosts = () => {
-    switch (selectedFeed) {
-      case "posts":
-        return posts;
-      case "replies":
-        // In a real app, you'd filter posts that are replies
-        return posts.filter((post) => post.content.text?.includes("@"));
-      case "media":
-        return posts.filter(
-          (post) => post.content.images && post.content.images.length > 0
-        );
-      case "likes":
-        // In a real app, you'd fetch liked posts
-        return posts.slice(0, 3);
-      default:
-        return posts;
-    }
+  // Mock analytics data - in a real app, this would come from props or API
+  const analyticsData = {
+    profileViews: 186,
+    postImpressions: 163,
+    searchAppearances: 23,
   };
 
-  const FeedTab = ({
-    type,
-    icon,
-    label,
-  }: {
-    type: FeedType;
-    icon: string;
-    label: string;
-  }) => (
-    <TouchableOpacity
-      style={[
-        styles(colors).tab,
-        selectedFeed === type && styles(colors).activeTab,
-      ]}
-      onPress={() => setSelectedFeed(type)}
+  const handleCreatePost = () => {
+    // Navigate to create post screen or show modal
+    console.log("Create post");
+  };
+
+  const handleEditAbout = () => {
+    // Navigate to edit about section
+    console.log("Edit about");
+  };
+
+  const handleViewAllAnalytics = () => {
+    // Navigate to full analytics page
+    console.log("View all analytics");
+  };
+
+  return (
+    <ScrollView 
+      style={styles(colors).container}
+      contentContainerStyle={styles(colors).contentContainer}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        ) : undefined
+      }
     >
-      <Ionicons
-        name={icon as any}
-        size={20}
-        color={selectedFeed === type ? colors.primary : colors.textSecondary}
-      />
-      <Text
-        style={[
-          styles(colors).tabLabel,
-          selectedFeed === type && styles(colors).activeTabLabel,
-        ]}
-      >
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-
-  const filteredPosts = filterPosts();
-
-  // Custom header component that includes profile header and tabs
-  const ListHeaderComponent = () => (
-    <View>
+      {/* Profile Header */}
       <ProfileHeader
         user={user}
         isOwnProfile={isOwnProfile}
@@ -113,30 +94,34 @@ export default function ProfileFeed({
         onFollowingPress={onFollowingPress}
       />
 
-      {/* Feed tabs */}
-      <View style={styles(colors).tabContainer}>
-        <FeedTab type="posts" icon="grid-outline" label="Posts" />
-        <FeedTab type="replies" icon="chatbubble-outline" label="Replies" />
-        <FeedTab type="media" icon="image-outline" label="Media" />
-        <FeedTab type="likes" icon="heart-outline" label="Likes" />
-      </View>
-    </View>
-  );
+      {/* Analytics Section - Only show for own profile */}
+      {isOwnProfile && (
+        <ProfileAnalytics
+          analytics={analyticsData}
+          onViewAll={handleViewAllAnalytics}
+        />
+      )}
 
-  return (
-    <View style={styles(colors).container}>
-      <PostList
-        posts={filteredPosts}
+      {/* About Section */}
+      <ProfileAbout
+        user={user}
+        isOwnProfile={isOwnProfile}
+        onEdit={handleEditAbout}
+      />
+
+      {/* Activity Section */}
+      <ProfileActivity
+        posts={posts}
+        followersCount={user.stats.followersCount}
+        isOwnProfile={isOwnProfile}
+        onCreatePost={handleCreatePost}
         onUserPress={onUserPress}
         onLike={onLike}
         onRepost={onRepost}
         onComment={onComment}
         onShare={onShare}
-        onRefresh={onRefresh}
-        refreshing={refreshing}
-        ListHeaderComponent={ListHeaderComponent}
       />
-    </View>
+    </ScrollView>
   );
 }
 
@@ -144,32 +129,10 @@ const styles = (colors: any) =>
   StyleSheet.create({
     container: {
       flex: 1,
-    },
-    tabContainer: {
-      flexDirection: "row",
       backgroundColor: colors.background,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
     },
-    tab: {
-      flex: 1,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      paddingVertical: 16,
-      gap: 8,
-    },
-    activeTab: {
-      borderBottomWidth: 2,
-      borderBottomColor: colors.primary,
-    },
-    tabLabel: {
-      fontSize: 14,
-      fontWeight: "500",
-      color: colors.textSecondary,
-    },
-    activeTabLabel: {
-      color: colors.primary,
-      fontWeight: "600",
+    contentContainer: {
+      paddingHorizontal: 0,
+      paddingBottom: 20,
     },
   });
