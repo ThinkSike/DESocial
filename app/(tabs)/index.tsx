@@ -7,6 +7,7 @@ import UserProfileSidebar from "@/components/UserProfileSidebar";
 import { useThemeColors } from "@/constants/Colors";
 import { mockPosts } from "@/data/mockData";
 import { Post, PostContent } from "@/types/post";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
