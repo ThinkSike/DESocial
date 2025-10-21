@@ -43,32 +43,44 @@ export default function ProfileHeader({
   const renderActionButtons = () => {
     if (isOwnProfile) {
       return (
-        <View style={styles(colors).actionButtonsContainer}>
-          <TouchableOpacity
-            style={styles(colors).addProfileButton}
-            onPress={() => {}}
-          >
-            <Text style={styles(colors).addProfileButtonText}>
-              Add profile section
-            </Text>
-          </TouchableOpacity>
+        <>
+          {/* First row with Edit Profile button */}
+          <View style={styles(colors).actionButtonsContainer}>
+            <TouchableOpacity
+              style={styles(colors).editProfileButtonBottom}
+              onPress={onEditProfile}
+            >
+              <Ionicons
+                name="pencil"
+                size={16}
+                color={colors.primary}
+                style={{ marginRight: 6 }}
+              />
+              <Text style={styles(colors).editProfileButtonText}>
+                Edit Profile
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-          <TouchableOpacity
-            style={styles(colors).enhanceProfileButton}
-            onPress={() => {}}
-          >
-            <Text style={styles(colors).enhanceProfileButtonText}>
-              Enhance profile
-            </Text>
-          </TouchableOpacity>
+          {/* Second row with other action buttons */}
+          <View style={styles(colors).actionButtonsContainer}>
+            <TouchableOpacity
+              style={styles(colors).enhanceProfileButton}
+              onPress={() => {}}
+            >
+              <Text style={styles(colors).enhanceProfileButtonText}>
+                Enhance profile
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles(colors).resourcesButton}
-            onPress={() => {}}
-          >
-            <Text style={styles(colors).resourcesButtonText}>Resources</Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity
+              style={styles(colors).resourcesButton}
+              onPress={() => {}}
+            >
+              <Text style={styles(colors).resourcesButtonText}>Resources</Text>
+            </TouchableOpacity>
+          </View>
+        </>
       );
     }
 
@@ -122,13 +134,13 @@ export default function ProfileHeader({
           )}
         </View>
 
-        {/* Edit Profile Button */}
+        {/* Settings Button - Replaces Edit Profile Button */}
         {isOwnProfile && (
           <TouchableOpacity
-            style={styles(colors).editProfileButton}
-            onPress={onEditProfile}
+            style={styles(colors).settingsButton}
+            onPress={onSettingsPress}
           >
-            <Ionicons name="pencil" size={16} color={colors.text} />
+            <Ionicons name="settings-sharp" size={18} color={colors.text} />
           </TouchableOpacity>
         )}
       </View>
@@ -259,7 +271,7 @@ const styles = (colors: any) =>
       justifyContent: "center",
       alignItems: "center",
     },
-    editProfileButton: {
+    settingsButton: {
       position: "absolute",
       top: 16,
       right: 16,
@@ -362,6 +374,24 @@ const styles = (colors: any) =>
     actionButtonsContainer: {
       flexDirection: "row",
       gap: 12,
+      marginBottom: 8,
+    },
+    editProfileButtonBottom: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      borderRadius: 24,
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "center",
+      backgroundColor: colors.surface,
+    },
+    editProfileButtonText: {
+      fontSize: 15,
+      fontWeight: "700",
+      color: colors.primary,
     },
     addProfileButton: {
       flex: 1,
@@ -392,6 +422,7 @@ const styles = (colors: any) =>
       color: colors.text,
     },
     resourcesButton: {
+      flex: 1,
       borderWidth: 1,
       borderColor: colors.border,
       borderRadius: 24,
