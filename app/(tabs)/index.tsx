@@ -5,21 +5,11 @@ import PostList from "@/components/PostList";
 import UserProfileSidebar from "@/components/UserProfileSidebar";
 import { useThemeColors } from "@/constants/Colors";
 import { mockPosts } from "@/data/mockData";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import {
-  Alert,
-  Dimensions,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, Dimensions, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
-  const router = useRouter();
   const colors = useThemeColors();
   const [refreshing, setRefreshing] = useState(false);
   const [posts, setPosts] = useState(mockPosts);
@@ -104,16 +94,6 @@ export default function HomeScreen() {
       <SafeAreaView style={styles(colors).container}>
         <View style={styles(colors).header}>
           <Logo width={50} height={50} />
-          <TouchableOpacity
-            onPress={() => router.push("/chats" as any)}
-            style={styles(colors).chatButton}
-          >
-            <Ionicons
-              name="chatbubble-outline"
-              size={24}
-              color={colors.primary}
-            />
-          </TouchableOpacity>
         </View>
 
         <ScrollView
@@ -153,16 +133,6 @@ export default function HomeScreen() {
     <SafeAreaView style={styles(colors).container}>
       <View style={styles(colors).header}>
         <Logo width={50} height={50} />
-        <TouchableOpacity
-          onPress={() => router.push("/chats" as any)}
-          style={styles(colors).chatButton}
-        >
-          <Ionicons
-            name="chatbubble-outline"
-            size={24}
-            color={colors.primary}
-          />
-        </TouchableOpacity>
       </View>
 
       <View style={styles(colors).mobileContent}>
@@ -202,7 +172,6 @@ const styles = (colors: any) =>
       width: 50,
       height: 50,
     },
-    chatButton: {},
     mainContent: {
       flex: 1,
     },
