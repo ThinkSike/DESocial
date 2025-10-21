@@ -1,4 +1,3 @@
-import Logo from "@/components/Logo";
 import NewsSidebar from "@/components/NewsSidebar";
 import PostCreator from "@/components/PostCreator";
 import PostList from "@/components/PostList";
@@ -92,10 +91,6 @@ export default function HomeScreen() {
     // Desktop/Tablet layout with three columns
     return (
       <SafeAreaView style={styles(colors).container}>
-        <View style={styles(colors).header}>
-          <Logo width={50} height={50} />
-        </View>
-
         <ScrollView
           style={styles(colors).mainContent}
           contentContainerStyle={styles(colors).mainContentContainer}
@@ -131,23 +126,17 @@ export default function HomeScreen() {
   // Mobile layout - single column
   return (
     <SafeAreaView style={styles(colors).container}>
-      <View style={styles(colors).header}>
-        <Logo width={50} height={50} />
-      </View>
-
-      <View style={styles(colors).mobileContent}>
-        <PostList
-          posts={posts}
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
-          onUserPress={handleUserPress}
-          onLike={handleLike}
-          onRepost={handleRepost}
-          onComment={handleComment}
-          onShare={handleShare}
-          ListHeaderComponent={<PostCreator onCreatePost={handleCreatePost} />}
-        />
-      </View>
+      <PostList
+        posts={posts}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
+        onUserPress={handleUserPress}
+        onLike={handleLike}
+        onRepost={handleRepost}
+        onComment={handleComment}
+        onShare={handleShare}
+        ListHeaderComponent={<PostCreator onCreatePost={handleCreatePost} />}
+      />
     </SafeAreaView>
   );
 }
@@ -158,24 +147,11 @@ const styles = (colors: any) =>
       flex: 1,
       backgroundColor: colors.background,
     },
-    header: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      backgroundColor: colors.surface,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    logo: {
-      width: 50,
-      height: 50,
-    },
     mainContent: {
       flex: 1,
     },
     mainContentContainer: {
+      paddingTop: 16,
       paddingBottom: 20,
     },
     threeColumnLayout: {
@@ -189,8 +165,5 @@ const styles = (colors: any) =>
       flex: 1,
       maxWidth: 540,
       minWidth: 400,
-    },
-    mobileContent: {
-      flex: 1,
     },
   });

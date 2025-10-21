@@ -156,6 +156,7 @@ const styles = (colors: any) =>
       backgroundColor: colors.surface || "#FFFFFF",
       borderRadius: 12,
       marginHorizontal: 16,
+      marginTop: 16,
       marginBottom: 16,
       shadowColor: "#000",
       shadowOffset: {
