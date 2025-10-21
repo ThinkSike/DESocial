@@ -15,7 +15,7 @@ export default function ProfileScreen() {
   const colors = useThemeColors();
   const [refreshing, setRefreshing] = useState(false);
   const [posts, setPosts] = useState(getCurrentUserPosts());
-  const [userProfile, setUserProfile] = useState(mockCurrentUser);
+  const [userProfile] = useState(mockCurrentUser);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -67,8 +67,8 @@ export default function ProfileScreen() {
                 likes: post.engagement.likes + 1,
               },
             }
-          : post
-      )
+          : post,
+      ),
     );
   }, []);
 
