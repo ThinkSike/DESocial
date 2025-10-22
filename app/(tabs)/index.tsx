@@ -5,68 +5,52 @@ import PostList from "@/components/PostList";
 import UserProfileSidebar from "@/components/UserProfileSidebar";
 import { useThemeColors } from "@/constants/Colors";
 import { mockPosts } from "@/data/mockData";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useCallback, useState } from "react";
-import { Alert, Dimensions, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import { Alert, Dimensions, StyleSheet, TouchableOpacity, View } from 'react-native'; // removed ScrollView
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
   const router = useRouter();
   const colors = useThemeColors();
   const [refreshing, setRefreshing] = useState(false);
-  const [posts, setPosts] = useState(mockPosts);
+  const [posts, setPosts] = useState<typeof mockPosts>(mockPosts);
   const screenWidth = Dimensions.get('window').width;
   const isTablet = screenWidth > 768;
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    // Simulate API call delay
-    setTimeout(() => {
-      // In a real app, you would fetch new posts from Firebase here
-      setRefreshing(false);
-    }, 1000);
+    setTimeout(() => setRefreshing(false), 1000);
   }, []);
 
   const handleUserPress = useCallback((userId: string) => {
-    // Navigate to user profile
     Alert.alert("User Profile", `Navigate to profile for user: ${userId}`);
   }, []);
 
   const handleLike = useCallback((postId: string) => {
-    // In a real app, you would update the like count in Firebase
-    setPosts((prevPosts) =>
+    setPosts((prevPosts: typeof mockPosts) =>
       prevPosts.map((post) =>
         post.id === postId
-          ? {
-              ...post,
-              engagement: {
-                ...post.engagement,
-                likes: post.engagement.likes + 1,
-              },
-            }
+          ? { ...post, engagement: { ...post.engagement, likes: post.engagement.likes + 1 } }
           : post
       )
     );
   }, []);
 
   const handleRepost = useCallback((postId: string) => {
-    // In a real app, you would handle reposting in Firebase
     Alert.alert("Repost", `Repost functionality for post: ${postId}`);
   }, []);
 
   const handleComment = useCallback((postId: string) => {
-    // Navigate to comments screen
     Alert.alert("Comments", `Navigate to comments for post: ${postId}`);
   }, []);
 
   const handleShare = useCallback((postId: string) => {
-    // Handle sharing functionality
     Alert.alert("Share", `Share functionality for post: ${postId}`);
   }, []);
 
   const handleCreatePost = useCallback((content: string) => {
-    // In a real app, you would create a new post in Firebase
     const newPost = {
       id: Date.now().toString(),
       user: {
@@ -76,88 +60,88 @@ export default function HomeScreen() {
         avatar: 'https://i.pravatar.cc/150?img=1',
         verified: false,
       },
-      content: {
-        text: content,
-      },
-      engagement: {
-        likes: 0,
-        reposts: 0,
-        comments: 0,
-        shares: 0,
-      },
+      content: { text: content },
+      engagement: { likes: 0, reposts: 0, comments: 0, shares: 0 },
       timestamp: new Date(),
-    };
-    
-    setPosts((prevPosts) => [newPost, ...prevPosts]);
+    } as (typeof mockPosts)[number];
+
+    setPosts((prevPosts: typeof mockPosts) => [newPost, ...prevPosts]);
   }, []);
 
   if (isTablet) {
-    // Desktop/Tablet layout with three columns
+    // widths tuned to fit within 1200px container
+    const LEFT_WIDTH = 310;
+    const RIGHT_WIDTH = 330;
+    const CENTER_MAX_WIDTH = 520;
+
     return (
       <SafeAreaView style={styles(colors).container}>
         <View style={styles(colors).header}>
           <Logo width={50} height={50} />
-          <TouchableOpacity
-            onPress={() => router.push("/chats" as any)}
-            style={styles(colors).chatButton}
-          >
-            <Ionicons
-              name="chatbubble-outline"
-              size={24}
-              color={colors.primary}
-            />
-          </TouchableOpacity>
-        </View>
-        
-        <ScrollView 
-          style={styles(colors).mainContent}
-          contentContainerStyle={styles(colors).mainContentContainer}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles(colors).threeColumnLayout}>
-            {/* Left Sidebar */}
-            <UserProfileSidebar />
-            
-            {/* Main Content */}
-            <View style={styles(colors).centerColumn}>
-              <PostCreator onCreatePost={handleCreatePost} />
-              <PostList
-                posts={posts}
-                refreshing={refreshing}
-                onRefresh={handleRefresh}
-                onUserPress={handleUserPress}
-                onLike={handleLike}
-                onRepost={handleRepost}
-                onComment={handleComment}
-                onShare={handleShare}
-              />
-            </View>
-            
-            {/* Right Sidebar */}
-            <NewsSidebar />
+          <View style={styles(colors).headerActions}>
+            <TouchableOpacity
+              onPress={() => router.push('/(tabs)/notifications')}
+              accessibilityRole="button"
+              accessibilityLabel="Notifications"
+              style={{ padding: 6 }}
+            >
+              <Ionicons name="notifications-outline" size={22} color={colors.textSecondary} />
+            </TouchableOpacity>
           </View>
-        </ScrollView>
+        </View>
+
+        {/* Only center column scrolls now */}
+        <View style={styles(colors).mainContent}>
+          <View style={styles(colors).threeColumnLayout}>
+            {/* make left sidebar a bit wider */}
+            <View style={{ width: LEFT_WIDTH }}>
+              <UserProfileSidebar />
+            </View>
+
+            {/* narrower center column */}
+            <View style={[styles(colors).centerColumn, { maxWidth: CENTER_MAX_WIDTH }]}>
+              <View style={{ flex: 1, minHeight: 0 }}>
+                <PostList
+                  posts={posts}
+                  refreshing={refreshing}
+                  onRefresh={handleRefresh}
+                  onUserPress={handleUserPress}
+                  onLike={handleLike}
+                  onRepost={handleRepost}
+                  onComment={handleComment}
+                  onShare={handleShare}
+                  ListHeaderComponent={<PostCreator onCreatePost={handleCreatePost} />}
+                />
+              </View>
+            </View>
+
+            {/* make right sidebar a bit wider */}
+            <View style={{ width: RIGHT_WIDTH }}>
+              <NewsSidebar />
+            </View>
+          </View>
+        </View>
       </SafeAreaView>
     );
   }
 
-  // Mobile layout - single column
+  // Mobile layout
   return (
     <SafeAreaView style={styles(colors).container}>
       <View style={styles(colors).header}>
         <Logo width={50} height={50} />
-        <TouchableOpacity
-          onPress={() => router.push("/chats" as any)}
-          style={styles(colors).chatButton}
-        >
-          <Ionicons
-            name="chatbubble-outline"
-            size={24}
-            color={colors.primary}
-          />
-        </TouchableOpacity>
+        <View style={styles(colors).headerActions}>
+          <TouchableOpacity
+            onPress={() => router.push('/(tabs)/notifications')}
+            accessibilityRole="button"
+            accessibilityLabel="Notifications"
+            style={{ padding: 6 }}
+          >
+            <Ionicons name="notifications-outline" size={22} color={colors.textSecondary} />
+          </TouchableOpacity>
+        </View>
       </View>
-      
+
       <View style={styles(colors).mobileContent}>
         <PostList
           posts={posts}
@@ -177,10 +161,7 @@ export default function HomeScreen() {
 
 const styles = (colors: any) =>
   StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
+    container: { flex: 1, backgroundColor: colors.background },
     header: {
       flexDirection: "row",
       alignItems: "center",
@@ -191,30 +172,25 @@ const styles = (colors: any) =>
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
     },
-    logo: {
-      width: 50,
-      height: 50,
-    },
-    chatButton: {},
-    mainContent: {
-      flex: 1,
-    },
-    mainContentContainer: {
-      paddingBottom: 20,
-    },
+    headerActions: { flexDirection: "row", alignItems: "center" },
+
+    // Root area under header
+    mainContent: { flex: 1 },                 // no ScrollView here
+
     threeColumnLayout: {
+      flex: 1,
       flexDirection: "row",
       justifyContent: "center",
       maxWidth: 1200,
       width: "100%",
       alignSelf: "center",
+      gap: 16,
+      paddingHorizontal: 0,
     },
-    centerColumn: {
-      flex: 1,
-      maxWidth: 540,
-      minWidth: 400,
-    },
-    mobileContent: {
-      flex: 1,
-    },
+    // allow inner FlatList to scroll; center gets narrowed via inline maxWidth
+    centerColumn: { flex: 1, maxWidth: 540, minWidth: 400, minHeight: 0 },
+
+    feedList: { flex: 1 },                    // FlatList gets flex to enable scrolling
+
+    mobileContent: { flex: 1 },
   });

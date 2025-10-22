@@ -2,15 +2,15 @@ import { useThemeColors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
-    Dimensions,
-    Image,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  Image,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -171,7 +171,7 @@ export default function SearchScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Search Header */}
+      {/* Search bar */}
       <View style={[styles.searchHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
         <View style={[styles.searchBarContainer, { backgroundColor: colors.background, borderColor: isSearchFocused ? colors.primary : colors.border }]}>
           <Ionicons name="search" size={20} color={colors.textSecondary} style={styles.searchIcon} />
@@ -192,43 +192,30 @@ export default function SearchScreen() {
         </View>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Search Suggestions */}
-        {(searchQuery.length === 0 || !isSearchFocused) && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Popular Searches</Text>
-            <View style={styles.suggestionsContainer}>
-              {searchSuggestions.map(renderSuggestion)}
-            </View>
-          </View>
-        )}
+      <ScrollView
+        contentContainerStyle={styles.contentContainer}  // center all sections
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Popular Searches */}
+        <View style={styles.centerWrap}>
+          <Text style={[styles.h1, { color: colors.text }]}>Popular Searches</Text>
 
-        {/* News Recommendations */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Latest Updates</Text>
-            <TouchableOpacity>
-              <Text style={[styles.seeAllText, { color: colors.primary }]}>See all</Text>
-            </TouchableOpacity>
-          </View>
-          <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
-            Stay updated with the latest news and trends
-          </Text>
-          
-          <View style={styles.newsContainer}>
-            {newsRecommendations.map(renderNewsCard)}
+          <View style={styles.suggestionsContainer}>
+            {searchSuggestions.map(renderSuggestion)}
           </View>
         </View>
 
-        {/* Trending Topics */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Trending Topics</Text>
-          <View style={styles.topicsContainer}>
-            {['#MachineLearning', '#StudentLife', '#TechInnovation', '#SustainableCampus', '#AIEducation'].map((topic, index) => (
-              <TouchableOpacity key={index} style={[styles.topicChip, { backgroundColor: colors.primary + '15' }]}>
-                <Text style={[styles.topicText, { color: colors.primary }]}>{topic}</Text>
-              </TouchableOpacity>
-            ))}
+        {/* Latest Updates */}
+        <View style={styles.centerWrap}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={[styles.h1, { color: colors.text }]}>Latest Updates</Text>
+            <TouchableOpacity>
+              <Text style={[styles.seeAll, { color: colors.textSecondary }]}>See all</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.newsContainer}>
+            {newsRecommendations.map(renderNewsCard)}
           </View>
         </View>
       </ScrollView>
@@ -236,10 +223,74 @@ export default function SearchScreen() {
   );
 }
 
+const MAX_COL_WIDTH = 680;
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container: { flex: 1 },
+  contentContainer: {
+    paddingTop: 8,
+    paddingBottom: 24,
+    alignItems: 'center',
   },
+
+  // Centered column wrapper
+  centerWrap: {
+    width: '100%',
+    maxWidth: MAX_COL_WIDTH,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  h1: { fontSize: 18, fontWeight: '700' },
+  seeAll: { fontSize: 12 },
+
+  // Popular search list
+  suggestionsContainer: {},
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 8,
+    width: '100%',
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2 },
+      android: { elevation: 2 },
+    }),
+  },
+  suggestionIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  suggestionContent: { flex: 1 },
+  suggestionHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  suggestionTitle: { fontSize: 16, fontWeight: '600' },
+  suggestionSubtitle: { fontSize: 12 },
+
+  // News
+  newsContainer: {},
+  newsCard: {
+    borderRadius: 12,
+    marginBottom: 16,
+    overflow: 'hidden',
+    width: '100%',
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
+      android: { elevation: 3 },
+    }),
+  },
+
+  // Search header
   searchHeader: {
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -253,23 +304,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  searchIcon: {
-    marginRight: 12,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '400',
-  },
-  clearButton: {
-    marginLeft: 8,
-  },
-  content: {
-    flex: 1,
-  },
-  section: {
-    marginBottom: 24,
-  },
+  searchIcon: { marginRight: 12 },
+  searchInput: { flex: 1, fontSize: 16, fontWeight: '400' },
+  clearButton: { marginLeft: 8 },
+
+  // Legacy section helpers (kept if referenced)
+  section: { marginBottom: 24 },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -277,154 +317,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 8,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    paddingHorizontal: 16,
-    marginBottom: 8,
-  },
-  sectionSubtitle: {
-    fontSize: 14,
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    lineHeight: 20,
-  },
-  seeAllText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  suggestionsContainer: {
-    paddingHorizontal: 16,
-  },
-  suggestionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 8,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-  suggestionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  suggestionContent: {
-    flex: 1,
-  },
-  suggestionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  suggestionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  suggestionSubtitle: {
-    fontSize: 14,
-    marginTop: 2,
-  },
-  newsContainer: {
-    paddingHorizontal: 16,
-  },
-  newsCard: {
-    borderRadius: 12,
-    marginBottom: 16,
-    overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
-  },
-  newsImage: {
-    width: '100%',
-    height: 200,
-    resizeMode: 'cover',
-  },
-  newsContent: {
-    padding: 16,
-  },
-  newsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  categoryBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  categoryText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  trendingBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  trendingText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  newsTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    lineHeight: 24,
-    marginBottom: 8,
-  },
-  newsSummary: {
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 12,
-  },
-  newsFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  newsSource: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  newsTime: {
-    fontSize: 12,
-  },
-  topicsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 16,
-    gap: 8,
-  },
-  topicChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  topicText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
+  sectionTitle: { fontSize: 20, fontWeight: '700', paddingHorizontal: 16, marginBottom: 8 },
+  sectionSubtitle: { fontSize: 14, paddingHorizontal: 16, marginBottom: 16, lineHeight: 20 },
+  seeAllText: { fontSize: 14, fontWeight: '600' },
+
+  // News card internals
+  newsImage: { width: '100%', height: 200, resizeMode: 'cover' },
+  newsContent: { padding: 16 },
+  newsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  categoryBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
+  categoryText: { fontSize: 12, fontWeight: '600' },
+  trendingBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  trendingText: { fontSize: 12, fontWeight: '600' },
+  newsTitle: { fontSize: 18, fontWeight: '700', lineHeight: 24, marginBottom: 8 },
+  newsSummary: { fontSize: 14, lineHeight: 20, marginBottom: 12 },
+  newsFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  newsSource: { fontSize: 12, fontWeight: '500' },
+  newsTime: { fontSize: 12 },
+
+  topicsContainer: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, gap: 8 },
+  topicChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
+  topicText: { fontSize: 12, fontWeight: '600' },
 });

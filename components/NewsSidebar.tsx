@@ -1,377 +1,87 @@
-import { useThemeColors } from "@/constants/Colors";
-import { getJoinedCommunities } from "@/data/communityData";
-import { mockCommunityPosts } from "@/data/communityPosts";
-import { Ionicons } from "@expo/vector-icons";
-import React from "react";
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { useThemeColors } from '@/constants/Colors';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-interface NewsItem {
-  id: string;
-  title: string;
-  timeAgo: string;
-  readers?: string;
-  community?: string;
-}
+type Props = { width?: number };
 
-interface PuzzleItem {
-  id: string;
-  name: string;
-  icon: string;
-  connections: string;
-}
-
-interface NewsSidebarProps {
-  news?: NewsItem[];
-  puzzles?: PuzzleItem[];
-}
-
-// Function to generate headlines from community posts
-const generateCommunityHeadlines = (): NewsItem[] => {
-  const joinedCommunities = getJoinedCommunities();
-  const joinedCommunityIds = joinedCommunities.map(c => c.id);
-  
-  // Filter posts from joined communities and sort by engagement
-  const joinedCommunityPosts = mockCommunityPosts
-    .filter(post => post.community && joinedCommunityIds.includes(post.community.id))
-    .sort((a, b) => b.engagement.likes + b.engagement.comments - (a.engagement.likes + a.engagement.comments));
-
-  const headlines: NewsItem[] = [
-    {
-      id: "h1",
-      title: "Binary Search Trees Discussion Sparks CS Interest",
-      timeAgo: "2h ago",
-      readers: "24 likes",
-      community: "Computer Science Club",
-    },
-    {
-      id: "h2", 
-      title: "Basketball Team Prepares for Championship Match",
-      timeAgo: "4h ago",
-      readers: "45 likes",
-      community: "Basketball Team",
-    },
-    {
-      id: "h3",
-      title: "Music Society Announces Acoustic Night Event",
-      timeAgo: "6h ago", 
-      readers: "67 likes",
-      community: "Music Society",
-    },
-    {
-      id: "h4",
-      title: "AI Ethics Debate Draws Large Campus Crowd",
-      timeAgo: "8h ago",
-      readers: "32 likes", 
-      community: "Debate Society",
-    },
-    {
-      id: "h5",
-      title: "Photography Club Captures Stunning Campus Sunset",
-      timeAgo: "12h ago",
-      readers: "89 likes",
-      community: "Photography Club",
-    },
-  ];
-
-  return headlines;
-};
-
-const defaultPuzzles: PuzzleItem[] = [
-  {
-    id: "1",
-    name: "Code Challenge #49",
-    icon: "code-slash",
-    connections: "CS Club challenge",
-  },
-  {
-    id: "2", 
-    name: "Photo Contest #196",
-    icon: "camera",
-    connections: "20 submissions received",
-  },
-  {
-    id: "3",
-    name: "Music Quiz #357", 
-    icon: "musical-notes",
-    connections: "5 participants joined",
-  },
-  {
-    id: "4",
-    name: "Debate Topic #517",
-    icon: "chatbubbles",
-    connections: "7 arguments posted",
-  },
+const ITEMS = [
+  { id: '1', title: 'Binary Search Trees Discussion Sparks CS Interest', community: 'Computer Science Club', likes: 24, time: '2h ago' },
+  { id: '2', title: 'Basketball Team Prepares for Championship Match', community: 'Basketball Team', likes: 45, time: '4h ago' },
+  { id: '3', title: 'Music Society Announces Acoustic Night', community: 'Music Society', likes: 67, time: '6h ago' },
+  { id: '4', title: 'AI Ethics Debate Draws Large Campus Crowd', community: 'Debate Society', likes: 32, time: '8h ago' },
 ];
 
-export default function NewsSidebar({
-  news = generateCommunityHeadlines(),
-  puzzles = defaultPuzzles,
-}: NewsSidebarProps) {
+export default function NewsSidebar({ width = 330 }: Props) {
   const colors = useThemeColors();
-
-  const renderNewsItem = (item: NewsItem) => (
-    <TouchableOpacity key={item.id} style={styles(colors).newsItem}>
-      <Text style={styles(colors).newsTitle}>{item.title}</Text>
-      <View style={styles(colors).newsMetadata}>
-        <Text style={styles(colors).newsTime}>{item.timeAgo}</Text>
-        {item.readers && (
-          <>
-            <Text style={styles(colors).newsDot}> • </Text>
-            <Text style={styles(colors).newsReaders}>{item.readers}</Text>
-          </>
-        )}
-        {item.community && (
-          <>
-            <Text style={styles(colors).newsDot}> • </Text>
-            <Text style={styles(colors).newsCommunity}>{item.community}</Text>
-          </>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
-
-  const renderPuzzleItem = (item: PuzzleItem) => (
-    <TouchableOpacity key={item.id} style={styles(colors).puzzleItem}>
-      <View style={styles(colors).puzzleIconContainer}>
-        <Ionicons
-          name={item.icon as any}
-          size={20}
-          color={colors.primary}
-        />
-      </View>
-      <View style={styles(colors).puzzleContent}>
-        <Text style={styles(colors).puzzleName}>{item.name}</Text>
-        <Text style={styles(colors).puzzleConnections}>{item.connections}</Text>
-      </View>
-      <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
-    </TouchableOpacity>
-  );
+  const s = styles(colors, width);
 
   return (
-    <View style={styles(colors).container}>
-      {/* LinkedIn News Section */}
-      <View style={styles(colors).section}>
-        <View style={styles(colors).sectionHeader}>
-          <Text style={styles(colors).sectionTitle}>Community Highlights</Text>
-          <Ionicons name="information-circle" size={16} color={colors.textSecondary} />
-        </View>
-        
-        <View style={styles(colors).subSectionHeader}>
-          <Text style={styles(colors).subSectionTitle}>Trending from your communities</Text>
-        </View>
+    <View style={s.container}>
+      <View style={s.card}>
+        <Text style={s.title}>Community Highlights</Text>
+        <Text style={s.subtitle}>Trending from your communities</Text>
 
-        <ScrollView style={styles(colors).newsContainer} showsVerticalScrollIndicator={false}>
-          {news.map(renderNewsItem)}
-          
-          <TouchableOpacity style={styles(colors).showMoreButton}>
-            <Text style={styles(colors).showMoreText}>Show more</Text>
-            <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
-          </TouchableOpacity>
-        </ScrollView>
+        <View style={s.list}>
+          {ITEMS.map((item) => (
+            <TouchableOpacity key={item.id} style={s.item} activeOpacity={0.85}>
+              <Text numberOfLines={2} style={s.itemTitle}>{item.title}</Text>
+              <Text style={s.meta}>
+                {item.time} • {item.likes} likes • <Text style={s.community}>{item.community}</Text>
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
-      {/* Today's Community Activities Section */}
-      <View style={styles(colors).section}>
-        <View style={styles(colors).sectionHeader}>
-          <Text style={styles(colors).sectionTitle}>Community Activities</Text>
-        </View>
-
-        <ScrollView style={styles(colors).puzzlesContainer} showsVerticalScrollIndicator={false}>
-          {puzzles.map(renderPuzzleItem)}
-          
-          <TouchableOpacity style={styles(colors).showMoreButton}>
-            <Text style={styles(colors).showMoreText}>Show more</Text>
-            <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
-
-      {/* Footer Links */}
-      <View style={styles(colors).footerSection}>
-        <View style={styles(colors).footerLinks}>
-          <TouchableOpacity><Text style={styles(colors).footerLink}>About</Text></TouchableOpacity>
-          <TouchableOpacity><Text style={styles(colors).footerLink}>Accessibility</Text></TouchableOpacity>
-          <TouchableOpacity><Text style={styles(colors).footerLink}>Help Center</Text></TouchableOpacity>
-        </View>
-        <View style={styles(colors).footerLinks}>
-          <TouchableOpacity><Text style={styles(colors).footerLink}>Privacy & Terms</Text></TouchableOpacity>
-          <TouchableOpacity><Text style={styles(colors).footerLink}>Ad Choices</Text></TouchableOpacity>
-        </View>
-        {/* <View style={styles(colors).footerLinks}>
-          <TouchableOpacity><Text style={styles(colors).footerLink}>Advertising</Text></TouchableOpacity>
-          <TouchableOpacity><Text style={styles(colors).footerLink}>Business Services</Text></TouchableOpacity>
-        </View> */}
-        <View style={styles(colors).footerLinks}>
-          <TouchableOpacity><Text style={styles(colors).footerLink}>Get the DESocial app</Text></TouchableOpacity>
-          <TouchableOpacity><Text style={styles(colors).footerLink}>More</Text></TouchableOpacity>
-        </View>
-        
-        <Text style={styles(colors).footerCopyright}>
-          DESocial © 2025
-        </Text>
+      <View style={s.card}>
+        <Text style={s.title}>Community Activities</Text>
+        <TouchableOpacity style={s.activityRow} activeOpacity={0.85}>
+          <Text style={s.activityTitle}>Code Challenge #49</Text>
+          <Text style={s.chevron}>›</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={s.activityRow} activeOpacity={0.85}>
+          <Text style={s.activityTitle}>Photo Contest #196</Text>
+          <Text style={s.chevron}>›</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={s.activityRow} activeOpacity={0.85}>
+          <Text style={s.activityTitle}>Music Quiz #357</Text>
+          <Text style={s.chevron}>›</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 }
 
-const styles = (colors: any) =>
+const styles = (colors: any, width: number) =>
   StyleSheet.create({
-    container: {
-      width: 320,
-      marginLeft: 16,
-    },
-    section: {
-      backgroundColor: colors.cardBackground || "#FFFFFF",
-      borderRadius: 12,
+    container: { width },
+    card: {
       marginBottom: 16,
-      shadowColor: "#000",
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: 0.1,
-      shadowRadius: 3.84,
-      elevation: 5,
-      overflow: "hidden",
-    },
-    sectionHeader: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-      paddingHorizontal: 16,
-      paddingTop: 16,
-      paddingBottom: 8,
-    },
-    sectionTitle: {
-      fontSize: 16,
-      fontWeight: "600",
-      color: colors.text,
-    },
-    subSectionHeader: {
-      paddingHorizontal: 16,
-      paddingBottom: 8,
-    },
-    subSectionTitle: {
-      fontSize: 14,
-      fontWeight: "500",
-      color: colors.textSecondary,
-    },
-    newsContainer: {
-      maxHeight: 300,
-    },
-    newsItem: {
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border || "#E1E8ED",
-    },
-    newsTitle: {
-      fontSize: 14,
-      fontWeight: "500",
-      color: colors.text,
-      marginBottom: 4,
-      lineHeight: 18,
-    },
-    newsMetadata: {
-      flexDirection: "row",
-      alignItems: "center",
-    },
-    newsTime: {
-      fontSize: 12,
-      color: colors.textSecondary,
-    },
-    newsDot: {
-      fontSize: 12,
-      color: colors.textSecondary,
-    },
-    newsReaders: {
-      fontSize: 12,
-      color: colors.textSecondary,
-    },
-    newsCommunity: {
-      fontSize: 12,
-      color: colors.primary,
-      fontWeight: "500",
-    },
-    puzzlesContainer: {
-      maxHeight: 200,
-    },
-    puzzleItem: {
-      flexDirection: "row",
-      alignItems: "center",
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border || "#E1E8ED",
-    },
-    puzzleIconContainer: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      backgroundColor: colors.primary + "20",
-      justifyContent: "center",
-      alignItems: "center",
-      marginRight: 12,
-    },
-    puzzleContent: {
-      flex: 1,
-    },
-    puzzleName: {
-      fontSize: 14,
-      fontWeight: "500",
-      color: colors.text,
-      marginBottom: 2,
-    },
-    puzzleConnections: {
-      fontSize: 12,
-      color: colors.textSecondary,
-    },
-    showMoreButton: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      paddingVertical: 12,
-      paddingHorizontal: 16,
-    },
-    showMoreText: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      marginRight: 4,
-    },
-    footerSection: {
-      backgroundColor: colors.cardBackground || "#FFFFFF",
+      padding: 12,
       borderRadius: 12,
-      padding: 16,
-      shadowColor: "#000",
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: 0.1,
-      shadowRadius: 3.84,
-      elevation: 5,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
-    footerLinks: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      marginBottom: 8,
+    title: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 4 },
+    subtitle: { fontSize: 12, color: colors.textSecondary, marginBottom: 8 },
+    list: { gap: 8 },
+    item: {
+      paddingVertical: 8,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.border,
     },
-    footerLink: {
-      fontSize: 12,
-      color: colors.textSecondary,
-      marginRight: 16,
-      marginBottom: 4,
+    itemTitle: { color: colors.text, fontSize: 13, lineHeight: 18 },
+    meta: { color: colors.textSecondary, fontSize: 11, marginTop: 4 },
+    community: { color: colors.primary },
+    activityRow: {
+      paddingVertical: 12,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.border,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
     },
-    footerCopyright: {
-      fontSize: 12,
-      color: colors.textSecondary,
-      marginTop: 8,
-      textAlign: "center",
-    },
+    activityTitle: { color: colors.text, fontSize: 14, fontWeight: '600' },
+    chevron: { color: colors.textSecondary, fontSize: 18, paddingHorizontal: 4 },
   });
