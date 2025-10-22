@@ -1,7 +1,13 @@
-import { useThemeColors } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+
+const useThemeColors = (): any => ({
+  surface: "#ffffff",
+  background: "#ffffff",
+  text: "#000000",
+  textSecondary: "#6b7280",
+  border: "#E1E8ED",
+});
 
 interface AnalyticsData {
   profileViews: number;

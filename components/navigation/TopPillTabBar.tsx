@@ -11,16 +11,20 @@ const ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   profile: 'person-outline',
 };
 
+const BASE_ROUTES = ['index', 'forum', 'search', 'profile'];
+
 export default function TopPillTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const colors = useThemeColors();
 
-  const routes = state.routes.filter(r => Object.keys(ICONS).includes(r.name));
+  const getBase = (name: string) => name.split('/')[0];
+  const routes = state.routes.filter(r => BASE_ROUTES.includes(getBase(r.name)));
 
   return (
     <View pointerEvents="box-none" style={styles.wrap}>
       <View style={[styles.pill, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-        {routes.map((route, index) => {
+        {routes.map((route) => {
           const isFocused = state.index === state.routes.indexOf(route);
+          const base = getBase(route.name);
           const onPress = () => {
             const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
             if (!isFocused && !event.defaultPrevented) navigation.navigate(route.name as never);
@@ -34,7 +38,7 @@ export default function TopPillTabBar({ state, descriptors, navigation }: Bottom
               style={[styles.item, isFocused && { backgroundColor: colors.primary + '26' }]}
             >
               <Ionicons
-                name={ICONS[route.name]}
+                name={ICONS[base] ?? 'ellipse-outline'}
                 size={18}
                 color={isFocused ? colors.primary : colors.textSecondary}
               />

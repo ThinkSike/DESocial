@@ -109,8 +109,11 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 16,
   },
+  // Make the community feed column narrower by constraining its maximum width.
+  // This keeps it responsive while giving more visual space to the sidebars.
   mainContent: {
     flex: 1,
+    maxWidth: 500,
   },
   mobileLayout: {
     flex: 1,

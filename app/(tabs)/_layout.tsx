@@ -9,10 +9,7 @@ export default function TabsLayout() {
 
   return (
     <Tabs
-      screenOptions={{
-        headerShown: false,        // remove the upper black bar
-        tabBarShowLabel: false,
-      }}
+      screenOptions={{ headerShown: false, tabBarShowLabel: false }}
       tabBar={(props) => <TopPillTabBar {...props} />}
     >
       <Tabs.Screen
@@ -43,7 +40,6 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" color={color} size={size} />,
         }}
       />
-      {/* Keep alerts but hide from the pill bar */}
       <Tabs.Screen
         name="notifications"
         options={{

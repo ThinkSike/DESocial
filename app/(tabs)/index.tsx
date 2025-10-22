@@ -5,10 +5,11 @@ import PostList from "@/components/PostList";
 import UserProfileSidebar from "@/components/UserProfileSidebar";
 import { useThemeColors } from "@/constants/Colors";
 import { mockPosts } from "@/data/mockData";
+import { openMaps } from '@/utils/maps';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, Dimensions, StyleSheet, TouchableOpacity, View } from 'react-native'; // removed ScrollView
+import { Alert, Dimensions, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
@@ -55,8 +56,8 @@ export default function HomeScreen() {
       id: Date.now().toString(),
       user: {
         id: 'current-user',
-        username: 'tiyabhavsar',
-        displayName: 'Tiya Bhavsar',
+        username: '',
+        displayName: '',
         avatar: 'https://i.pravatar.cc/150?img=1',
         verified: false,
       },
@@ -68,16 +69,33 @@ export default function HomeScreen() {
     setPosts((prevPosts: typeof mockPosts) => [newPost, ...prevPosts]);
   }, []);
 
+  const handleOpenMaps = React.useCallback(() => {
+    // You can swap the query for a dynamic value later (e.g., user location)
+    openMaps({ query: 'Colleges near me' });
+  }, []);
+
   if (isTablet) {
-    // widths tuned to fit within 1200px container
     const LEFT_WIDTH = 310;
     const RIGHT_WIDTH = 330;
-    const CENTER_MAX_WIDTH = 520;
+    const CENTER_MAX_WIDTH = 420;
+
+    // row width = left + center + right + gaps (16px between columns)
+    const CONTENT_GAP = 16;
+    const CONTENT_WIDTH =
+      LEFT_WIDTH + CENTER_MAX_WIDTH + RIGHT_WIDTH + CONTENT_GAP * 2;
 
     return (
       <SafeAreaView style={styles(colors).container}>
         <View style={styles(colors).header}>
-          <Logo width={50} height={50} />
+          <TouchableOpacity
+            onPress={handleOpenMaps}
+            accessibilityRole="button"
+            accessibilityLabel="Open Maps"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Logo width={50} height={50} />
+          </TouchableOpacity>
+
           <View style={styles(colors).headerActions}>
             <TouchableOpacity
               onPress={() => router.push('/(tabs)/notifications')}
@@ -90,16 +108,24 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Only center column scrolls now */}
         <View style={styles(colors).mainContent}>
-          <View style={styles(colors).threeColumnLayout}>
-            {/* make left sidebar a bit wider */}
+          {/* Center the whole 3-column row */}
+          <View
+            style={[
+              styles(colors).threeColumnLayout,
+              { width: CONTENT_WIDTH, alignSelf: 'center' },
+            ]}
+          >
             <View style={{ width: LEFT_WIDTH }}>
-              <UserProfileSidebar />
+              <UserProfileSidebar width={LEFT_WIDTH} />
             </View>
 
-            {/* narrower center column */}
-            <View style={[styles(colors).centerColumn, { maxWidth: CENTER_MAX_WIDTH }]}>
+            <View
+              style={[
+                styles(colors).centerColumn,
+                { maxWidth: CENTER_MAX_WIDTH, width: '100%' },
+              ]}
+            >
               <View style={{ flex: 1, minHeight: 0 }}>
                 <PostList
                   posts={posts}
@@ -115,9 +141,8 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            {/* make right sidebar a bit wider */}
             <View style={{ width: RIGHT_WIDTH }}>
-              <NewsSidebar />
+              <NewsSidebar width={RIGHT_WIDTH} />
             </View>
           </View>
         </View>
@@ -129,7 +154,16 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles(colors).container}>
       <View style={styles(colors).header}>
-        <Logo width={50} height={50} />
+        {/* Logo opens maps */}
+        <TouchableOpacity
+          onPress={handleOpenMaps}
+          accessibilityRole="button"
+          accessibilityLabel="Open Maps"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Logo width={50} height={50} />
+        </TouchableOpacity>
+
         <View style={styles(colors).headerActions}>
           <TouchableOpacity
             onPress={() => router.push('/(tabs)/notifications')}
@@ -185,10 +219,14 @@ const styles = (colors: any) =>
       width: "100%",
       alignSelf: "center",
       gap: 16,
-      paddingHorizontal: 0,
     },
-    // allow inner FlatList to scroll; center gets narrowed via inline maxWidth
-    centerColumn: { flex: 1, maxWidth: 540, minWidth: 400, minHeight: 0 },
+    // Make center take only its content width, allow inner list to scroll
+    centerColumn: {
+      flexGrow: 0,
+      flexShrink: 1,
+      minWidth: 360,   // was 360/400 — allow a tighter center
+      minHeight: 0,
+    },
 
     feedList: { flex: 1 },                    // FlatList gets flex to enable scrolling
 

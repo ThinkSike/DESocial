@@ -10,8 +10,6 @@ interface UserProfileSidebarProps {
     location: string;
     avatar: string;
   };
-  profileViews?: number;
-  postImpressions?: number;
   width?: number;
 }
 
@@ -23,15 +21,13 @@ export default function UserProfileSidebar({
     location: "City, Country",
     avatar: "https://i.pravatar.cc/100?img=1",
   },
-  profileViews = 0,
-  postImpressions = 0,
 }: UserProfileSidebarProps) {
   const colors = useThemeColors();
   const s = styles(colors);
 
   return (
     <View style={[s.container, { width }]}>
-      {/* Profile Section */}
+      {/* Profile card */}
       <View style={s.profileSection}>
         <View style={s.coverPhoto}>
           <Image source={{ uri: user.avatar }} style={s.avatar} />
@@ -42,24 +38,9 @@ export default function UserProfileSidebar({
           <Text style={s.title}>{user.title}</Text>
           <Text style={s.location}>{user.location}</Text>
         </View>
-
-        <View style={s.separator} />
-
-        <View style={s.statsSection}>
-          <View style={s.statRow}>
-            <Text style={s.statLabel}>Profile viewers</Text>
-            <Text style={s.statValue}>{profileViews}</Text>
-          </View>
-          <View style={s.statRow}>
-            <Text style={s.statLabel}>Post impressions</Text>
-            <Text style={s.statValue}>{postImpressions}</Text>
-          </View>
-        </View>
-
-        <View style={s.separator} />
       </View>
 
-      {/* Quick Access Section */}
+      {/* Quick Access */}
       <View style={s.quickAccessSection}>
         <TouchableOpacity style={s.quickAccessItem}>
           <Ionicons name="bookmark-outline" size={20} color={colors.text} />
@@ -127,11 +108,7 @@ const styles = (colors: any) =>
     name: { fontSize: 18, fontWeight: "600", color: colors.text, textAlign: "center", marginBottom: 4 },
     title: { fontSize: 14, color: colors.textSecondary, textAlign: "center", marginBottom: 4, lineHeight: 18 },
     location: { fontSize: 12, color: colors.textSecondary, textAlign: "center" },
-    separator: { height: 1, backgroundColor: colors.border || "#E1E8ED", marginHorizontal: 16 },
-    statsSection: { padding: 16 },
-    statRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
-    statLabel: { fontSize: 14, color: colors.textSecondary },
-    statValue: { fontSize: 14, fontWeight: "600", color: colors.primary },
+
     quickAccessSection: {
       backgroundColor: colors.surface || "#FFFFFF",
       borderRadius: 12,

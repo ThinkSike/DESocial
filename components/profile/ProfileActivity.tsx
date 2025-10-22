@@ -6,7 +6,6 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-nati
 
 interface ProfileActivityProps {
   posts: PostType[];
-  followersCount: number;
   isOwnProfile?: boolean;
   onCreatePost?: () => void;
   onUserPress?: (userId: string) => void;
@@ -20,7 +19,6 @@ type ActivityTab = "posts" | "comments" | "images" | "documents";
 
 export default function ProfileActivity({
   posts,
-  followersCount,
   isOwnProfile = false,
   onCreatePost,
   onUserPress,
@@ -102,13 +100,16 @@ export default function ProfileActivity({
 
   const filteredPosts = filterPostsByTab(activeTab);
 
+  const safeDate = (value: any) => {
+    const d = value instanceof Date ? value : new Date(value);
+    return isNaN(d.getTime()) ? "" : d.toLocaleDateString();
+  };
+
   return (
     <View style={styles(colors).container}>
       <View style={styles(colors).header}>
         <Text style={styles(colors).title}>Activity</Text>
-        <Text style={styles(colors).subtitle}>
-          {followersCount.toLocaleString()} followers
-        </Text>
+        <Text style={styles(colors).subtitle}>Your recent activity</Text>
       </View>
 
       {isOwnProfile && (
@@ -120,8 +121,8 @@ export default function ProfileActivity({
       )}
 
       <View style={styles(colors).tabsContainer}>
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles(colors).tabsScrollContent}
         >
@@ -141,21 +142,15 @@ export default function ProfileActivity({
                   {post.content.text}
                 </Text>
                 <View style={styles(colors).postMeta}>
-                  <Text style={styles(colors).postDate}>
-                    {post.timestamp.toLocaleDateString()}
-                  </Text>
+                  <Text style={styles(colors).postDate}>{safeDate(post.timestamp)}</Text>
                   <View style={styles(colors).postStats}>
-                    <Text style={styles(colors).postStat}>
-                      {post.engagement.likes} likes
-                    </Text>
-                    <Text style={styles(colors).postStat}>
-                      {post.engagement.comments} comments
-                    </Text>
+                    <Text style={styles(colors).postStat}>{post.engagement.likes} likes</Text>
+                    <Text style={styles(colors).postStat}>{post.engagement.comments} comments</Text>
                   </View>
                 </View>
               </View>
             ))}
-            
+
             <TouchableOpacity style={styles(colors).showAllButton}>
               <Text style={styles(colors).showAllText}>
                 Show all {activeTab} ({filteredPosts.length})
@@ -165,22 +160,11 @@ export default function ProfileActivity({
           </View>
         ) : (
           <View style={styles(colors).emptyState}>
-            <Ionicons 
-              name={getTabIcon(activeTab) as any} 
-              size={48} 
-              color={colors.textSecondary} 
-            />
-            <Text style={styles(colors).emptyStateText}>
-              No {activeTab} yet
-            </Text>
+            <Ionicons name={getTabIcon(activeTab) as any} size={48} color={colors.textSecondary} />
+            <Text style={styles(colors).emptyStateText}>No {activeTab} yet</Text>
             {isOwnProfile && activeTab === "posts" && (
-              <TouchableOpacity 
-                style={styles(colors).emptyStateButton}
-                onPress={onCreatePost}
-              >
-                <Text style={styles(colors).emptyStateButtonText}>
-                  Create your first post
-                </Text>
+              <TouchableOpacity style={styles(colors).emptyStateButton} onPress={onCreatePost}>
+                <Text style={styles(colors).emptyStateButtonText}>Create your first post</Text>
               </TouchableOpacity>
             )}
           </View>

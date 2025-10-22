@@ -27,12 +27,12 @@ export default function ProfileAbout({
     ? aboutText.substring(0, 150) + "..." 
     : aboutText;
 
-  const topSkills = [
-    "Game Development",
-    "Machine Learning", 
-    "Android Development",
-    "Full Stack Development"
-  ];
+  // const topSkills = [
+  //   "Game Development",
+  //   "Machine Learning", 
+  //   "Android Development",
+  //   "Full Stack Development"
+  // ];
 
   return (
     <View style={styles(colors).container}>
@@ -59,7 +59,7 @@ export default function ProfileAbout({
           </TouchableOpacity>
         )}
 
-        {/* Top Skills Section */}
+        {/* Top Skills Section
         <View style={styles(colors).skillsSection}>
           <Text style={styles(colors).skillsTitle}>Top skills</Text>
           <View style={styles(colors).skillsList}>
@@ -72,7 +72,7 @@ export default function ProfileAbout({
               </View>
             ))}
           </View>
-        </View>
+        </View> */}
       </View>
     </View>
   );
@@ -135,34 +135,34 @@ const styles = (colors: any) =>
       color: colors.primary,
       fontWeight: "500",
     },
-    skillsSection: {
-      marginTop: 20,
-    },
-    skillsTitle: {
-      fontSize: 16,
-      fontWeight: "600",
-      color: colors.text,
-      marginBottom: 12,
-    },
-    skillsList: {
-      gap: 12,
-    },
-    skillItem: {
-      flexDirection: "row",
-      alignItems: "center",
-    },
-    skillIcon: {
-      width: 24,
-      height: 24,
-      borderRadius: 12,
-      backgroundColor: colors.primary + "20",
-      justifyContent: "center",
-      alignItems: "center",
-      marginRight: 12,
-    },
-    skillText: {
-      fontSize: 14,
-      color: colors.text,
-      fontWeight: "500",
-    },
+    // skillsSection: {
+    //   marginTop: 20,
+    // },
+    // skillsTitle: {
+    //   fontSize: 16,
+    //   fontWeight: "600",
+    //   color: colors.text,
+    //   marginBottom: 12,
+    // },
+    // skillsList: {
+    //   gap: 12,
+    // },
+    // skillItem: {
+    //   flexDirection: "row",
+    //   alignItems: "center",
+    // },
+    // skillIcon: {
+    //   width: 24,
+    //   height: 24,
+    //   borderRadius: 12,
+    //   backgroundColor: colors.primary + "20",
+    //   justifyContent: "center",
+    //   alignItems: "center",
+    //   marginRight: 12,
+    // },
+    // skillText: {
+    //   fontSize: 14,
+    //   color: colors.text,
+    //   fontWeight: "500",
+    // },
   });

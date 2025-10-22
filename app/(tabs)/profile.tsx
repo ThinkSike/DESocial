@@ -1,110 +1,108 @@
+import ProfileActivity from "@/components/profile/ProfileActivity";
 import { useThemeColors } from "@/constants/Colors";
+import { getCurrentUserPosts, mockCurrentUser } from "@/data/profileData";
+import type { Post } from "@/types/post";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useCallback, useState } from "react";
-import { Alert, StyleSheet } from "react-native";
+import React, { useCallback, useState } from "react";
+import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// Profile components
-import ProfileFeed from "@/components/profile/ProfileFeed";
-
-// Data
-import { getCurrentUserPosts, mockCurrentUser } from "@/data/profileData";
-
 export default function ProfileScreen() {
-  const router = useRouter();
   const colors = useThemeColors();
+  const router = useRouter();
+
+  const [user, setUser] = useState(mockCurrentUser);
+  const [posts, setPosts] = useState<Post[]>(getCurrentUserPosts());
   const [refreshing, setRefreshing] = useState(false);
-  const [posts, setPosts] = useState(getCurrentUserPosts());
-  const [userProfile, setUserProfile] = useState(mockCurrentUser);
+
+  const pickImage = useCallback(async () => {
+    try {
+      const ImagePicker = await import("expo-image-picker");
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (perm.status !== "granted") {
+        Alert.alert("Permission needed", "Allow photo library access to change profile picture.");
+        return;
+      }
+      const res = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.8,
+      });
+      if (!res.canceled && res.assets?.[0]?.uri) {
+        setUser((u) => ({ ...u, avatar: res.assets[0].uri }));
+        // TODO: upload to storage and save URL to Firestore
+      }
+    } catch (e) {
+      Alert.alert("Error", "Unable to open image picker.");
+    }
+  }, []);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    // Simulate API call delay
-    setTimeout(() => {
-      // In a real app, you would fetch updated profile and posts from Firebase here
-      setRefreshing(false);
-    }, 1000);
+    // TODO: refetch user's posts from Firestore
+    setTimeout(() => setRefreshing(false), 800);
   }, []);
 
-  const handleSettingsPress = useCallback(() => {
-    router.push("/settings" as any);
-  }, [router]);
-
-  const handleEditProfile = useCallback(() => {
-    // Navigate to edit profile screen
-    Alert.alert("Edit Profile", "Navigate to edit profile screen");
+  const handleCreatePost = useCallback(() => {
+    Alert.alert("Create Post", "Open create post composer");
   }, []);
 
-  const handlePostsPress = useCallback(() => {
-    // Scroll to posts or show posts modal
-    Alert.alert("Posts", "Show all posts");
-  }, []);
-
-  const handleFollowersPress = useCallback(() => {
-    // Navigate to followers screen
-    Alert.alert("Followers", "Navigate to followers list");
-  }, []);
-
-  const handleFollowingPress = useCallback(() => {
-    // Navigate to following screen
-    Alert.alert("Following", "Navigate to following list");
-  }, []);
-
-  const handleUserPress = useCallback((userId: string) => {
-    // Navigate to user profile
-    Alert.alert("User Profile", `Navigate to profile for user: ${userId}`);
-  }, []);
-
-  const handleLike = useCallback((postId: string) => {
-    // Update like count in Firebase
-    setPosts((prevPosts) =>
-      prevPosts.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              engagement: {
-                ...post.engagement,
-                likes: post.engagement.likes + 1,
-              },
-            }
-          : post
-      )
-    );
-  }, []);
-
-  const handleRepost = useCallback((postId: string) => {
-    // Handle reposting in Firebase
-    Alert.alert("Repost", `Repost functionality for post: ${postId}`);
-  }, []);
-
-  const handleComment = useCallback((postId: string) => {
-    // Navigate to comments screen
-    Alert.alert("Comments", `Navigate to comments for post: ${postId}`);
-  }, []);
-
-  const handleShare = useCallback((postId: string) => {
-    // Handle sharing functionality
-    Alert.alert("Share", `Share functionality for post: ${postId}`);
-  }, []);
+  const s = styles(colors);
 
   return (
-    <SafeAreaView style={styles(colors).container}>
-      <ProfileFeed
-        user={userProfile}
+    <SafeAreaView style={[s.container, { backgroundColor: colors.background }]}>
+      {/* spacer so content sits below the top pill bar */}
+      <View style={s.headerSpacer} />
+
+      {/* Header card with avatar + settings */}
+      <View style={[s.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View style={s.headerRow}>
+          <Text style={[s.headerTitle, { color: colors.text }]}>Profile</Text>
+          <TouchableOpacity
+            onPress={() => router.push("/settings" as any)}
+            accessibilityRole="button"
+            accessibilityLabel="Open Settings"
+            style={s.iconBtn}
+          >
+            <Ionicons name="settings-outline" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={s.profileRow}>
+          <View>
+            <Image
+              source={{ uri: user.avatar || "https://i.pravatar.cc/120?img=5" }}
+              style={s.avatar}
+            />
+            <TouchableOpacity style={[s.editBadge, { backgroundColor: colors.surface, borderColor: colors.border }]} onPress={pickImage}>
+              <Ionicons name="camera" size={14} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={s.infoCol}>
+            <Text style={[s.name, { color: colors.text }]} numberOfLines={1}>
+              {user.displayName || user.username}
+            </Text>
+            <Text style={[s.meta, { color: colors.textSecondary }]} numberOfLines={1}>
+              PRN: {user.prn ?? "-"}
+            </Text>
+            <Text style={[s.meta, { color: colors.textSecondary }]} numberOfLines={1}>
+              Department: {user.department ?? "-"}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Activity (posts/comments/images/documents) + create post */}
+      <ProfileActivity
         posts={posts}
-        isOwnProfile={true}
-        onEditProfile={handleEditProfile}
-        onSettingsPress={handleSettingsPress}
-        onUserPress={handleUserPress}
-        onLike={handleLike}
-        onRepost={handleRepost}
-        onComment={handleComment}
-        onShare={handleShare}
-        onRefresh={handleRefresh}
-        onPostsPress={handlePostsPress}
-        onFollowersPress={handleFollowersPress}
-        onFollowingPress={handleFollowingPress}
-        refreshing={refreshing}
+        isOwnProfile
+        onCreatePost={handleCreatePost}
+        onUserPress={() => {}}
+        onLike={() => {}}
+        onRepost={() => {}}
+        onComment={() => {}}
+        onShare={() => {}}
       />
     </SafeAreaView>
   );
@@ -112,8 +110,36 @@ export default function ProfileScreen() {
 
 const styles = (colors: any) =>
   StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
+    container: { flex: 1 },
+    headerSpacer: { height: 56 },
+    card: {
+      alignSelf: "center",
+      width: "100%",
+      maxWidth: 720,
+      marginHorizontal: 16,
+      borderRadius: 12,
+      borderWidth: 1,
+      padding: 16,
     },
+    headerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 12,
+    },
+    headerTitle: { fontSize: 18, fontWeight: "700" },
+    iconBtn: { padding: 6, borderRadius: 8 },
+    profileRow: { flexDirection: "row", gap: 12, alignItems: "center" },
+    avatar: { width: 84, height: 84, borderRadius: 42 },
+    editBadge: {
+      position: "absolute",
+      right: -6,
+      bottom: -6,
+      padding: 6,
+      borderRadius: 999,
+      borderWidth: 1,
+    },
+    infoCol: { flex: 1, minWidth: 0 },
+    name: { fontSize: 18, fontWeight: "700" },
+    meta: { fontSize: 12 },
   });

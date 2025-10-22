@@ -1,33 +1,20 @@
 // Profile-specific types extending the base User type
-import { User } from './post';
 
-export interface UserProfile extends User {
-  prn: string; // Primary Registration Number - unique college identifier
-  displayName: string;
-  bio?: string;
-  location?: string;
-  website?: string;
-  joinedDate: Date;
-  isPrivate: boolean;
-  stats: ProfileStats;
-  // Academic info (optional)
-  department?: string;
-  year?: string;
-  batch?: string;
-}
-
-export interface ProfileStats {
-  postsCount: number;
-  followersCount: number;
-  followingCount: number;
-}
-
-export interface FollowRelation {
+export type UserProfile = {
   id: string;
-  followerId: string;
-  followingId: string;
-  createdAt: Date;
-}
+  username: string;
+  displayName: string;
+  avatar?: string;
+  bio?: string;
+  prn?: string;
+  department?: string;
+  // deprecated/unused in UI
+  stats?: {
+    followers?: number;
+    following?: number;
+    posts?: number;
+  };
+};
 
 // For Firebase integration
 export interface UserProfileFirestore extends Omit<UserProfile, 'joinedDate'> {
