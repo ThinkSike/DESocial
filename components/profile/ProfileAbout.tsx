@@ -18,24 +18,31 @@ export default function ProfileAbout({
   const colors = useThemeColors();
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const aboutText = user.bio 
-    ? user.bio.replace(/"/g, '') 
+  const aboutText = user.bio
+    ? user.bio.replace(/"/g, "")
     : "Technology has always been more than just a field of study for me - it's a space where creativity meets problem solving, and I thrive on pushing those boundaries. With a diploma in computer engineering, I started my journey in game development, crafting interactive experiences that engage.";
 
   const shouldShowReadMore = aboutText.length > 150;
-  const displayText = shouldShowReadMore && !isExpanded 
-    ? aboutText.substring(0, 150) + "..." 
-    : aboutText;
+  const displayText =
+    shouldShowReadMore && !isExpanded
+      ? aboutText.substring(0, 150) + "..."
+      : aboutText;
 
   // const topSkills = [
   //   "Game Development",
-  //   "Machine Learning", 
+  //   "Machine Learning",
   //   "Android Development",
   //   "Full Stack Development"
   // ];
 
   return (
-    <View style={styles(colors).container}>
+    // Force card to a centered width so multiple cards align together
+    <View
+      style={[
+        styles(colors).container,
+        { alignSelf: "center", width: "94%", maxWidth: 720 },
+      ]}
+    >
       <View style={styles(colors).header}>
         <Text style={styles(colors).title}>About</Text>
         {isOwnProfile && (
@@ -47,9 +54,9 @@ export default function ProfileAbout({
 
       <View style={styles(colors).content}>
         <Text style={styles(colors).aboutText}>{displayText}</Text>
-        
+
         {shouldShowReadMore && (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles(colors).readMoreButton}
             onPress={() => setIsExpanded(!isExpanded)}
           >
