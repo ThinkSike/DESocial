@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ProfileScreen() {
@@ -51,67 +52,87 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={[s.container, { backgroundColor: colors.background }]}>
-      {/* spacer so content sits below the top pill bar */}
       <View style={s.headerSpacer} />
 
-      {/* Header card with avatar + settings */}
-      <View style={[s.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <View style={s.headerRow}>
-          <Text style={[s.headerTitle, { color: colors.text }]}>Profile</Text>
-          <TouchableOpacity
-            onPress={() => router.push("/settings" as any)}
-            accessibilityRole="button"
-            accessibilityLabel="Open Settings"
-            style={s.iconBtn}
-          >
-            <Ionicons name="settings-outline" size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
+      {/* Center page content */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={s.pageContent}
+      >
+        <View style={s.pageColumn}>
+          {/* Header card */}
+          <View style={[s.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={s.headerRow}>
+              <Text style={[s.headerTitle, { color: colors.text }]}>Profile</Text>
+              <TouchableOpacity
+                onPress={() => router.push("/settings" as any)}
+                accessibilityRole="button"
+                accessibilityLabel="Open Settings"
+                style={s.iconBtn}
+              >
+                <Ionicons name="settings-outline" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
 
-        <View style={s.profileRow}>
-          <View>
-            <Image
-              source={{ uri: user.avatar || "https://i.pravatar.cc/120?img=5" }}
-              style={s.avatar}
-            />
-            <TouchableOpacity style={[s.editBadge, { backgroundColor: colors.surface, borderColor: colors.border }]} onPress={pickImage}>
-              <Ionicons name="camera" size={14} color={colors.text} />
-            </TouchableOpacity>
+            <View style={s.profileRow}>
+              <View>
+                <Image
+                  source={{ uri: user.avatar || "https://i.pravatar.cc/120?img=5" }}
+                  style={s.avatar}
+                />
+                <TouchableOpacity style={[s.editBadge, { backgroundColor: colors.surface, borderColor: colors.border }]} onPress={pickImage}>
+                  <Ionicons name="camera" size={14} color={colors.text} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={s.infoCol}>
+                <Text style={[s.name, { color: colors.text }]} numberOfLines={1}>
+                  {user.displayName || user.username}
+                </Text>
+                <Text style={[s.meta, { color: colors.textSecondary }]} numberOfLines={1}>
+                  PRN: {user.prn ?? "-"}
+                </Text>
+                <Text style={[s.meta, { color: colors.textSecondary }]} numberOfLines={1}>
+                  Department: {user.department ?? "-"}
+                </Text>
+              </View>
+            </View>
           </View>
 
-          <View style={s.infoCol}>
-            <Text style={[s.name, { color: colors.text }]} numberOfLines={1}>
-              {user.displayName || user.username}
-            </Text>
-            <Text style={[s.meta, { color: colors.textSecondary }]} numberOfLines={1}>
-              PRN: {user.prn ?? "-"}
-            </Text>
-            <Text style={[s.meta, { color: colors.textSecondary }]} numberOfLines={1}>
-              Department: {user.department ?? "-"}
-            </Text>
-          </View>
+          {/* Activity card */}
+          <ProfileActivity
+            posts={posts}
+            isOwnProfile
+            onCreatePost={handleCreatePost}
+            onUserPress={() => {}}
+            onLike={() => {}}
+            onRepost={() => {}}
+            onComment={() => {}}
+            onShare={() => {}}
+          />
         </View>
-      </View>
-
-      {/* Activity (posts/comments/images/documents) + create post */}
-      <ProfileActivity
-        posts={posts}
-        isOwnProfile
-        onCreatePost={handleCreatePost}
-        onUserPress={() => {}}
-        onLike={() => {}}
-        onRepost={() => {}}
-        onComment={() => {}}
-        onShare={() => {}}
-      />
+      </ScrollView>
     </SafeAreaView>
   );
 }
+
+const PAGE_MAX_WIDTH = 700;
 
 const styles = (colors: any) =>
   StyleSheet.create({
     container: { flex: 1 },
     headerSpacer: { height: 56 },
+    pageContent: {
+      paddingHorizontal: 16,
+      paddingBottom: 24,
+      alignItems: 'center',
+    },
+    pageColumn: {
+      width: '100%',
+      maxWidth: PAGE_MAX_WIDTH,
+      alignSelf: 'center',
+      gap: 16,
+    },
     card: {
       alignSelf: "center",
       width: "100%",

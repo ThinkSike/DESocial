@@ -174,18 +174,20 @@ export default function ProfileActivity({
   );
 }
 
+// ProfileActivity.tsx - within the styles function at the bottom
+
 const styles = (colors: any) =>
   StyleSheet.create({
     container: {
+      width: '100%',           // ensure it fills the centered column
+      maxWidth: 700,
+      marginLeft: 'auto',
+      marginRight: 'auto',
+      marginBottom: 16,
       backgroundColor: colors.surface || colors.background,
       borderRadius: 12,
-      marginHorizontal: 16,
-      marginBottom: 16,
       shadowColor: "#000",
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
+      shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
       shadowRadius: 3.84,
       elevation: 5,

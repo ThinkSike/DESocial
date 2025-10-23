@@ -18,153 +18,25 @@ interface ProfileHeaderProps {
 }
 
 const { width: screenWidth } = Dimensions.get('window');
-
-export default function ProfileHeader({
-  user,
-  isOwnProfile = false,
-  onEditProfile,
-  onFollowToggle,
-  onMessagePress,
-  onPostsPress,
-  onFollowersPress,
-  onFollowingPress,
-  onSettingsPress,
-  isFollowing = false,
-}: ProfileHeaderProps) {
-  const colors = useThemeColors();
-
-  const renderActionButtons = () => {
-    if (isOwnProfile) {
-      return (
-        <View style={styles(colors).actionButtonsContainer}>
-          <TouchableOpacity
-            style={styles(colors).addProfileButton}
-            onPress={() => {}}
-          >
-            <Text style={styles(colors).addProfileButtonText}>Add profile section</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={styles(colors).enhanceProfileButton}
-            onPress={() => {}}
-          >
-            <Text style={styles(colors).enhanceProfileButtonText}>Enhance profile</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={styles(colors).resourcesButton}
-            onPress={() => {}}
-          >
-            <Text style={styles(colors).resourcesButtonText}>Resources</Text>
-          </TouchableOpacity>
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles(colors).actionButtonsContainer}>
-        <TouchableOpacity
-          style={styles(colors).followButton}
-          onPress={onFollowToggle}
-        >
-          <Text style={styles(colors).followButtonText}>
-            {isFollowing ? "Following" : "Follow"}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles(colors).messageButton}
-          onPress={onMessagePress}
-        >
-          <Text style={styles(colors).messageButtonText}>Message</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
-
-  return (
-    <View style={styles(colors).container}>
-      {/* Cover Photo Section */}
-      <View style={styles(colors).coverSection}>
-        <View style={styles(colors).coverPhoto} />
-        
-        {/* Profile Picture Overlay (centered) */}
-        <View style={styles(colors).profilePictureContainer}>
-          <Image source={{ uri: user.avatar }} style={styles(colors).profilePicture} />
-          {isOwnProfile && (
-            <TouchableOpacity style={styles(colors).editAvatarButton}>
-              <Ionicons name="camera" size={16} color="#FFFFFF" />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Edit Profile Button */}
-        {isOwnProfile && (
-          <TouchableOpacity
-            style={styles(colors).editProfileButton}
-            onPress={onEditProfile}
-          >
-            <Ionicons name="pencil" size={16} color={colors.text} />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Profile Info Section */}
-      <View style={styles(colors).profileInfoSection}>
-        <View style={styles(colors).nameSection}>
-          <View style={styles(colors).nameRow}>
-            <Text style={styles(colors).displayName}>{user.displayName}</Text>
-            {(user as any).verified && (
-              <Ionicons
-                name="checkmark-circle"
-                size={20}
-                color={colors.primary}
-                style={styles(colors).verifiedIcon}
-              />
-            )}
-          </View>
-          
-          <Text style={styles(colors).username}>@{user.username}</Text>
-          <Text style={styles(colors).title}>{user.bio?.replace(/"/g, '') || 'Student'}</Text>
-
-          <View style={styles(colors).academicInfo}>
-            <Ionicons name="school" size={14} color={colors.textSecondary} />
-            <Text style={styles(colors).academicText}>
-              {user.department} • {((user as any).year ?? '—')}
-            </Text>
-          </View>
-
-          <View style={styles(colors).prnInfo}>
-            <Text style={styles(colors).prnLabel}>PRN: </Text>
-            <Text style={styles(colors).prnValue}>{user.prn}</Text>
-          </View>
-        </View>
-
-        {/* Action Buttons */}
-        {renderActionButtons()}
-      </View>
-    </View>
-  );
-}
+const CARD_MAX_WIDTH = 700;
 
 const styles = (colors: any) =>
   StyleSheet.create({
     container: {
-      backgroundColor: colors.surface || colors.background,
-      alignSelf: 'center',          // center the card
       width: '100%',
-      maxWidth: 720,                // limit width
-      marginHorizontal: 16,
-      marginBottom: 16,
+      maxWidth: CARD_MAX_WIDTH,
+      alignSelf: 'center',
+      // marginBottom: 16,
+      backgroundColor: colors.surface || colors.background,
       borderRadius: 12,
-      shadowColor: "#000",
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
       shadowRadius: 3.84,
       elevation: 5,
-      overflow: "hidden",
-      borderWidth: 1,
-      borderColor: colors.border,
+      overflow: 'hidden',
     },
     coverSection: {
       position: "relative",
@@ -325,3 +197,131 @@ const styles = (colors: any) =>
     },
     messageButtonText: { fontSize: 14, fontWeight: "600", color: colors.text },
   });
+
+export default function ProfileHeader({
+  user,
+  isOwnProfile = false,
+  onEditProfile,
+  onFollowToggle,
+  onMessagePress,
+  onPostsPress,
+  onFollowersPress,
+  onFollowingPress,
+  onSettingsPress,
+  isFollowing = false,
+}: ProfileHeaderProps) {
+  const colors = useThemeColors();
+
+  const renderActionButtons = () => {
+    if (isOwnProfile) {
+      return (
+        <View style={styles(colors).actionButtonsContainer}>
+          <TouchableOpacity
+            style={styles(colors).addProfileButton}
+            onPress={() => {}}
+          >
+            <Text style={styles(colors).addProfileButtonText}>Add profile section</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles(colors).enhanceProfileButton}
+            onPress={() => {}}
+          >
+            <Text style={styles(colors).enhanceProfileButtonText}>Enhance profile</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles(colors).resourcesButton}
+            onPress={() => {}}
+          >
+            <Text style={styles(colors).resourcesButtonText}>Resources</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles(colors).actionButtonsContainer}>
+        <TouchableOpacity
+          style={styles(colors).followButton}
+          onPress={onFollowToggle}
+        >
+          <Text style={styles(colors).followButtonText}>
+            {isFollowing ? "Following" : "Follow"}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles(colors).messageButton}
+          onPress={onMessagePress}
+        >
+          <Text style={styles(colors).messageButtonText}>Message</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  return (
+    <View style={styles(colors).container}>
+      {/* Cover Photo Section */}
+      <View style={styles(colors).coverSection}>
+        <View style={styles(colors).coverPhoto} />
+        
+        {/* Profile Picture Overlay (centered) */}
+        <View style={styles(colors).profilePictureContainer}>
+          <Image source={{ uri: user.avatar }} style={styles(colors).profilePicture} />
+          {isOwnProfile && (
+            <TouchableOpacity style={styles(colors).editAvatarButton}>
+              <Ionicons name="camera" size={16} color="#FFFFFF" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Edit Profile Button */}
+        {isOwnProfile && (
+          <TouchableOpacity
+            style={styles(colors).editProfileButton}
+            onPress={onEditProfile}
+          >
+            <Ionicons name="pencil" size={16} color={colors.text} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Profile Info Section */}
+      <View style={styles(colors).profileInfoSection}>
+        <View style={styles(colors).nameSection}>
+          <View style={styles(colors).nameRow}>
+            <Text style={styles(colors).displayName}>{user.displayName}</Text>
+            {(user as any).verified && (
+              <Ionicons
+                name="checkmark-circle"
+                size={20}
+                color={colors.primary}
+                style={styles(colors).verifiedIcon}
+              />
+            )}
+          </View>
+          
+          <Text style={styles(colors).username}>@{user.username}</Text>
+          <Text style={styles(colors).title}>{user.bio?.replace(/"/g, '') || 'Student'}</Text>
+
+          <View style={styles(colors).academicInfo}>
+            <Ionicons name="school" size={14} color={colors.textSecondary} />
+            <Text style={styles(colors).academicText}>
+              {user.department} • {((user as any).year ?? '—')}
+            </Text>
+          </View>
+
+          <View style={styles(colors).prnInfo}>
+            <Text style={styles(colors).prnLabel}>PRN: </Text>
+            <Text style={styles(colors).prnValue}>{user.prn}</Text>
+          </View>
+        </View>
+
+        {/* Action Buttons */}
+        {renderActionButtons()}
+      </View>
+    </View>
+  );
+}

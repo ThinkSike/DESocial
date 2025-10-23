@@ -142,7 +142,6 @@ const styles = (colors: any) =>
       shadowRadius: 4,
       elevation: 3,
     },
-    // ... rest of the styles
     header: {
       paddingHorizontal: 16,
       paddingVertical: 16,
