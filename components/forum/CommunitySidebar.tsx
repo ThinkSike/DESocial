@@ -202,7 +202,6 @@ const styles = (colors: any) =>
   StyleSheet.create({
     container: {
       width: 280,
-      marginRight: 16,
     },
     scrollContainer: {
       flex: 1,

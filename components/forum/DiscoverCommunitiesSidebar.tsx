@@ -142,8 +142,9 @@ export default function DiscoverCommunitiesSidebar({
 const styles = (colors: any) =>
   StyleSheet.create({
     container: {
-      width: 280,
-      marginLeft: 16,
+      width: 300,
+      marginLeft: 'auto',
+      marginRight: 'auto',
       borderRadius: 12,
       borderWidth: 1,
       shadowColor: '#000',

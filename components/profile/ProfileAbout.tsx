@@ -90,7 +90,7 @@ const styles = (colors: any) =>
     container: {
       backgroundColor: colors.surface || colors.background,
       borderRadius: 12,
-      marginHorizontal: 16,
+      marginHorizontal: 0,
       marginBottom: 16,
       shadowColor: "#000",
       shadowOffset: {

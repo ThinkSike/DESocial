@@ -126,11 +126,14 @@ export default function JoinedCommunitiesSidebar({
   );
 }
 
+// JoinedCommunitiesSidebar.tsx - within the styles function at the bottom
+
 const styles = (colors: any) =>
   StyleSheet.create({
     container: {
       width: 280,
-      marginRight: 16,
+      marginRight: 'auto', 
+      marginLeft: 'auto',
       borderRadius: 12,
       borderWidth: 1,
       shadowColor: '#000',
@@ -139,6 +142,7 @@ const styles = (colors: any) =>
       shadowRadius: 4,
       elevation: 3,
     },
+    // ... rest of the styles
     header: {
       paddingHorizontal: 16,
       paddingVertical: 16,
