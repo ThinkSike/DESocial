@@ -203,6 +203,19 @@ const styles = (colors: any) =>
       alignItems: "center",
     },
     messageButtonText: { fontSize: 14, fontWeight: "600", color: colors.text },
+    settingsButton: {
+      position: "absolute",
+      top: 12,
+      right: 12,
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
   });
 
 export default function ProfileHeader({
@@ -226,7 +239,7 @@ export default function ProfileHeader({
           {/* First row with Edit Profile button */}
           <View style={styles(colors).actionButtonsContainer}>
             <TouchableOpacity
-              style={styles(colors).editProfileButtonBottom}
+              style={styles(colors).editProfileButton}
               onPress={onEditProfile}
             >
               <Ionicons
@@ -235,7 +248,7 @@ export default function ProfileHeader({
                 color={colors.primary}
                 style={{ marginRight: 6 }}
               />
-              <Text style={styles(colors).editProfileButtonText}>
+              <Text style={styles(colors).editProfileButton}>
                 Edit Profile
               </Text>
             </TouchableOpacity>
@@ -305,12 +318,12 @@ export default function ProfileHeader({
 
         {/* Settings Button - Replaces Edit Profile Button */}
         {isOwnProfile && (
-          <TouchableOpacity
-            style={styles(colors).settingsButton}
+            <TouchableOpacity
+            style={styles(colors).editProfileButton}
             onPress={onSettingsPress}
-          >
-            <Ionicons name="settings-sharp" size={18} color={colors.text} />
-          </TouchableOpacity>
+            >
+            <Ionicons name="settings-sharp" size={18} color={colors.primary} />
+            </TouchableOpacity>
         )}
       </View>
 

@@ -5,9 +5,10 @@ import UserProfileSidebar from "@/components/UserProfileSidebar";
 import { useThemeColors } from "@/constants/Colors";
 import { mockPosts } from "@/data/mockData";
 import { openMaps } from '@/utils/maps';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React, { useCallback, useState } from 'react';
-import { Alert, Dimensions, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
@@ -16,6 +17,7 @@ export default function HomeScreen() {
   const [posts, setPosts] = useState<typeof mockPosts>(mockPosts);
   const screenWidth = Dimensions.get('window').width;
   const isTablet = screenWidth > 768;
+  const router = useRouter(); // FIX: provide router
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -84,18 +86,21 @@ export default function HomeScreen() {
     return (
       <SafeAreaView style={styles(colors).container}>
         <View style={styles(colors).header}>
+          {/* FIX: replace unknown <Logo /> with a simple title button */}
           <TouchableOpacity
             onPress={handleOpenMaps}
             accessibilityRole="button"
             accessibilityLabel="Open Maps"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Logo width={50} height={50} />
+            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>
+              DESocial
+            </Text>
           </TouchableOpacity>
 
           <View style={styles(colors).headerActions}>
             <TouchableOpacity
-              onPress={() => router.push('/(tabs)/notifications')}
+              onPress={() => router.push("/notifications" as any)}
               accessibilityRole="button"
               accessibilityLabel="Notifications"
               style={{ padding: 6 }}
@@ -151,19 +156,22 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles(colors).container}>
       <View style={styles(colors).header}>
-        {/* Logo opens maps */}
+        {/* FIX: replace unknown <Logo /> with title button */}
         <TouchableOpacity
           onPress={handleOpenMaps}
           accessibilityRole="button"
           accessibilityLabel="Open Maps"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Logo width={50} height={50} />
+          <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>
+            DESocial
+          </Text>
         </TouchableOpacity>
 
         <View style={styles(colors).headerActions}>
+          {/* Mobile header */}
           <TouchableOpacity
-            onPress={() => router.push('/(tabs)/notifications')}
+            onPress={() => router.push("/notifications" as any)}
             accessibilityRole="button"
             accessibilityLabel="Notifications"
             style={{ padding: 6 }}
