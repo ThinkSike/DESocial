@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 
 interface PostCreatorProps {
@@ -103,6 +104,13 @@ export default function PostCreator({
   };
 
   const showImageOptions = () => {
+    // On web, directly open the image picker (browser will show its own file picker)
+    if (Platform.OS === "web") {
+      pickImage();
+      return;
+    }
+
+    // On mobile, show options for Camera or Photo Library
     Alert.alert("Add Photo", "Choose an option", [
       { text: "Camera", onPress: takePhoto },
       { text: "Photo Library", onPress: pickImage },
