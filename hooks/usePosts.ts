@@ -6,6 +6,7 @@ import {
   likePost,
   unlikePost,
   isPostLiked,
+  getUserProfile,
 } from "@/utils/firestore";
 import { uploadPostImage } from "@/utils/storage";
 import type { Post, PostContent } from "@/types/post";
@@ -63,19 +64,32 @@ export const usePosts = () => {
       }
 
       try {
+        // Fetch user profile from Firestore
+        const userProfile = await getUserProfile(user.uid);
+
+        // Build user data from profile or fallback to auth data
+        const userData = {
+          id: user.uid,
+          username:
+            userProfile?.username || user.email?.split("@")[0] || "user",
+          displayName: userProfile?.displayName || user.displayName || "User",
+          avatar: userProfile?.avatar || user.photoURL || "",
+          verified: false,
+        };
+
+        // Build the post content object, only including defined fields
+        const postContent: any = {};
+        if (content.text) {
+          postContent.text = content.text;
+        }
+        if (content.hashtags && content.hashtags.length > 0) {
+          postContent.hashtags = content.hashtags;
+        }
+
         // First create the post document to get an ID
         const postId = await createPost({
-          user: {
-            id: user.uid,
-            username: user.displayName || "Anonymous",
-            displayName: user.displayName || "Anonymous",
-            avatar: user.photoURL || "",
-            verified: false,
-          },
-          content: {
-            text: content.text,
-            hashtags: content.hashtags,
-          },
+          user: userData,
+          content: postContent,
           engagement: {
             likes: 0,
             comments: 0,
@@ -84,7 +98,6 @@ export const usePosts = () => {
         });
 
         // Upload images if any
-        let imageUrls: string[] = [];
         if (content.images && content.images.length > 0) {
           // Upload images to Firebase Storage
           const uploadPromises = content.images.map(async (imageUri, index) => {
@@ -94,14 +107,11 @@ export const usePosts = () => {
             return uploadPostImage(blob, postId, index);
           });
 
-          imageUrls = await Promise.all(uploadPromises);
+          const imageUrls = await Promise.all(uploadPromises);
 
           // Update post with image URLs
           await updatePost(postId, {
-            content: {
-              ...content,
-              images: imageUrls,
-            },
+            "content.images": imageUrls,
           } as any);
         }
 

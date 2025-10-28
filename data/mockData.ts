@@ -250,13 +250,25 @@ export const mockPosts: Post[] = [
     },
     engagement: {
       likes: 134,
-      reposts: 45,
       comments: 28,
-      shares: 19,
     },
     timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 1 week ago
   },
 ];
+
+// Helper functions for formatting
+export const formatEngagementNumber = (num?: number): string => {
+  if (!num && num !== 0) {
+    return "0";
+  }
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1) + "M";
+  }
+  if (num >= 1000) {
+    return (num / 1000).toFixed(1) + "K";
+  }
+  return num.toString();
+};
 
 export const getTimeAgo = (date: Date): string => {
   const now = new Date();
@@ -287,17 +299,4 @@ export const getTimeAgo = (date: Date): string => {
   }
 
   return date.toLocaleDateString();
-};
-
-export const formatEngagementNumber = (num?: number): string => {
-  if (!num && num !== 0) {
-    return "0";
-  }
-  if (num >= 1000000) {
-    return (num / 1000000).toFixed(1) + "M";
-  }
-  if (num >= 1000) {
-    return (num / 1000).toFixed(1) + "K";
-  }
-  return num.toString();
 };

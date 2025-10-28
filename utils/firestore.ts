@@ -75,12 +75,40 @@ export const updateUserProfile = async (
 
 export const createPost = async (postData: Omit<Post, "id">) => {
   const postsRef = collection(db, COLLECTIONS.POSTS);
-  const docRef = await addDoc(postsRef, {
-    ...postData,
+
+  // Clean the data - remove undefined values
+  const cleanData: any = {
+    user: postData.user,
+    content: {},
+    engagement: {
+      likes: 0,
+      comments: 0,
+    },
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     timestamp: serverTimestamp(),
-  });
+  };
+
+  // Only add content fields that are defined
+  if (postData.content.text) {
+    cleanData.content.text = postData.content.text;
+  }
+  if (postData.content.images && postData.content.images.length > 0) {
+    cleanData.content.images = postData.content.images;
+  }
+  if (postData.content.hashtags && postData.content.hashtags.length > 0) {
+    cleanData.content.hashtags = postData.content.hashtags;
+  }
+
+  // Add optional fields if they exist
+  if (postData.community) {
+    cleanData.community = postData.community;
+  }
+  if (postData.event) {
+    cleanData.event = postData.event;
+  }
+
+  const docRef = await addDoc(postsRef, cleanData);
   return docRef.id;
 };
 
