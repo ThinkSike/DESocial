@@ -16,9 +16,7 @@ interface PostProps {
   post: PostType;
   onUserPress?: (userId: string) => void;
   onLike?: (postId: string) => void;
-  onRepost?: (postId: string) => void;
   onComment?: (postId: string) => void;
-  onShare?: (postId: string) => void;
 }
 
 const { width: screenWidth } = Dimensions.get("window");
@@ -28,9 +26,7 @@ export default function Post({
   post,
   onUserPress,
   onLike,
-  onRepost,
   onComment,
-  onShare,
 }: PostProps) {
   const colors = useThemeColors();
   const styles = createStyles(colors);
@@ -140,34 +136,6 @@ export default function Post({
       <View style={styles.engagement}>
         <TouchableOpacity
           style={styles.engagementButton}
-          onPress={() => onComment?.(post.id)}
-        >
-          <Ionicons
-            name="chatbubble-outline"
-            size={18}
-            color={colors.textSecondary}
-          />
-          <Text style={styles.engagementText}>
-            {formatEngagementNumber(post.engagement.comments)}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.engagementButton}
-          onPress={() => onRepost?.(post.id)}
-        >
-          <Ionicons
-            name="repeat-outline"
-            size={18}
-            color={colors.textSecondary}
-          />
-          <Text style={styles.engagementText}>
-            {formatEngagementNumber(post.engagement.reposts)}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.engagementButton}
           onPress={() => onLike?.(post.id)}
         >
           <Ionicons
@@ -182,15 +150,15 @@ export default function Post({
 
         <TouchableOpacity
           style={styles.engagementButton}
-          onPress={() => onShare?.(post.id)}
+          onPress={() => onComment?.(post.id)}
         >
           <Ionicons
-            name="share-outline"
+            name="chatbubble-outline"
             size={18}
             color={colors.textSecondary}
           />
           <Text style={styles.engagementText}>
-            {formatEngagementNumber(post.engagement.shares)}
+            {formatEngagementNumber(post.engagement.comments)}
           </Text>
         </TouchableOpacity>
       </View>

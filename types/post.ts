@@ -15,9 +15,7 @@ export interface PostContent {
 
 export interface PostEngagement {
   likes: number;
-  reposts: number;
   comments: number;
-  shares: number;
 }
 
 export interface Post {
@@ -35,7 +33,7 @@ export interface Post {
     title: string;
     date: Date;
     locationId: string;
-    type: 'upcoming' | 'ongoing' | 'completed';
+    type: "upcoming" | "ongoing" | "completed";
   };
   // Firebase specific fields that can be added later
   createdAt?: any; // Firebase Timestamp

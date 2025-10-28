@@ -4,6 +4,9 @@ import {
   getAuth,
   browserLocalPersistence,
 } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
+import { getAnalytics, isSupported } from "firebase/analytics";
 import { Platform } from "react-native";
 
 const firebaseConfig = {
@@ -16,6 +19,7 @@ const firebaseConfig = {
   measurementId: "G-J9F7GPY5NF",
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
 // Platform-specific auth initialization
@@ -35,4 +39,20 @@ if (Platform.OS === "web") {
   });
 }
 
-export { auth };
+// Initialize Firestore
+const db = getFirestore(app);
+
+// Initialize Storage
+const storage = getStorage(app);
+
+// Initialize Analytics (only on web)
+let analytics;
+if (Platform.OS === "web") {
+  isSupported().then((supported) => {
+    if (supported) {
+      analytics = getAnalytics(app);
+    }
+  });
+}
+
+export { auth, db, storage, analytics };

@@ -11,9 +11,7 @@ interface PostListProps {
   onLoadMore?: () => void;
   onUserPress?: (userId: string) => void;
   onLike?: (postId: string) => void;
-  onRepost?: (postId: string) => void;
   onComment?: (postId: string) => void;
-  onShare?: (postId: string) => void;
   ListHeaderComponent?: React.ReactNode;
 }
 
@@ -24,9 +22,7 @@ export default function PostList({
   onLoadMore,
   onUserPress,
   onLike,
-  onRepost,
   onComment,
-  onShare,
   ListHeaderComponent,
 }: PostListProps) {
   const colors = useThemeColors();
@@ -39,9 +35,7 @@ export default function PostList({
           post={item}
           onUserPress={onUserPress}
           onLike={onLike}
-          onRepost={onRepost}
           onComment={onComment}
-          onShare={onShare}
         />
       )}
       keyExtractor={(item) => item.id}
@@ -69,6 +63,6 @@ export default function PostList({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 0, // Remove padding since we handle it at parent level
+    paddingHorizontal: 0,
   },
 });

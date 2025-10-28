@@ -1,4 +1,5 @@
 import { useThemeColors } from "@/constants/Colors";
+import { PostContent } from "@/types/post";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
@@ -16,12 +17,12 @@ interface PostCreatorProps {
     name: string;
     avatar: string;
   };
-  onCreatePost?: (content: string) => void;
+  onCreatePost?: (content: PostContent) => void;
 }
 
 export default function PostCreator({
   user = {
-    name: "Tiya Bhavsar",
+    name: "User",
     avatar: "https://i.pravatar.cc/150?img=1",
   },
   onCreatePost,
@@ -32,7 +33,7 @@ export default function PostCreator({
 
   const handlePostSubmit = () => {
     if (postText.trim()) {
-      onCreatePost?.(postText);
+      onCreatePost?.({ text: postText.trim() }); // Changed from onCreatePost?.(postText)
       setPostText("");
       setIsFocused(false);
       Alert.alert("Success", "Your post has been created!");
