@@ -99,15 +99,19 @@ export const usePosts = () => {
 
         // Upload images if any
         if (content.images && content.images.length > 0) {
+          console.log("Uploading images...");
+
           // Upload images to Firebase Storage
           const uploadPromises = content.images.map(async (imageUri, index) => {
-            // Convert image URI to Blob
-            const response = await fetch(imageUri);
-            const blob = await response.blob();
-            return uploadPostImage(blob, postId, index);
+            console.log(
+              `Uploading image ${index + 1}/${content.images!.length}:`,
+              imageUri,
+            );
+            return uploadPostImage(imageUri, postId, index);
           });
 
           const imageUrls = await Promise.all(uploadPromises);
+          console.log("Images uploaded successfully:", imageUrls);
 
           // Update post with image URLs
           await updatePost(postId, {
