@@ -76,7 +76,7 @@ export default function HomeScreen() {
   if (isTablet) {
     const LEFT_WIDTH = 310;
     const RIGHT_WIDTH = 330;
-    const CENTER_MAX_WIDTH = 440;
+    const CENTER_MAX_WIDTH = 500;
 
     // row width = left + center + right + gaps (16px between columns)
     const CONTENT_GAP = 16;
