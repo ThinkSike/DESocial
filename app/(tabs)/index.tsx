@@ -4,166 +4,228 @@ import PostList from "@/components/PostList";
 import UserProfileSidebar from "@/components/UserProfileSidebar";
 import { useThemeColors } from "@/constants/Colors";
 import { mockPosts } from "@/data/mockData";
-import { useCallback, useState } from "react";
-import { Alert, Dimensions, ScrollView, StyleSheet, View } from "react-native";
+import { openMaps } from '@/utils/maps';
+import { Ionicons } from '@expo/vector-icons';
+import React, { useCallback, useState } from 'react';
+import { Alert, Dimensions, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
   const colors = useThemeColors();
   const [refreshing, setRefreshing] = useState(false);
-  const [posts, setPosts] = useState(mockPosts);
-  const screenWidth = Dimensions.get("window").width;
+  const [posts, setPosts] = useState<typeof mockPosts>(mockPosts);
+  const screenWidth = Dimensions.get('window').width;
   const isTablet = screenWidth > 768;
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    // Simulate API call delay
-    setTimeout(() => {
-      // In a real app, you would fetch new posts from Firebase here
-      setRefreshing(false);
-    }, 1000);
+    setTimeout(() => setRefreshing(false), 1000);
   }, []);
 
   const handleUserPress = useCallback((userId: string) => {
-    // Navigate to user profile
     Alert.alert("User Profile", `Navigate to profile for user: ${userId}`);
   }, []);
 
   const handleLike = useCallback((postId: string) => {
-    // In a real app, you would update the like count in Firebase
-    setPosts((prevPosts) =>
+    setPosts((prevPosts: typeof mockPosts) =>
       prevPosts.map((post) =>
         post.id === postId
-          ? {
-              ...post,
-              engagement: {
-                ...post.engagement,
-                likes: post.engagement.likes + 1,
-              },
-            }
-          : post,
-      ),
+          ? { ...post, engagement: { ...post.engagement, likes: post.engagement.likes + 1 } }
+          : post
+      )
     );
   }, []);
 
   const handleRepost = useCallback((postId: string) => {
-    // In a real app, you would handle reposting in Firebase
     Alert.alert("Repost", `Repost functionality for post: ${postId}`);
   }, []);
 
   const handleComment = useCallback((postId: string) => {
-    // Navigate to comments screen
     Alert.alert("Comments", `Navigate to comments for post: ${postId}`);
   }, []);
 
   const handleShare = useCallback((postId: string) => {
-    // Handle sharing functionality
     Alert.alert("Share", `Share functionality for post: ${postId}`);
   }, []);
 
   const handleCreatePost = useCallback((content: string) => {
-    // In a real app, you would create a new post in Firebase
     const newPost = {
       id: Date.now().toString(),
       user: {
-        id: "current-user",
-        username: "tiyabhavsar",
-        displayName: "Tiya Bhavsar",
-        avatar: "https://i.pravatar.cc/150?img=1",
+        id: 'current-user',
+        username: '',
+        displayName: '',
+        avatar: 'https://i.pravatar.cc/150?img=1',
         verified: false,
       },
-      content: {
-        text: content,
-      },
-      engagement: {
-        likes: 0,
-        reposts: 0,
-        comments: 0,
-        shares: 0,
-      },
+      content: { text: content },
+      engagement: { likes: 0, reposts: 0, comments: 0, shares: 0 },
       timestamp: new Date(),
-    };
+    } as (typeof mockPosts)[number];
 
-    setPosts((prevPosts) => [newPost, ...prevPosts]);
+    setPosts((prevPosts: typeof mockPosts) => [newPost, ...prevPosts]);
+  }, []);
+
+  const handleOpenMaps = React.useCallback(() => {
+    // You can swap the query for a dynamic value later (e.g., user location)
+    openMaps({ query: 'Colleges near me' });
   }, []);
 
   if (isTablet) {
-    // Desktop/Tablet layout with three columns
+    const LEFT_WIDTH = 310;
+    const RIGHT_WIDTH = 330;
+    const CENTER_MAX_WIDTH = 440;
+
+    // row width = left + center + right + gaps (16px between columns)
+    const CONTENT_GAP = 16;
+    const CONTENT_WIDTH =
+      LEFT_WIDTH + CENTER_MAX_WIDTH + RIGHT_WIDTH + CONTENT_GAP * 2;
+
     return (
       <SafeAreaView style={styles(colors).container}>
-        <ScrollView
-          style={styles(colors).mainContent}
-          contentContainerStyle={styles(colors).mainContentContainer}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles(colors).threeColumnLayout}>
-            {/* Left Sidebar */}
-            <UserProfileSidebar />
+        <View style={styles(colors).header}>
+          <TouchableOpacity
+            onPress={handleOpenMaps}
+            accessibilityRole="button"
+            accessibilityLabel="Open Maps"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Logo width={50} height={50} />
+          </TouchableOpacity>
 
-            {/* Main Content */}
-            <View style={styles(colors).centerColumn}>
-              <PostCreator onCreatePost={handleCreatePost} />
-              <PostList
-                posts={posts}
-                refreshing={refreshing}
-                onRefresh={handleRefresh}
-                onUserPress={handleUserPress}
-                onLike={handleLike}
-                onRepost={handleRepost}
-                onComment={handleComment}
-                onShare={handleShare}
-              />
+          <View style={styles(colors).headerActions}>
+            <TouchableOpacity
+              onPress={() => router.push('/(tabs)/notifications')}
+              accessibilityRole="button"
+              accessibilityLabel="Notifications"
+              style={{ padding: 6 }}
+            >
+              <Ionicons name="notifications-outline" size={22} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles(colors).mainContent}>
+          {/* Center the whole 3-column row */}
+          <View
+            style={[
+              styles(colors).threeColumnLayout,
+              { width: CONTENT_WIDTH, alignSelf: 'center' },
+            ]}
+          >
+            <View style={{ width: LEFT_WIDTH }}>
+              <UserProfileSidebar width={LEFT_WIDTH} />
             </View>
 
-            {/* Right Sidebar */}
-            <NewsSidebar />
+            <View
+              style={[
+                styles(colors).centerColumn,
+                { maxWidth: CENTER_MAX_WIDTH, width: '100%' },
+              ]}
+            >
+              <View style={{ flex: 1, minHeight: 0 }}>
+                <PostList
+                  posts={posts}
+                  refreshing={refreshing}
+                  onRefresh={handleRefresh}
+                  onUserPress={handleUserPress}
+                  onLike={handleLike}
+                  onRepost={handleRepost}
+                  onComment={handleComment}
+                  onShare={handleShare}
+                  ListHeaderComponent={<PostCreator onCreatePost={handleCreatePost} />}
+                />
+              </View>
+            </View>
+
+            <View style={{ width: RIGHT_WIDTH }}>
+              <NewsSidebar width={RIGHT_WIDTH} />
+            </View>
           </View>
-        </ScrollView>
+        </View>
       </SafeAreaView>
     );
   }
 
-  // Mobile layout - single column
+  // Mobile layout
   return (
     <SafeAreaView style={styles(colors).container}>
-      <PostList
-        posts={posts}
-        refreshing={refreshing}
-        onRefresh={handleRefresh}
-        onUserPress={handleUserPress}
-        onLike={handleLike}
-        onRepost={handleRepost}
-        onComment={handleComment}
-        onShare={handleShare}
-        ListHeaderComponent={<PostCreator onCreatePost={handleCreatePost} />}
-      />
+      <View style={styles(colors).header}>
+        {/* Logo opens maps */}
+        <TouchableOpacity
+          onPress={handleOpenMaps}
+          accessibilityRole="button"
+          accessibilityLabel="Open Maps"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Logo width={50} height={50} />
+        </TouchableOpacity>
+
+        <View style={styles(colors).headerActions}>
+          <TouchableOpacity
+            onPress={() => router.push('/(tabs)/notifications')}
+            accessibilityRole="button"
+            accessibilityLabel="Notifications"
+            style={{ padding: 6 }}
+          >
+            <Ionicons name="notifications-outline" size={22} color={colors.textSecondary} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={styles(colors).mobileContent}>
+        <PostList
+          posts={posts}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          onUserPress={handleUserPress}
+          onLike={handleLike}
+          onRepost={handleRepost}
+          onComment={handleComment}
+          onShare={handleShare}
+          ListHeaderComponent={<PostCreator onCreatePost={handleCreatePost} />}
+        />
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = (colors: any) =>
   StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
+    container: { flex: 1, backgroundColor: colors.background },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      backgroundColor: colors.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
     },
-    mainContent: {
-      flex: 1,
-    },
-    mainContentContainer: {
-      paddingTop: 16,
-      paddingBottom: 20,
-    },
+    headerActions: { flexDirection: "row", alignItems: "center" },
+
+    // Root area under header
+    mainContent: { flex: 1 },                 // no ScrollView here
+
     threeColumnLayout: {
+      flex: 1,
       flexDirection: "row",
       justifyContent: "center",
       maxWidth: 1200,
       width: "100%",
       alignSelf: "center",
+      gap: 16,
     },
+    // Make center take only its content width, allow inner list to scroll
     centerColumn: {
-      flex: 1,
-      maxWidth: 540,
-      minWidth: 400,
+      flexGrow: 0,
+      flexShrink: 1,
+      minWidth: 360,   // was 360/400 — allow a tighter center
+      minHeight: 0,
     },
+
+    feedList: { flex: 1 },                    // FlatList gets flex to enable scrolling
+
+    mobileContent: { flex: 1 },
   });

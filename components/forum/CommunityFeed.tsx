@@ -4,14 +4,14 @@ import { Post } from '@/types/post';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
-    Dimensions,
-    Image,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  Image,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 interface CommunityFeedProps {
@@ -239,9 +239,9 @@ export function CommunityFeed({ posts, selectedCommunity }: CommunityFeedProps) 
         backgroundColor: colors.cardBackground 
       }]}>
         <Text style={[styles.feedTitle, { color: colors.text }]}>{feedTitle}</Text>
-        <Text style={[styles.feedSubtitle, { color: colors.textSecondary }]}>
+        {/* <Text style={[styles.feedSubtitle, { color: colors.textSecondary }]}>
           {posts.length} {posts.length === 1 ? 'post' : 'posts'}
-        </Text>
+        </Text> */}
       </View>
 
       {/* Posts List */}
@@ -271,9 +271,11 @@ export function CommunityFeed({ posts, selectedCommunity }: CommunityFeedProps) 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    width: '100%',
   },
   feedHeader: {
-    paddingHorizontal: 20,
+    marginTop:20,
+    paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: 1,
   },

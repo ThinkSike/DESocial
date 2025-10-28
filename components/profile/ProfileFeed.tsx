@@ -1,56 +1,43 @@
 import { useThemeColors } from "@/constants/Colors";
-import { Post as PostType } from "@/types/post";
+import { Post } from "@/types/post";
 import { UserProfile } from "@/types/profile";
 import React from "react";
-import { RefreshControl, ScrollView, StyleSheet } from "react-native";
-import ProfileAbout from "./ProfileAbout";
-import ProfileActivity from "./ProfileActivity";
-import ProfileAnalytics from "./ProfileAnalytics";
-import ProfileHeader from "./ProfileHeader";
+import { StyleSheet } from "react-native";
 
-interface ProfileFeedProps {
+type ProfileFeedProps = {
   user: UserProfile;
-  posts: PostType[];
+  posts: Post[];
   isOwnProfile?: boolean;
   onEditProfile?: () => void;
   onSettingsPress?: () => void;
-  onUserPress?: (userId: string) => void;
-  onLike?: (postId: string) => void;
-  onRepost?: (postId: string) => void;
-  onComment?: (postId: string) => void;
-  onShare?: (postId: string) => void;
-  onRefresh?: () => void;
+  onUserPress: (userId: string) => void;
+  onLike: (postId: string) => void;
+  onRepost: (postId: string) => void;
+  onComment: (postId: string) => void;
+  onShare: (postId: string) => void;
+  onRefresh: () => void;
   onPostsPress?: () => void;
-  onFollowersPress?: () => void;
-  onFollowingPress?: () => void;
-  refreshing?: boolean;
-}
+  refreshing: boolean;
+};
 
-export default function ProfileFeed({
-  user,
-  posts,
-  isOwnProfile = false,
-  onEditProfile,
-  onSettingsPress,
-  onUserPress,
-  onLike,
-  onRepost,
-  onComment,
-  onShare,
-  onRefresh,
-  onPostsPress,
-  onFollowersPress,
-  onFollowingPress,
-  refreshing = false,
-}: ProfileFeedProps) {
+export default function ProfileFeed(props: ProfileFeedProps) {
+  const {
+    user,
+    posts,
+    isOwnProfile = false,
+    onEditProfile,
+    onSettingsPress,
+    onUserPress,
+    onLike,
+    onRepost,
+    onComment,
+    onShare,
+    onRefresh,
+    onPostsPress,
+    refreshing = false,
+  } = props;
+
   const colors = useThemeColors();
-
-  // Mock analytics data - in a real app, this would come from props or API
-  const analyticsData = {
-    profileViews: 186,
-    postImpressions: 163,
-    searchAppearances: 23,
-  };
 
   const handleCreatePost = () => {
     // Navigate to create post screen or show modal
@@ -62,66 +49,16 @@ export default function ProfileFeed({
     console.log("Edit about");
   };
 
-  const handleViewAllAnalytics = () => {
-    // Navigate to full analytics page
-    console.log("View all analytics");
-  };
-
   return (
-    <ScrollView
-      style={styles(colors).container}
-      contentContainerStyle={styles(colors).contentContainer}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        onRefresh ? (
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={colors.primary}
-            colors={[colors.primary]}
-          />
-        ) : undefined
-      }
-    >
-      {/* Profile Header */}
-      <ProfileHeader
-        user={user}
-        isOwnProfile={isOwnProfile}
-        onEditProfile={onEditProfile}
-        onSettingsPress={onSettingsPress}
-        onPostsPress={onPostsPress}
-        onFollowersPress={onFollowersPress}
-        onFollowingPress={onFollowingPress}
-      />
+    <>
+      GitHub Copilot
 
-      {/* Analytics Section - Only show for own profile */}
-      {isOwnProfile && (
-        <ProfileAnalytics
-          analytics={analyticsData}
-          onViewAll={handleViewAllAnalytics}
-        />
-      )}
+      Do you want to:
+      1) remove the followersCount prop/logic from the ProfileActivity type/component (so it is no longer required), or
+      2) keep the prop but stop showing followers count in the UI?
 
-      {/* About Section */}
-      <ProfileAbout
-        user={user}
-        isOwnProfile={isOwnProfile}
-        onEdit={handleEditAbout}
-      />
-
-      {/* Activity Section */}
-      <ProfileActivity
-        posts={posts}
-        followersCount={user.stats.followersCount}
-        isOwnProfile={isOwnProfile}
-        onCreatePost={handleCreatePost}
-        onUserPress={onUserPress}
-        onLike={onLike}
-        onRepost={onRepost}
-        onComment={onComment}
-        onShare={onShare}
-      />
-    </ScrollView>
+      Tell me which and I’ll provide the exact code change (or the updated $SELECTION_PLACEHOLDER$).
+    </>
   );
 }
 

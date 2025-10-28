@@ -138,46 +138,51 @@ export default function CommunitySidebar({
             </View>
             {newCommunities.slice(0, 4).map((community) => (
               <View key={community.id} style={styles(colors).newCommunityItem}>
-                <TouchableOpacity
-                  style={[
-                    styles(colors).communityItem,
-                    selectedCommunity?.id === community.id && styles(colors).selectedCommunityItem,
-                  ]}
-                  onPress={() => onCommunitySelect(community)}
-                >
-                  <View style={styles(colors).communityHeader}>
-                    <View
-                      style={[
-                        styles(colors).communityIcon,
-                        { backgroundColor: getCategoryColor(community.type) + '20' },
-                      ]}
-                    >
-                      <Ionicons
-                        name={community.icon as any}
-                        size={16}
-                        color={getCategoryColor(community.type)}
-                      />
-                    </View>
-                    <View style={styles(colors).communityInfo}>
-                      <Text style={styles(colors).communityName} numberOfLines={1}>
-                        {community.name}
-                      </Text>
-                      <Text style={styles(colors).memberCount}>
-                        {community.memberCount >= 1000 
-                          ? `${(community.memberCount / 1000).toFixed(1)}K` 
-                          : community.memberCount} members
-                      </Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-                {!community.isJoined && (
+                <View style={styles(colors).newCommunityRow}>
                   <TouchableOpacity
-                    style={styles(colors).joinButton}
-                    onPress={() => onJoinCommunity(community.id)}
+                    style={[
+                      styles(colors).communityItem,
+                      selectedCommunity?.id === community.id && styles(colors).selectedCommunityItem,
+                    ]}
+                    onPress={() => onCommunitySelect(community)}
                   >
-                    <Text style={styles(colors).joinButtonText}>Join</Text>
+                    <View style={styles(colors).communityHeader}>
+                      <View
+                        style={[
+                          styles(colors).communityIcon,
+                          { backgroundColor: getCategoryColor(community.type) + '20' },
+                        ]}
+                      >
+                        <Ionicons
+                          name={community.icon as any}
+                          size={16}
+                          color={getCategoryColor(community.type)}
+                        />
+                      </View>
+                      <View style={styles(colors).communityInfo}>
+                        <Text style={styles(colors).communityName} numberOfLines={1}>
+                          {community.name}
+                        </Text>
+                        <Text style={styles(colors).memberCount}>
+                          {community.memberCount >= 1000 
+                            ? `${(community.memberCount / 1000).toFixed(1)}K` 
+                            : community.memberCount} members
+                        </Text>
+                      </View>
+                    </View>
+                    {community.isVerified && (
+                      <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+                    )}
                   </TouchableOpacity>
-                )}
+                  {!community.isJoined && (
+                    <TouchableOpacity
+                      style={styles(colors).joinButton}
+                      onPress={() => onJoinCommunity(community.id)}
+                    >
+                      <Text style={styles(colors).joinButtonText}>Join</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
             ))}
           </View>
@@ -197,7 +202,6 @@ const styles = (colors: any) =>
   StyleSheet.create({
     container: {
       width: 280,
-      marginRight: 16,
     },
     scrollContainer: {
       flex: 1,
@@ -296,6 +300,11 @@ const styles = (colors: any) =>
     },
     newCommunityItem: {
       marginBottom: 4,
+    },
+    newCommunityRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
     },
     joinButton: {
       paddingHorizontal: 8,
