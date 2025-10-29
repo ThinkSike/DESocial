@@ -6,11 +6,11 @@ import React from "react";
 import {
   Dimensions,
   Image,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Platform,
 } from "react-native";
 
 interface PostProps {
@@ -20,13 +20,9 @@ interface PostProps {
   onComment?: (postId: string) => void;
 }
 
-const { width: screenWidth } = Dimensions.get("window");
+Dimensions.get("window");
 // Limit max width on web, use full width on mobile
 const MAX_CONTENT_WIDTH = 600;
-const contentWidth =
-  Platform.OS === "web"
-    ? Math.min(screenWidth - 80, MAX_CONTENT_WIDTH)
-    : screenWidth - 80;
 
 export default function Post({
   post,
