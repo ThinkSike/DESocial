@@ -2,10 +2,10 @@ import { useThemeColors } from "@/constants/Colors";
 import { formatEngagementNumber, getTimeAgo } from "@/data/mockData";
 import { Post as PostType } from "@/types/post";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import React from "react";
 import {
   Dimensions,
-  Image,
   Platform,
   StyleSheet,
   Text,
@@ -44,7 +44,8 @@ export default function Post({
           <Image
             source={{ uri: images[0] }}
             style={styles.singleImage}
-            resizeMode="contain"
+            contentFit="contain"
+            transition={200}
           />
         </TouchableOpacity>
       );
@@ -62,7 +63,8 @@ export default function Post({
               <Image
                 source={{ uri: image }}
                 style={styles.multiImage}
-                resizeMode="contain"
+                contentFit="contain"
+                transition={200}
               />
             </TouchableOpacity>
           ))}
@@ -82,7 +84,8 @@ export default function Post({
             <Image
               source={{ uri: image }}
               style={styles.gridImage}
-              resizeMode="contain"
+              contentFit="contain"
+              transition={200}
             />
             {index === 3 && images.length > 4 && (
               <View style={styles.overlay}>
@@ -102,7 +105,12 @@ export default function Post({
           style={styles.userInfo}
           onPress={() => onUserPress?.(post.user.id)}
         >
-          <Image source={{ uri: post.user.avatar }} style={styles.avatar} />
+          <Image
+            source={{ uri: post.user.avatar }}
+            style={styles.avatar}
+            contentFit="cover"
+            transition={200}
+          />
           <View style={styles.userDetails}>
             <View style={styles.nameRow}>
               <Text style={styles.displayName}>{post.user.displayName}</Text>
