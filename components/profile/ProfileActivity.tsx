@@ -1,6 +1,7 @@
 import { useThemeColors } from "@/constants/Colors";
 import { Post as PostType } from "@/types/post";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import React, { useState } from "react";
 import {
   ScrollView,
@@ -21,7 +22,7 @@ interface ProfileActivityProps {
   onShare?: (postId: string) => void;
 }
 
-type ActivityTab = "posts" | "comments" | "images" | "documents";
+type ActivityTab = "posts" | "comments";
 
 export default function ProfileActivity({
   posts,
@@ -30,21 +31,14 @@ export default function ProfileActivity({
 }: ProfileActivityProps) {
   const colors = useThemeColors();
   const [activeTab, setActiveTab] = useState<ActivityTab>("posts");
+  const [showAll, setShowAll] = useState(false);
 
   const filterPostsByTab = (tab: ActivityTab) => {
     switch (tab) {
       case "posts":
         return posts;
       case "comments":
-        // Filter posts that are replies/comments
         return posts.filter((post) => post.content.text?.includes("@"));
-      case "images":
-        return posts.filter(
-          (post) => post.content.images && post.content.images.length > 0
-        );
-      case "documents":
-        // In a real app, you'd filter for document attachments
-        return posts.slice(0, 2);
       default:
         return posts;
     }
@@ -56,10 +50,6 @@ export default function ProfileActivity({
         return "document-text";
       case "comments":
         return "chatbubble";
-      case "images":
-        return "image";
-      case "documents":
-        return "document";
       default:
         return "document-text";
     }
@@ -134,45 +124,58 @@ export default function ProfileActivity({
         >
           <ActivityTab tab="posts" label="Posts" />
           <ActivityTab tab="comments" label="Comments" />
-          <ActivityTab tab="images" label="Images" />
-          <ActivityTab tab="documents" label="Documents" />
         </ScrollView>
       </View>
 
       <View style={styles(colors).contentContainer}>
         {filteredPosts.length > 0 ? (
           <View style={styles(colors).postsContainer}>
-            {filteredPosts.slice(0, 3).map((post) => (
-              <View key={post.id} style={styles(colors).postItem}>
-                <Text style={styles(colors).postText} numberOfLines={3}>
-                  {post.content.text}
-                </Text>
-                <View style={styles(colors).postMeta}>
-                  <Text style={styles(colors).postDate}>
-                    {safeDate(post.timestamp)}
+            {(showAll ? filteredPosts : filteredPosts.slice(0, 3)).map(
+              (post) => (
+                <View key={post.id} style={styles(colors).postItem}>
+                  {post.content.images?.length > 0 && (
+                    <Image
+                      source={{ uri: post.content.images[0] }}
+                      style={styles(colors).postImage}
+                      contentFit="cover" // Added for expo-image
+                      transition={200} // Smooth transition for image loading
+                    />
+                  )}
+                  <Text style={styles(colors).postText} numberOfLines={3}>
+                    {post.content.text}
                   </Text>
-                  <View style={styles(colors).postStats}>
-                    <Text style={styles(colors).postStat}>
-                      {post.engagement.likes} likes
+                  <View style={styles(colors).postMeta}>
+                    <Text style={styles(colors).postDate}>
+                      {safeDate(post.timestamp)}
                     </Text>
-                    <Text style={styles(colors).postStat}>
-                      {post.engagement.comments} comments
-                    </Text>
+                    <View style={styles(colors).postStats}>
+                      <Text style={styles(colors).postStat}>
+                        {post.engagement.likes} likes
+                      </Text>
+                      <Text style={styles(colors).postStat}>
+                        {post.engagement.comments} comments
+                      </Text>
+                    </View>
                   </View>
                 </View>
-              </View>
-            ))}
+              )
+            )}
 
-            <TouchableOpacity style={styles(colors).showAllButton}>
-              <Text style={styles(colors).showAllText}>
-                Show all {activeTab} ({filteredPosts.length})
-              </Text>
-              <Ionicons
-                name="arrow-forward"
-                size={16}
-                color={colors.textSecondary}
-              />
-            </TouchableOpacity>
+            {!showAll && filteredPosts.length > 3 && (
+              <TouchableOpacity
+                style={styles(colors).showAllButton}
+                onPress={() => setShowAll(true)}
+              >
+                <Text style={styles(colors).showAllText}>
+                  Show all {activeTab} ({filteredPosts.length})
+                </Text>
+                <Ionicons
+                  name="arrow-forward"
+                  size={16}
+                  color={colors.textSecondary}
+                />
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
           <View style={styles(colors).emptyState}>
@@ -201,31 +204,23 @@ export default function ProfileActivity({
   );
 }
 
-// ProfileActivity.tsx - within the styles function at the bottom
-
 const styles = (colors: any) =>
   StyleSheet.create({
     container: {
-      width: "100%", // ensure it fills the centered column
+      width: "100%",
       maxWidth: 700,
       marginLeft: "auto",
       marginRight: "auto",
       marginBottom: 16,
       backgroundColor: colors.surface || colors.background,
       borderRadius: 12,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 3.84,
-      elevation: 5,
-      overflow: "hidden",
       borderWidth: 1,
       borderColor: colors.border,
     },
     header: {
       padding: 16,
       borderBottomWidth: 1,
-      borderBottomColor: colors.border || "#E1E8ED",
+      borderBottomColor: colors.border,
     },
     title: {
       fontSize: 18,
@@ -240,7 +235,7 @@ const styles = (colors: any) =>
     createPostSection: {
       padding: 16,
       borderBottomWidth: 1,
-      borderBottomColor: colors.border || "#E1E8ED",
+      borderBottomColor: colors.border,
     },
     createPostButton: {
       borderWidth: 1,
@@ -257,7 +252,7 @@ const styles = (colors: any) =>
     },
     tabsContainer: {
       borderBottomWidth: 1,
-      borderBottomColor: colors.border || "#E1E8ED",
+      borderBottomColor: colors.border,
     },
     tabsScrollContent: {
       paddingHorizontal: 16,
@@ -301,7 +296,13 @@ const styles = (colors: any) =>
     postItem: {
       paddingBottom: 16,
       borderBottomWidth: 1,
-      borderBottomColor: colors.border || "#E1E8ED",
+      borderBottomColor: colors.border,
+    },
+    postImage: {
+      width: "100%",
+      height: 200,
+      borderRadius: 8,
+      marginBottom: 8,
     },
     postText: {
       fontSize: 14,
