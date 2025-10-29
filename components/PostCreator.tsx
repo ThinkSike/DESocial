@@ -1,19 +1,20 @@
 import { useThemeColors } from "@/constants/Colors";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { PostContent } from "@/types/post";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Image,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  ActivityIndicator,
-  Platform,
 } from "react-native";
 
 interface PostCreatorProps {
@@ -27,6 +28,7 @@ export default function PostCreator({ user, onCreatePost }: PostCreatorProps) {
   const [images, setImages] = useState<string[]>([]);
   const [focused, setFocused] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const { profile } = useUserProfile();
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -44,7 +46,7 @@ export default function PostCreator({ user, onCreatePost }: PostCreatorProps) {
 
     if (!result.canceled) {
       setImages((prev) =>
-        [...prev, ...result.assets.map((a) => a.uri)].slice(0, 4),
+        [...prev, ...result.assets.map((a) => a.uri)].slice(0, 4)
       );
       setFocused(true);
     }
@@ -110,7 +112,9 @@ export default function PostCreator({ user, onCreatePost }: PostCreatorProps) {
     <View style={styles(colors).container}>
       <View style={styles(colors).inputSection}>
         <Image
-          source={{ uri: user?.avatar || "https://i.pravatar.cc/150?img=1" }}
+          source={{
+            uri: profile?.avatar,
+          }}
           style={styles(colors).avatar}
         />
         <TouchableOpacity
