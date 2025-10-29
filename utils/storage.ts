@@ -1,10 +1,11 @@
+import { storage } from "@/config/firebase";
+import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import {
+  deleteObject,
+  getDownloadURL,
   ref,
   uploadBytes,
-  getDownloadURL,
-  deleteObject,
 } from "firebase/storage";
-import { storage } from "@/config/firebase";
 
 export const STORAGE_PATHS = {
   AVATARS: "avatars",
@@ -12,6 +13,48 @@ export const STORAGE_PATHS = {
   COMMUNITY_COVERS: "communities/covers",
   COMMUNITY_ICONS: "communities/icons",
 } as const;
+
+// Compression settings - extremely aggressive for small viewing areas
+const COMPRESSION_QUALITY = {
+  AVATAR: 0.3,
+  POST: 0.4,
+  COMMUNITY: 0.4,
+} as const;
+
+// Max dimensions to reduce file size - much smaller for mobile viewing
+const MAX_DIMENSIONS = {
+  AVATAR: 300,
+  POST: 800,
+  COMMUNITY: 800,
+} as const;
+
+/**
+ * Compress and resize image before upload
+ */
+const compressImage = async (
+  uri: string,
+  quality: number = 0.4,
+  maxDimension: number = 800
+): Promise<string> => {
+  try {
+    const context = ImageManipulator.manipulate(uri);
+
+    // Resize image to reduce file size
+    // This will maintain aspect ratio and ensure neither dimension exceeds maxDimension
+    context.resize({ width: maxDimension });
+
+    const image = await context.renderAsync();
+    const result = await image.saveAsync({
+      compress: quality,
+      format: SaveFormat.JPEG,
+    });
+    return result.uri;
+  } catch (error) {
+    console.error("Compression error:", error);
+    // Return original URI if compression fails
+    return uri;
+  }
+};
 
 /**
  * Upload file to Firebase Storage
@@ -36,10 +79,21 @@ const uriToBlob = async (uri: string): Promise<Blob> => {
 export const uploadImage = async (
   fileOrUri: Blob | File | string,
   path: string,
+  compressionQuality?: number,
+  maxDimension?: number
 ): Promise<string> => {
   try {
-    const file =
-      typeof fileOrUri === "string" ? await uriToBlob(fileOrUri) : fileOrUri;
+    let file: Blob | File;
+
+    if (typeof fileOrUri === "string") {
+      // Compress if it's a URI and quality is specified
+      const uri = compressionQuality
+        ? await compressImage(fileOrUri, compressionQuality, maxDimension)
+        : fileOrUri;
+      file = await uriToBlob(uri);
+    } else {
+      file = fileOrUri;
+    }
 
     return await uploadFile(file, path);
   } catch (error) {
@@ -53,10 +107,15 @@ export const uploadImage = async (
  */
 export const uploadAvatar = async (
   fileOrUri: Blob | File | string,
-  userId: string,
+  userId: string
 ): Promise<string> => {
   const path = `${STORAGE_PATHS.AVATARS}/${userId}_${Date.now()}.jpg`;
-  return uploadImage(fileOrUri, path);
+  return uploadImage(
+    fileOrUri,
+    path,
+    COMPRESSION_QUALITY.AVATAR,
+    MAX_DIMENSIONS.AVATAR
+  );
 };
 
 /**
@@ -65,10 +124,15 @@ export const uploadAvatar = async (
 export const uploadPostImage = async (
   fileOrUri: Blob | File | string,
   postId: string,
-  imageIndex: number,
+  imageIndex: number
 ): Promise<string> => {
   const path = `${STORAGE_PATHS.POST_IMAGES}/${postId}_${imageIndex}.jpg`;
-  return uploadImage(fileOrUri, path);
+  return uploadImage(
+    fileOrUri,
+    path,
+    COMPRESSION_QUALITY.POST,
+    MAX_DIMENSIONS.POST
+  );
 };
 
 /**
@@ -76,10 +140,15 @@ export const uploadPostImage = async (
  */
 export const uploadCommunityCover = async (
   fileOrUri: Blob | File | string,
-  communityId: string,
+  communityId: string
 ): Promise<string> => {
   const path = `${STORAGE_PATHS.COMMUNITY_COVERS}/${communityId}.jpg`;
-  return uploadImage(fileOrUri, path);
+  return uploadImage(
+    fileOrUri,
+    path,
+    COMPRESSION_QUALITY.COMMUNITY,
+    MAX_DIMENSIONS.COMMUNITY
+  );
 };
 
 /**
@@ -87,10 +156,15 @@ export const uploadCommunityCover = async (
  */
 export const uploadCommunityIcon = async (
   fileOrUri: Blob | File | string,
-  communityId: string,
+  communityId: string
 ): Promise<string> => {
   const path = `${STORAGE_PATHS.COMMUNITY_ICONS}/${communityId}.jpg`;
-  return uploadImage(fileOrUri, path);
+  return uploadImage(
+    fileOrUri,
+    path,
+    COMPRESSION_QUALITY.COMMUNITY,
+    MAX_DIMENSIONS.COMMUNITY
+  );
 };
 
 /**
