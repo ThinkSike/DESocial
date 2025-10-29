@@ -14,14 +14,14 @@ export const STORAGE_PATHS = {
   COMMUNITY_ICONS: "communities/icons",
 } as const;
 
-// Compression settings - extremely aggressive for small viewing areas
+// Compression settings
 const COMPRESSION_QUALITY = {
-  AVATAR: 0.3,
-  POST: 0.4,
-  COMMUNITY: 0.4,
+  AVATAR: 0.2,
+  POST: 0.3,
+  COMMUNITY: 0.3,
 } as const;
 
-// Max dimensions to reduce file size - much smaller for mobile viewing
+// Max dimensions for different image types
 const MAX_DIMENSIONS = {
   AVATAR: 300,
   POST: 800,
@@ -33,20 +33,16 @@ const MAX_DIMENSIONS = {
  */
 const compressImage = async (
   uri: string,
-  quality: number = 0.4,
-  maxDimension: number = 800
+  quality: number = 0.3,
+  maxWidth: number = 800
 ): Promise<string> => {
   try {
     const context = ImageManipulator.manipulate(uri);
-
-    // Resize image to reduce file size
-    // This will maintain aspect ratio and ensure neither dimension exceeds maxDimension
-    context.resize({ width: maxDimension });
-
+    context.resize({ width: maxWidth });
     const image = await context.renderAsync();
     const result = await image.saveAsync({
       compress: quality,
-      format: SaveFormat.JPEG,
+      format: SaveFormat.WEBP,
     });
     return result.uri;
   } catch (error) {
@@ -80,7 +76,7 @@ export const uploadImage = async (
   fileOrUri: Blob | File | string,
   path: string,
   compressionQuality?: number,
-  maxDimension?: number
+  maxWidth?: number
 ): Promise<string> => {
   try {
     let file: Blob | File;
@@ -88,7 +84,7 @@ export const uploadImage = async (
     if (typeof fileOrUri === "string") {
       // Compress if it's a URI and quality is specified
       const uri = compressionQuality
-        ? await compressImage(fileOrUri, compressionQuality, maxDimension)
+        ? await compressImage(fileOrUri, compressionQuality, maxWidth)
         : fileOrUri;
       file = await uriToBlob(uri);
     } else {
@@ -109,7 +105,7 @@ export const uploadAvatar = async (
   fileOrUri: Blob | File | string,
   userId: string
 ): Promise<string> => {
-  const path = `${STORAGE_PATHS.AVATARS}/${userId}_${Date.now()}.jpg`;
+  const path = `${STORAGE_PATHS.AVATARS}/${userId}_${Date.now()}.webp`;
   return uploadImage(
     fileOrUri,
     path,
@@ -126,7 +122,7 @@ export const uploadPostImage = async (
   postId: string,
   imageIndex: number
 ): Promise<string> => {
-  const path = `${STORAGE_PATHS.POST_IMAGES}/${postId}_${imageIndex}.jpg`;
+  const path = `${STORAGE_PATHS.POST_IMAGES}/${postId}_${imageIndex}.webp`;
   return uploadImage(
     fileOrUri,
     path,
@@ -142,7 +138,7 @@ export const uploadCommunityCover = async (
   fileOrUri: Blob | File | string,
   communityId: string
 ): Promise<string> => {
-  const path = `${STORAGE_PATHS.COMMUNITY_COVERS}/${communityId}.jpg`;
+  const path = `${STORAGE_PATHS.COMMUNITY_COVERS}/${communityId}.webp`;
   return uploadImage(
     fileOrUri,
     path,
@@ -158,7 +154,7 @@ export const uploadCommunityIcon = async (
   fileOrUri: Blob | File | string,
   communityId: string
 ): Promise<string> => {
-  const path = `${STORAGE_PATHS.COMMUNITY_ICONS}/${communityId}.jpg`;
+  const path = `${STORAGE_PATHS.COMMUNITY_ICONS}/${communityId}.webp`;
   return uploadImage(
     fileOrUri,
     path,
