@@ -26,7 +26,7 @@ export default function ProfileScreen() {
   const { user: authUser } = useAuthStore();
 
   const { profile, loading: profileLoading, updateAvatar } = useUserProfile();
-  const { handleCreatePost } = usePosts();
+  usePosts();
 
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [postsLoading, setPostsLoading] = useState(true);
@@ -293,7 +293,7 @@ export default function ProfileScreen() {
 
 const PAGE_MAX_WIDTH = 700;
 
-const styles = (colors: any) =>
+const styles = () =>
   StyleSheet.create({
     container: { flex: 1 },
     headerSpacer: { height: 56 },

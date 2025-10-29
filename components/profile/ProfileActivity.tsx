@@ -27,11 +27,6 @@ export default function ProfileActivity({
   posts,
   isOwnProfile = false,
   onCreatePost,
-  onUserPress,
-  onLike,
-  onRepost,
-  onComment,
-  onShare,
 }: ProfileActivityProps) {
   const colors = useThemeColors();
   const [activeTab, setActiveTab] = useState<ActivityTab>("posts");
@@ -45,7 +40,7 @@ export default function ProfileActivity({
         return posts.filter((post) => post.content.text?.includes("@"));
       case "images":
         return posts.filter(
-          (post) => post.content.images && post.content.images.length > 0,
+          (post) => post.content.images && post.content.images.length > 0
         );
       case "documents":
         // In a real app, you'd filter for document attachments
@@ -153,10 +148,16 @@ export default function ProfileActivity({
                   {post.content.text}
                 </Text>
                 <View style={styles(colors).postMeta}>
-                  <Text style={styles(colors).postDate}>{safeDate(post.timestamp)}</Text>
+                  <Text style={styles(colors).postDate}>
+                    {safeDate(post.timestamp)}
+                  </Text>
                   <View style={styles(colors).postStats}>
-                    <Text style={styles(colors).postStat}>{post.engagement.likes} likes</Text>
-                    <Text style={styles(colors).postStat}>{post.engagement.comments} comments</Text>
+                    <Text style={styles(colors).postStat}>
+                      {post.engagement.likes} likes
+                    </Text>
+                    <Text style={styles(colors).postStat}>
+                      {post.engagement.comments} comments
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -175,11 +176,22 @@ export default function ProfileActivity({
           </View>
         ) : (
           <View style={styles(colors).emptyState}>
-            <Ionicons name={getTabIcon(activeTab) as any} size={48} color={colors.textSecondary} />
-            <Text style={styles(colors).emptyStateText}>No {activeTab} yet</Text>
+            <Ionicons
+              name={getTabIcon(activeTab) as any}
+              size={48}
+              color={colors.textSecondary}
+            />
+            <Text style={styles(colors).emptyStateText}>
+              No {activeTab} yet
+            </Text>
             {isOwnProfile && activeTab === "posts" && (
-              <TouchableOpacity style={styles(colors).emptyStateButton} onPress={onCreatePost}>
-                <Text style={styles(colors).emptyStateButtonText}>Create your first post</Text>
+              <TouchableOpacity
+                style={styles(colors).emptyStateButton}
+                onPress={onCreatePost}
+              >
+                <Text style={styles(colors).emptyStateButtonText}>
+                  Create your first post
+                </Text>
               </TouchableOpacity>
             )}
           </View>
@@ -194,10 +206,10 @@ export default function ProfileActivity({
 const styles = (colors: any) =>
   StyleSheet.create({
     container: {
-      width: '100%',           // ensure it fills the centered column
+      width: "100%", // ensure it fills the centered column
       maxWidth: 700,
-      marginLeft: 'auto',
-      marginRight: 'auto',
+      marginLeft: "auto",
+      marginRight: "auto",
       marginBottom: 16,
       backgroundColor: colors.surface || colors.background,
       borderRadius: 12,
