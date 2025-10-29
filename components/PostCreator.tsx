@@ -17,286 +17,177 @@ import {
 } from "react-native";
 
 interface PostCreatorProps {
-  user?: {
-    name: string;
-    avatar: string;
-  };
+  user?: { name: string; avatar: string };
   onCreatePost?: (content: PostContent) => void;
 }
 
-export default function PostCreator({
-  user = {
-    name: "User",
-    avatar: "https://i.pravatar.cc/150?img=1",
-  },
-  onCreatePost,
-}: PostCreatorProps) {
+export default function PostCreator({ user, onCreatePost }: PostCreatorProps) {
   const colors = useThemeColors();
-  const [postText, setPostText] = useState("");
-  const [selectedImages, setSelectedImages] = useState<string[]>([]);
-  const [isFocused, setIsFocused] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const [text, setText] = useState("");
+  const [images, setImages] = useState<string[]>([]);
+  const [focused, setFocused] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const pickImage = async () => {
-    try {
-      // Request permission
-      const { status } =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          "Permission required",
-          "Sorry, we need camera roll permissions to upload images.",
-        );
-        return;
-      }
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission needed", "Please grant photo library access");
+      return;
+    }
 
-      // Launch image picker
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: "images",
-        allowsMultipleSelection: true,
-        selectionLimit: 4,
-        quality: 0.8,
-        // Force export to JPEG/PNG instead of HEIC on iOS
-        allowsEditing: false,
-        exif: false,
-      });
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: "images",
+      allowsMultipleSelection: true,
+      selectionLimit: 4,
+      quality: 0.8,
+    });
 
-      if (!result.canceled && result.assets) {
-        const imageUris = result.assets.map((asset) => asset.uri);
-        setSelectedImages((prev) => [...prev, ...imageUris].slice(0, 4)); // Max 4 images
-        setIsFocused(true);
-      }
-    } catch (error) {
-      console.error("Error picking image:", error);
-      Alert.alert("Error", "Failed to pick image");
+    if (!result.canceled) {
+      setImages((prev) =>
+        [...prev, ...result.assets.map((a) => a.uri)].slice(0, 4),
+      );
+      setFocused(true);
     }
   };
 
   const takePhoto = async () => {
-    try {
-      // Request permission
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          "Permission required",
-          "Sorry, we need camera permissions to take photos.",
-        );
-        return;
-      }
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission needed", "Please grant camera access");
+      return;
+    }
 
-      // Launch camera
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: "images",
-        quality: 0.8,
-      });
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: "images",
+      quality: 0.8,
+    });
 
-      if (!result.canceled && result.assets) {
-        setSelectedImages((prev) =>
-          [...prev, result.assets[0].uri].slice(0, 4),
-        );
-        setIsFocused(true);
-      }
-    } catch (error) {
-      console.error("Error taking photo:", error);
-      Alert.alert("Error", "Failed to take photo");
+    if (!result.canceled) {
+      setImages((prev) => [...prev, result.assets[0].uri].slice(0, 4));
+      setFocused(true);
     }
   };
 
-  const removeImage = (index: number) => {
-    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
+  const handleSubmit = async () => {
+    if (!text.trim() && !images.length) {
+      Alert.alert("Empty post", "Add text or images");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      await onCreatePost?.({
+        text: text.trim() || undefined,
+        images: images.length ? images : undefined,
+      });
+
+      setText("");
+      setImages([]);
+      setFocused(false);
+      Alert.alert("Success", "Post created!");
+    } catch (error) {
+      Alert.alert("Error", "Failed to create post");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const showImageOptions = () => {
-    // On web, directly open the image picker (browser will show its own file picker)
     if (Platform.OS === "web") {
       pickImage();
-      return;
-    }
-
-    // On mobile, show options for Camera or Photo Library
-    Alert.alert("Add Photo", "Choose an option", [
-      { text: "Camera", onPress: takePhoto },
-      { text: "Photo Library", onPress: pickImage },
-      { text: "Cancel", style: "cancel" },
-    ]);
-  };
-
-  const handlePostSubmit = async () => {
-    if (!postText.trim() && selectedImages.length === 0) {
-      Alert.alert("Empty Post", "Please add some text or images to your post.");
-      return;
-    }
-
-    setIsUploading(true);
-
-    try {
-      const postContent: PostContent = {
-        text: postText.trim() || undefined,
-        images: selectedImages.length > 0 ? selectedImages : undefined,
-      };
-
-      await onCreatePost?.(postContent);
-
-      // Reset form
-      setPostText("");
-      setSelectedImages([]);
-      setIsFocused(false);
-      Alert.alert("Success", "Your post has been created!");
-    } catch (error) {
-      console.error("Error creating post:", error);
-      Alert.alert("Error", "Failed to create post. Please try again.");
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleMediaAction = (type: string) => {
-    if (type === "Photo") {
-      showImageOptions();
     } else {
-      Alert.alert(type, `${type} functionality would be implemented here`);
+      Alert.alert("Add Photo", "Choose option", [
+        { text: "Camera", onPress: takePhoto },
+        { text: "Photo Library", onPress: pickImage },
+        { text: "Cancel", style: "cancel" },
+      ]);
     }
   };
 
-  const canPost =
-    (postText.trim().length > 0 || selectedImages.length > 0) && !isUploading;
+  const canPost = (text.trim() || images.length) && !uploading;
 
   return (
     <View style={styles(colors).container}>
-      {/* Post Input Section */}
       <View style={styles(colors).inputSection}>
-        <Image source={{ uri: user.avatar }} style={styles(colors).avatar} />
+        <Image
+          source={{ uri: user?.avatar || "https://i.pravatar.cc/150?img=1" }}
+          style={styles(colors).avatar}
+        />
         <TouchableOpacity
           style={styles(colors).inputContainer}
-          onPress={() => setIsFocused(true)}
+          onPress={() => setFocused(true)}
         >
-          {!isFocused && selectedImages.length === 0 ? (
+          {!focused && !images.length ? (
             <Text style={styles(colors).placeholder}>Start a post</Text>
           ) : (
             <TextInput
-              style={styles(colors).textInput}
-              placeholder="What do you want to talk about?"
+              style={styles(colors).input}
+              placeholder="What's on your mind?"
               placeholderTextColor={colors.textSecondary}
               multiline
-              value={postText}
-              onChangeText={setPostText}
-              autoFocus={isFocused}
-              onBlur={() =>
-                !postText && selectedImages.length === 0 && setIsFocused(false)
-              }
+              value={text}
+              onChangeText={setText}
+              autoFocus={focused}
+              onBlur={() => !text && !images.length && setFocused(false)}
             />
           )}
         </TouchableOpacity>
       </View>
 
-      {/* Image Preview */}
-      {selectedImages.length > 0 && (
-        <ScrollView
-          horizontal
-          style={styles(colors).imagePreviewContainer}
-          showsHorizontalScrollIndicator={false}
-        >
-          {selectedImages.map((uri, index) => (
-            <View key={index} style={styles(colors).imagePreview}>
-              <Image source={{ uri }} style={styles(colors).previewImage} />
+      {images.length > 0 && (
+        <ScrollView horizontal style={styles(colors).imageScroll}>
+          {images.map((uri, i) => (
+            <View key={i} style={styles(colors).imagePreview}>
+              <Image source={{ uri }} style={styles(colors).image} />
               <TouchableOpacity
-                style={styles(colors).removeImageButton}
-                onPress={() => removeImage(index)}
+                style={styles(colors).removeBtn}
+                onPress={() =>
+                  setImages((prev) => prev.filter((_, idx) => idx !== i))
+                }
               >
-                <Ionicons name="close-circle" size={24} color="#FFFFFF" />
+                <Ionicons name="close-circle" size={24} color="#FFF" />
               </TouchableOpacity>
             </View>
           ))}
         </ScrollView>
       )}
 
-      {/* Action Buttons */}
-      <View style={styles(colors).actionsSection}>
+      <View style={styles(colors).actions}>
         <TouchableOpacity
-          style={styles(colors).actionButton}
-          onPress={() => handleMediaAction("Video")}
-        >
-          <Ionicons name="videocam" size={20} color="#5F9B41" />
-          <Text style={styles(colors).actionText}>Video</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles(colors).actionButton}
-          onPress={() => handleMediaAction("Photo")}
-          disabled={selectedImages.length >= 4}
+          style={styles(colors).actionBtn}
+          onPress={showImageOptions}
+          disabled={images.length >= 4}
         >
           <Ionicons
             name="image"
             size={20}
-            color={
-              selectedImages.length >= 4 ? colors.textSecondary : "#378FE9"
-            }
+            color={images.length >= 4 ? colors.textSecondary : "#378FE9"}
           />
-          <Text
-            style={[
-              styles(colors).actionText,
-              selectedImages.length >= 4 && { opacity: 0.5 },
-            ]}
-          >
-            Photo {selectedImages.length > 0 && `(${selectedImages.length}/4)`}
+          <Text style={styles(colors).actionText}>
+            Photo {images.length > 0 && `(${images.length}/4)`}
           </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles(colors).actionButton}
-          onPress={() => handleMediaAction("Article")}
-        >
-          <Ionicons name="document-text" size={20} color="#C37D16" />
-          <Text style={styles(colors).actionText}>Write article</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Post Button (shown when typing or images selected) */}
-      {(isFocused || selectedImages.length > 0) && (
-        <View style={styles(colors).postButtonSection}>
-          <View style={styles(colors).postOptions}>
-            <Text style={styles(colors).charCount}>{postText.length}/280</Text>
-          </View>
-
+      {(focused || images.length > 0) && (
+        <View style={styles(colors).footer}>
+          <Text style={styles(colors).charCount}>{text.length}/280</Text>
           <TouchableOpacity
             style={[
-              styles(colors).postButton,
-              !canPost && styles(colors).postButtonDisabled,
+              styles(colors).postBtn,
+              !canPost && styles(colors).postBtnDisabled,
             ]}
-            onPress={handlePostSubmit}
+            onPress={handleSubmit}
             disabled={!canPost}
           >
-            {isUploading ? (
-              <ActivityIndicator color="#FFFFFF" size="small" />
+            {uploading ? (
+              <ActivityIndicator color="#FFF" size="small" />
             ) : (
-              <Text
-                style={[
-                  styles(colors).postButtonText,
-                  !canPost && styles(colors).postButtonTextDisabled,
-                ]}
-              >
-                Post
-              </Text>
+              <Text style={styles(colors).postBtnText}>Post</Text>
             )}
           </TouchableOpacity>
         </View>
       )}
-
-      {/* Sort Options */}
-      <View style={styles(colors).sortSection}>
-        <View style={styles(colors).sortLeft}>
-          <Text style={styles(colors).sortText}>Sort by: </Text>
-          <TouchableOpacity>
-            <Text style={styles(colors).sortOption}>Top</Text>
-          </TouchableOpacity>
-          <Ionicons
-            name="chevron-down"
-            size={14}
-            color={colors.textSecondary}
-            style={styles(colors).sortIcon}
-          />
-        </View>
-      </View>
     </View>
   );
 }
@@ -304,25 +195,18 @@ export default function PostCreator({
 const styles = (colors: any) =>
   StyleSheet.create({
     container: {
-      backgroundColor: colors.surface || "#FFFFFF",
+      backgroundColor: colors.surface || "#FFF",
       borderRadius: 12,
-      marginHorizontal: 16,
-      marginTop: 16,
-      marginBottom: 16,
+      margin: 16,
       shadowColor: "#000",
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
+      shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
-      shadowRadius: 3.84,
+      shadowRadius: 4,
       elevation: 5,
     },
     inputSection: {
       flexDirection: "row",
-      alignItems: "flex-start",
       padding: 16,
-      paddingBottom: 12,
     },
     avatar: {
       width: 48,
@@ -344,72 +228,60 @@ const styles = (colors: any) =>
       fontSize: 16,
       color: colors.textSecondary,
     },
-    textInput: {
+    input: {
       fontSize: 16,
       color: colors.text,
       minHeight: 24,
       maxHeight: 120,
     },
-    imagePreviewContainer: {
+    imageScroll: {
       paddingHorizontal: 16,
       marginBottom: 12,
-      maxHeight: 120,
     },
     imagePreview: {
-      position: "relative",
       marginRight: 8,
+      position: "relative",
     },
-    previewImage: {
+    image: {
       width: 100,
       height: 100,
       borderRadius: 8,
     },
-    removeImageButton: {
+    removeBtn: {
       position: "absolute",
       top: -8,
       right: -8,
-      backgroundColor: "rgba(0, 0, 0, 0.6)",
+      backgroundColor: "rgba(0,0,0,0.6)",
       borderRadius: 12,
     },
-    actionsSection: {
+    actions: {
       flexDirection: "row",
       paddingHorizontal: 16,
       paddingBottom: 12,
       borderBottomWidth: 1,
       borderBottomColor: colors.border || "#E1E8ED",
     },
-    actionButton: {
+    actionBtn: {
       flexDirection: "row",
       alignItems: "center",
-      paddingVertical: 8,
-      paddingHorizontal: 12,
-      marginRight: 16,
-      borderRadius: 6,
+      padding: 8,
     },
     actionText: {
       fontSize: 14,
-      fontWeight: "500",
       color: colors.textSecondary,
       marginLeft: 6,
     },
-    postButtonSection: {
+    footer: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border || "#E1E8ED",
-    },
-    postOptions: {
-      flexDirection: "row",
-      alignItems: "center",
+      padding: 16,
     },
     charCount: {
       fontSize: 12,
       color: colors.textSecondary,
     },
-    postButton: {
+    postBtn: {
       backgroundColor: colors.primary,
       paddingHorizontal: 24,
       paddingVertical: 8,
@@ -417,38 +289,12 @@ const styles = (colors: any) =>
       minWidth: 70,
       alignItems: "center",
     },
-    postButtonDisabled: {
-      backgroundColor: colors.textSecondary + "40",
+    postBtnDisabled: {
+      opacity: 0.5,
     },
-    postButtonText: {
-      color: "#FFFFFF",
+    postBtnText: {
+      color: "#FFF",
       fontSize: 14,
       fontWeight: "600",
-    },
-    postButtonTextDisabled: {
-      color: colors.textSecondary,
-    },
-    sortSection: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-    },
-    sortLeft: {
-      flexDirection: "row",
-      alignItems: "center",
-    },
-    sortText: {
-      fontSize: 14,
-      color: colors.textSecondary,
-    },
-    sortOption: {
-      fontSize: 14,
-      fontWeight: "500",
-      color: colors.text,
-    },
-    sortIcon: {
-      marginLeft: 4,
     },
   });

@@ -17,19 +17,13 @@ export const usePosts = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | undefined>();
+  const [lastDoc, setLastDoc] = useState<DocumentSnapshot>();
   const [hasMore, setHasMore] = useState(true);
   const { user } = useAuthStore();
 
-  // Fetch initial posts
   const fetchPosts = useCallback(async (refresh = false) => {
     try {
-      if (refresh) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
-
+      refresh ? setRefreshing(true) : setLoading(true);
       const result = await getPosts(20);
       setPosts(result.posts);
       setLastDoc(result.lastDoc);
@@ -42,7 +36,6 @@ export const usePosts = () => {
     }
   }, []);
 
-  // Load more posts (pagination)
   const loadMore = useCallback(async () => {
     if (!hasMore || loading || !lastDoc) return;
 
@@ -52,86 +45,44 @@ export const usePosts = () => {
       setLastDoc(result.lastDoc);
       setHasMore(result.posts.length === 20);
     } catch (error) {
-      console.error("Error loading more posts:", error);
+      console.error("Error loading more:", error);
     }
   }, [hasMore, loading, lastDoc]);
 
-  // Create a new post
   const handleCreatePost = useCallback(
     async (content: PostContent) => {
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
+      if (!user) throw new Error("Not authenticated");
 
       try {
-        // Fetch user profile from Firestore
-        const userProfile = await getUserProfile(user.uid);
+        const profile = await getUserProfile(user.uid);
 
-        // Build user data from profile or fallback to auth data
         const userData = {
           id: user.uid,
-          username:
-            userProfile?.username || user.email?.split("@")[0] || "user",
-          displayName: userProfile?.displayName || user.displayName || "User",
-          avatar: userProfile?.avatar || user.photoURL || "",
+          username: profile?.username || user.email?.split("@")[0] || "user",
+          displayName: profile?.displayName || user.displayName || "User",
+          avatar: profile?.avatar || user.photoURL || "",
           verified: false,
         };
 
-        // Build the post content object, only including defined fields
-        const postContent: any = {};
-        if (content.text) {
-          postContent.text = content.text;
-        }
-        if (content.hashtags && content.hashtags.length > 0) {
-          postContent.hashtags = content.hashtags;
-        }
-
-        // First create the post document to get an ID
+        // Create post
         const postId = await createPost({
           user: userData,
-          content: postContent,
-          engagement: {
-            likes: 0,
-            comments: 0,
+          content: {
+            text: content.text,
+            hashtags: content.hashtags,
           },
+          engagement: { likes: 0, comments: 0 },
           timestamp: new Date(),
         });
 
         // Upload images if any
-        if (content.images && content.images.length > 0) {
-          console.log("Uploading images...");
-
-          // Upload images to Firebase Storage
-          const uploadPromises = content.images.map(async (imageUri, index) => {
-            console.log(
-              `Uploading image ${index + 1}/${content.images!.length}:`,
-              imageUri,
-            );
-            try {
-              const url = await uploadPostImage(imageUri, postId, index);
-              console.log(`Image ${index + 1} uploaded successfully:`, url);
-              return url;
-            } catch (error: any) {
-              console.error(`Error uploading image ${index + 1}:`, {
-                message: error.message,
-                code: error.code,
-                serverResponse: error.serverResponse,
-                customData: error.customData,
-              });
-              throw error;
-            }
-          });
-
-          const imageUrls = await Promise.all(uploadPromises);
-          console.log("All images uploaded successfully:", imageUrls);
-
-          // Update post with image URLs
-          await updatePost(postId, {
-            "content.images": imageUrls,
-          } as any);
+        if (content.images?.length) {
+          const imageUrls = await Promise.all(
+            content.images.map((uri, i) => uploadPostImage(uri, postId, i)),
+          );
+          await updatePost(postId, { "content.images": imageUrls } as any);
         }
 
-        // Refresh posts to show the new one
         await fetchPosts(true);
       } catch (error) {
         console.error("Error creating post:", error);
@@ -141,7 +92,6 @@ export const usePosts = () => {
     [user, fetchPosts],
   );
 
-  // Handle like/unlike
   const handleLike = useCallback(
     async (postId: string) => {
       if (!user) return;
@@ -149,48 +99,34 @@ export const usePosts = () => {
       try {
         const isLiked = await isPostLiked(postId, user.uid);
 
-        if (isLiked) {
-          await unlikePost(postId, user.uid);
-          // Optimistically update UI
-          setPosts((prev) =>
-            prev.map((post) =>
-              post.id === postId
-                ? {
-                    ...post,
-                    engagement: {
-                      ...post.engagement,
-                      likes: Math.max(0, post.engagement.likes - 1),
-                    },
-                  }
-                : post,
-            ),
-          );
-        } else {
-          await likePost(postId, user.uid);
-          // Optimistically update UI
-          setPosts((prev) =>
-            prev.map((post) =>
-              post.id === postId
-                ? {
-                    ...post,
-                    engagement: {
-                      ...post.engagement,
-                      likes: post.engagement.likes + 1,
-                    },
-                  }
-                : post,
-            ),
-          );
-        }
+        // Update UI optimistically
+        setPosts((prev) =>
+          prev.map((post) =>
+            post.id === postId
+              ? {
+                  ...post,
+                  engagement: {
+                    ...post.engagement,
+                    likes: post.engagement.likes + (isLiked ? -1 : 1),
+                  },
+                }
+              : post,
+          ),
+        );
+
+        // Update backend
+        isLiked
+          ? await unlikePost(postId, user.uid)
+          : await likePost(postId, user.uid);
       } catch (error) {
         console.error("Error liking post:", error);
-        throw error;
+        // Revert UI on error
+        await fetchPosts(true);
       }
     },
-    [user],
+    [user, fetchPosts],
   );
 
-  // Initial load
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
