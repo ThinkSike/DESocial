@@ -247,7 +247,7 @@ const createStyles = (colors: any) =>
       width: "100%",
       height: 300,
       borderRadius: 12,
-      backgroundColor: colors.border || "#E1E8ED",
+      backgroundColor: colors.surface || colors.background,
     },
     imageRow: {
       flexDirection: "row",
@@ -258,7 +258,7 @@ const createStyles = (colors: any) =>
       flex: 1,
       height: 200,
       borderRadius: 8,
-      backgroundColor: colors.border || "#E1E8ED",
+      backgroundColor: colors.surface || colors.background,
     },
     multiImageContainer: {
       flexDirection: "row",
@@ -271,7 +271,7 @@ const createStyles = (colors: any) =>
       borderRadius: 8,
       width: undefined,
       height: undefined,
-      backgroundColor: colors.border || "#E1E8ED",
+      backgroundColor: colors.surface || colors.background,
     },
     sideImagesContainer: {
       flex: 1,
@@ -288,7 +288,7 @@ const createStyles = (colors: any) =>
       width: "100%",
       height: "100%",
       borderRadius: 8,
-      backgroundColor: colors.border || "#E1E8ED",
+      backgroundColor: colors.surface || colors.background,
     },
     overlay: {
       position: "absolute",
