@@ -107,11 +107,23 @@ export const usePosts = () => {
               `Uploading image ${index + 1}/${content.images!.length}:`,
               imageUri,
             );
-            return uploadPostImage(imageUri, postId, index);
+            try {
+              const url = await uploadPostImage(imageUri, postId, index);
+              console.log(`Image ${index + 1} uploaded successfully:`, url);
+              return url;
+            } catch (error: any) {
+              console.error(`Error uploading image ${index + 1}:`, {
+                message: error.message,
+                code: error.code,
+                serverResponse: error.serverResponse,
+                customData: error.customData,
+              });
+              throw error;
+            }
           });
 
           const imageUrls = await Promise.all(uploadPromises);
-          console.log("Images uploaded successfully:", imageUrls);
+          console.log("All images uploaded successfully:", imageUrls);
 
           // Update post with image URLs
           await updatePost(postId, {

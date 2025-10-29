@@ -56,6 +56,9 @@ export default function PostCreator({
         allowsMultipleSelection: true,
         selectionLimit: 4,
         quality: 0.8,
+        // Force export to JPEG/PNG instead of HEIC on iOS
+        allowsEditing: false,
+        exif: false,
       });
 
       if (!result.canceled && result.assets) {
