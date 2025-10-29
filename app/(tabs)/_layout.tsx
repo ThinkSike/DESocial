@@ -1,17 +1,20 @@
-import TopPillTabBar from '@/components/navigation/TopPillTabBar';
-import { useThemeColors } from '@/constants/Colors';
-import { Tabs } from 'expo-router';
-import { Icon, Label, NativeTabs } from 'expo-router/unstable-native-tabs';
-import React from 'react';
-import { Platform } from 'react-native';
+import TopPillTabBar from "@/components/navigation/TopPillTabBar";
+import { useThemeColors } from "@/constants/Colors";
+import { Tabs } from "expo-router";
+import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
+import React from "react";
+import { Platform } from "react-native";
 
 export default function TabsLayout() {
   const colors = useThemeColors();
 
   // Phones/Tablets → Native tabs
-  if (Platform.OS === 'ios' || Platform.OS === 'android') {
+  if (Platform.OS === "ios" || Platform.OS === "android") {
     return (
-      <NativeTabs backgroundColor={colors.surface} iconColor={colors.textSecondary}>
+      <NativeTabs
+        backgroundColor={colors.surface}
+        iconColor={colors.textSecondary}
+      >
         <NativeTabs.Trigger name="index">
           <Label hidden />
           <Icon sf="house" drawable="ic_menu_home" />
@@ -33,16 +36,15 @@ export default function TabsLayout() {
     );
   }
 
-  // Web → Top pill tab bar
   return (
     <Tabs
       screenOptions={{ headerShown: false, tabBarShowLabel: false }}
       tabBar={(props) => <TopPillTabBar {...props} />}
     >
-      <Tabs.Screen name="index" options={{ title: 'Home' }} />
-      <Tabs.Screen name="forum" options={{ title: 'Forum' }} />
-      <Tabs.Screen name="search" options={{ title: 'Search' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      <Tabs.Screen name="index" options={{ title: "Home" }} />
+      <Tabs.Screen name="forum" options={{ title: "Forum" }} />
+      <Tabs.Screen name="search" options={{ title: "Search" }} />
+      <Tabs.Screen name="profile" options={{ title: "Profile" }} />
       <Tabs.Screen name="notifications" options={{ href: null }} />
     </Tabs>
   );
