@@ -40,11 +40,13 @@ export default function Post({
 
     if (images.length === 1) {
       return (
-        <Image
-          source={{ uri: images[0] }}
-          style={styles.singleImage}
-          resizeMode="contain"
-        />
+        <TouchableOpacity activeOpacity={0.95}>
+          <Image
+            source={{ uri: images[0] }}
+            style={styles.singleImage}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
       );
     }
 
@@ -52,51 +54,46 @@ export default function Post({
       return (
         <View style={styles.imageRow}>
           {images.map((image, index) => (
-            <Image
+            <TouchableOpacity
               key={index}
-              source={{ uri: image }}
-              style={styles.doubleImage}
-              resizeMode="cover"
-            />
+              activeOpacity={0.95}
+              style={{ flex: 1 }}
+            >
+              <Image
+                source={{ uri: image }}
+                style={styles.multiImage}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
           ))}
         </View>
       );
     }
 
-    if (images.length >= 3) {
-      return (
-        <View style={styles.multiImageContainer}>
-          <Image
-            source={{ uri: images[0] }}
-            style={styles.mainImage}
-            resizeMode="cover"
-          />
-          <View style={styles.sideImagesContainer}>
+    // 3 or more images - simple grid
+    return (
+      <View style={styles.imageGrid}>
+        {images.slice(0, 4).map((image, index) => (
+          <TouchableOpacity
+            key={index}
+            activeOpacity={0.95}
+            style={styles.gridItem}
+          >
             <Image
-              source={{ uri: images[1] }}
-              style={styles.sideImage}
-              resizeMode="cover"
+              source={{ uri: image }}
+              style={styles.gridImage}
+              resizeMode="contain"
             />
-            {images.length > 2 && (
-              <View style={styles.sideImageWrapper}>
-                <Image
-                  source={{ uri: images[2] }}
-                  style={styles.sideImage}
-                  resizeMode="cover"
-                />
-                {images.length > 3 && (
-                  <View style={styles.overlay}>
-                    <Text style={styles.overlayText}>+{images.length - 3}</Text>
-                  </View>
-                )}
+            {index === 3 && images.length > 4 && (
+              <View style={styles.overlay}>
+                <Text style={styles.overlayText}>+{images.length - 4}</Text>
               </View>
             )}
-          </View>
-        </View>
-      );
-    }
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
   };
-
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -251,42 +248,28 @@ const createStyles = (colors: any) =>
     },
     imageRow: {
       flexDirection: "row",
-      gap: 4,
+      gap: 8,
       width: "100%",
     },
-    doubleImage: {
-      flex: 1,
+    multiImage: {
+      width: "100%",
       height: 200,
       borderRadius: 8,
       backgroundColor: colors.surface || colors.background,
     },
-    multiImageContainer: {
+    imageGrid: {
       flexDirection: "row",
-      gap: 4,
-      height: 250,
+      flexWrap: "wrap",
+      gap: 8,
       width: "100%",
     },
-    mainImage: {
-      flex: 2,
-      borderRadius: 8,
-      width: undefined,
-      height: undefined,
-      backgroundColor: colors.surface || colors.background,
-    },
-    sideImagesContainer: {
-      flex: 1,
-      gap: 4,
-    },
-    sideImageWrapper: {
-      flex: 1,
-      borderRadius: 8,
+    gridItem: {
+      width: "48%",
       position: "relative",
-      overflow: "hidden",
     },
-    sideImage: {
-      flex: 1,
+    gridImage: {
       width: "100%",
-      height: "100%",
+      height: 150,
       borderRadius: 8,
       backgroundColor: colors.surface || colors.background,
     },
@@ -303,8 +286,8 @@ const createStyles = (colors: any) =>
     },
     overlayText: {
       color: "white",
-      fontSize: 18,
-      fontWeight: "600",
+      fontSize: 24,
+      fontWeight: "700",
     },
     engagement: {
       flexDirection: "row",
