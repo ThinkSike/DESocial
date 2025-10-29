@@ -10,6 +10,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Platform,
 } from "react-native";
 
 interface PostProps {
@@ -20,7 +21,12 @@ interface PostProps {
 }
 
 const { width: screenWidth } = Dimensions.get("window");
-const imageWidth = screenWidth - 80; // Account for margins and padding
+// Limit max width on web, use full width on mobile
+const MAX_CONTENT_WIDTH = 600;
+const contentWidth =
+  Platform.OS === "web"
+    ? Math.min(screenWidth - 80, MAX_CONTENT_WIDTH)
+    : screenWidth - 80;
 
 export default function Post({
   post,
@@ -41,7 +47,7 @@ export default function Post({
         <Image
           source={{ uri: images[0] }}
           style={styles.singleImage}
-          resizeMode="cover"
+          resizeMode="contain"
         />
       );
     }
@@ -76,7 +82,7 @@ export default function Post({
               resizeMode="cover"
             />
             {images.length > 2 && (
-              <View style={styles.sideImage}>
+              <View style={styles.sideImageWrapper}>
                 <Image
                   source={{ uri: images[2] }}
                   style={styles.sideImage}
@@ -183,6 +189,11 @@ const createStyles = (colors: any) =>
       shadowOpacity: 0.1,
       shadowRadius: 3.84,
       elevation: 5,
+      ...(Platform.OS === "web" && {
+        maxWidth: MAX_CONTENT_WIDTH + 32, // Add padding
+        alignSelf: "center",
+        width: "100%",
+      }),
     },
     header: {
       flexDirection: "row",
@@ -237,36 +248,51 @@ const createStyles = (colors: any) =>
       marginBottom: 12,
     },
     singleImage: {
-      width: imageWidth,
-      height: 200,
+      width: "100%",
+      height: 300,
       borderRadius: 12,
+      backgroundColor: colors.border || "#E1E8ED",
     },
     imageRow: {
       flexDirection: "row",
       gap: 4,
+      width: "100%",
     },
     doubleImage: {
-      width: (imageWidth - 4) / 2,
-      height: 150,
+      flex: 1,
+      height: 200,
       borderRadius: 8,
+      backgroundColor: colors.border || "#E1E8ED",
     },
     multiImageContainer: {
       flexDirection: "row",
       gap: 4,
-      height: 200,
+      height: 250,
+      width: "100%",
     },
     mainImage: {
       flex: 2,
       borderRadius: 8,
+      width: undefined,
+      height: undefined,
+      backgroundColor: colors.border || "#E1E8ED",
     },
     sideImagesContainer: {
       flex: 1,
       gap: 4,
     },
-    sideImage: {
+    sideImageWrapper: {
       flex: 1,
       borderRadius: 8,
       position: "relative",
+      overflow: "hidden",
+    },
+    sideImage: {
+      flex: 1,
+      width: "100%",
+      height: "100%",
+      borderRadius: 8,
+      backgroundColor: colors.border || "#E1E8ED",
     },
     overlay: {
       position: "absolute",
