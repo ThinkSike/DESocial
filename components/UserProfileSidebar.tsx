@@ -1,42 +1,82 @@
 import { useThemeColors } from "@/constants/Colors";
+import { useAuthStore } from "@/store/auth";
+import type { UserProfile } from "@/types/profile";
+import { getUserProfile } from "@/utils/firestore";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image } from "expo-image";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface UserProfileSidebarProps {
-  user?: {
-    name: string;
-    title: string;
-    location: string;
-    avatar: string;
-  };
   width?: number;
 }
 
-export default function UserProfileSidebar({
-  width = 300,
-  user = {
-    name: "Your Name",
-    title: "Your title",
-    location: "City, Country",
-    avatar: "https://i.pravatar.cc/100?img=1",
-  },
-}: UserProfileSidebarProps) {
+export default function UserProfileSidebar({ width = 300 }: UserProfileSidebarProps) {
   const colors = useThemeColors();
+  const { user } = useAuthStore();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user?.uid) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const profileData = await getUserProfile(user.uid);
+        setProfile(profileData);
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [user?.uid]);
+
   const s = styles(colors);
+
+  if (loading) {
+    return (
+      <View style={[s.container, { width }]}>
+        <View style={s.profileSection}>
+          <View style={{ padding: 40, alignItems: "center" }}>
+            <ActivityIndicator size="small" color={colors.primary} />
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  if (!profile) {
+    return null;
+  }
 
   return (
     <View style={[s.container, { width }]}>
       {/* Profile card */}
       <View style={s.profileSection}>
         <View style={s.coverPhoto}>
-          <Image source={{ uri: user.avatar }} style={s.avatar} />
+          <Image
+            source={{ uri: profile.avatar || "https://i.pravatar.cc/100?img=1" }}
+            style={s.avatar}
+            contentFit="cover"
+            transition={200}
+          />
         </View>
 
         <View style={s.profileInfo}>
-          <Text style={s.name}>{user.name}</Text>
-          <Text style={s.title}>{user.title}</Text>
-          <Text style={s.location}>{user.location}</Text>
+          <Text style={s.name}>{profile.displayName}</Text>
+          {profile.bio && <Text style={s.title}>{profile.bio}</Text>}
+          {profile.department && (
+            <Text style={s.location}>
+              {profile.department}
+              {profile.prn ? ` • ${profile.prn}` : ""}
+            </Text>
+          )}
         </View>
       </View>
 
@@ -105,9 +145,25 @@ const styles = (colors: any) =>
       paddingBottom: 16,
       alignItems: "center",
     },
-    name: { fontSize: 18, fontWeight: "600", color: colors.text, textAlign: "center", marginBottom: 4 },
-    title: { fontSize: 14, color: colors.textSecondary, textAlign: "center", marginBottom: 4, lineHeight: 18 },
-    location: { fontSize: 12, color: colors.textSecondary, textAlign: "center" },
+    name: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: colors.text,
+      textAlign: "center",
+      marginBottom: 4,
+    },
+    title: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      textAlign: "center",
+      marginBottom: 4,
+      lineHeight: 18,
+    },
+    location: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      textAlign: "center",
+    },
 
     quickAccessSection: {
       backgroundColor: colors.surface || "#FFFFFF",
