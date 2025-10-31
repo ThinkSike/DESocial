@@ -5,13 +5,21 @@ import { getUserProfile } from "@/utils/firestore";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 interface UserProfileSidebarProps {
   width?: number;
 }
 
-export default function UserProfileSidebar({ width = 300 }: UserProfileSidebarProps) {
+export default function UserProfileSidebar({
+  width = 300,
+}: UserProfileSidebarProps) {
   const colors = useThemeColors();
   const { user } = useAuthStore();
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -61,7 +69,9 @@ export default function UserProfileSidebar({ width = 300 }: UserProfileSidebarPr
       <View style={s.profileSection}>
         <View style={s.coverPhoto}>
           <Image
-            source={{ uri: profile.avatar || "https://i.pravatar.cc/100?img=1" }}
+            source={{
+              uri: profile.avatar || "https://i.pravatar.cc/100?img=1",
+            }}
             style={s.avatar}
             contentFit="cover"
             transition={200}
@@ -125,7 +135,7 @@ const styles = (colors: any) =>
     },
     coverPhoto: {
       height: 60,
-      backgroundColor: "#4A90E2",
+      backgroundColor: colors.primary,
       position: "relative",
       justifyContent: "center",
       alignItems: "center",
