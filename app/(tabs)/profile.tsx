@@ -12,39 +12,34 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ProfileScreen() {
   const colors = useThemeColors();
   const router = useRouter();
   const { user: authUser } = useAuthStore();
-
   const { profile, loading: profileLoading, updateAvatar } = useUserProfile();
-  usePosts();
-
   const [userPosts, setUserPosts] = useState<Post[]>([]);
-  const [postsLoading, setPostsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch user's posts
   const fetchUserPosts = useCallback(async () => {
     if (!authUser?.uid) return;
-
     try {
-      setPostsLoading(true);
+      setLoading(true);
       const posts = await getUserPosts(authUser.uid);
       setUserPosts(posts);
     } catch (error) {
-      console.error("Error fetching user posts:", error);
-      Alert.alert("Error", "Failed to load your posts");
+      Alert.alert("Error", "Failed to load posts");
     } finally {
-      setPostsLoading(false);
+      setLoading(false);
     }
   }, [authUser?.uid]);
 
@@ -54,10 +49,7 @@ export default function ProfileScreen() {
 
   const pickImage = useCallback(async () => {
     if (!authUser?.uid) {
-      Alert.alert(
-        "Error",
-        "You must be logged in to change your profile picture"
-      );
+      Alert.alert("Error", "You must be logged in");
       return;
     }
 
@@ -66,307 +58,171 @@ export default function ProfileScreen() {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
       if (perm.status !== "granted") {
-        Alert.alert(
-          "Permission needed",
-          "Allow photo library access to change profile picture."
-        );
+        Alert.alert("Permission", "Allow photo access to change your picture");
         return;
       }
 
       const res = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        quality: 0.8,
         allowsEditing: true,
+        quality: 0.8,
         aspect: [1, 1],
       });
 
       if (!res.canceled && res.assets?.[0]?.uri) {
-        // Show loading indicator
-        Alert.alert("Uploading", "Updating your profile picture...");
-
-        // Upload to Firebase Storage and update Firestore
+        Alert.alert("Updating", "Uploading your new picture...");
         await updateAvatar(res.assets[0].uri);
-
-        Alert.alert("Success", "Profile picture updated!");
+        Alert.alert("Done", "Profile picture updated!");
       }
-    } catch (error) {
-      console.error("Error updating avatar:", error);
-      Alert.alert(
-        "Error",
-        "Failed to update profile picture. Please try again."
-      );
+    } catch {
+      Alert.alert("Error", "Could not update profile picture");
     }
   }, [authUser?.uid, updateAvatar]);
 
-  const handleRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await fetchUserPosts();
-    setRefreshing(false);
-  }, [fetchUserPosts]);
-
-  const handleCreatePostAction = useCallback(async () => {
-    try {
-      // You can open a modal or navigate to a post creation screen
-      // For now, we'll just show an alert
-      Alert.alert(
-        "Create Post",
-        "Post creation modal will be implemented here"
-      );
-    } catch (error) {
-      console.error("Error creating post:", error);
-      Alert.alert("Error", "Failed to create post");
-    }
-  }, []);
-
-  const handleLike = useCallback(async (postId: string) => {
-    // Implement like functionality
-    console.log("Like post:", postId);
-  }, []);
-
-  const handleComment = useCallback((postId: string) => {
-    // Navigate to post detail or open comment modal
-    console.log("Comment on post:", postId);
-  }, []);
-
-  const handleRepost = useCallback((postId: string) => {
-    console.log("Repost:", postId);
-  }, []);
-
-  const handleShare = useCallback((postId: string) => {
-    console.log("Share post:", postId);
-  }, []);
-
   const s = styles(colors);
 
-  // Show loading state
-  if (profileLoading || postsLoading) {
+  if (profileLoading || loading) {
     return (
-      <SafeAreaView
-        style={[s.container, { backgroundColor: colors.background }]}
-      >
-        <View style={s.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[s.loadingText, { color: colors.textSecondary }]}>
-            Loading profile...
-          </Text>
-        </View>
+      <SafeAreaView style={[s.center, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ color: colors.textSecondary, marginTop: 10 }}>
+          Loading profile...
+        </Text>
       </SafeAreaView>
     );
   }
 
-  // Show error state if no profile
   if (!profile) {
     return (
-      <SafeAreaView
-        style={[s.container, { backgroundColor: colors.background }]}
-      >
-        <View style={s.errorContainer}>
-          <Ionicons
-            name="alert-circle-outline"
-            size={48}
-            color={colors.textSecondary}
-          />
-          <Text style={[s.errorText, { color: colors.text }]}>
-            Failed to load profile
-          </Text>
-          <TouchableOpacity
-            style={[s.retryButton, { backgroundColor: colors.primary }]}
-            onPress={fetchUserPosts}
-          >
-            <Text style={s.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
+      <SafeAreaView style={[s.center, { backgroundColor: colors.background }]}>
+        <Ionicons
+          name="alert-circle-outline"
+          size={48}
+          color={colors.textSecondary}
+        />
+        <Text style={{ color: colors.text, marginTop: 10 }}>
+          Failed to load profile
+        </Text>
+        <TouchableOpacity
+          style={[s.retryBtn, { backgroundColor: colors.primary }]}
+          onPress={fetchUserPosts}
+        >
+          <Text style={s.retryText}>Retry</Text>
+        </TouchableOpacity>
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={[s.container, { backgroundColor: colors.background }]}>
-      <View style={s.headerSpacer} />
-
-      {/* Center page content */}
       <ScrollView
+        contentContainerStyle={s.scroll}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={s.pageContent}
-        refreshing={refreshing}
-        onRefresh={handleRefresh}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={async () => {
+              setRefreshing(true);
+              await fetchUserPosts();
+              setRefreshing(false);
+            }}
+          />
+        }
       >
-        <View style={s.pageColumn}>
-          {/* Header card */}
-          <View
-            style={[
-              s.card,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-          >
-            <View style={s.headerRow}>
-              <Text style={[s.headerTitle, { color: colors.text }]}>
-                Profile
-              </Text>
-              <TouchableOpacity
-                onPress={() => router.push("/settings" as any)}
-                accessibilityRole="button"
-                accessibilityLabel="Open Settings"
-                style={s.iconBtn}
-              >
-                <Ionicons
-                  name="settings-outline"
-                  size={20}
-                  color={colors.textSecondary}
-                />
+        {/* Header */}
+        <View style={[s.card, { backgroundColor: colors.surface }]}>
+          <View style={s.header}>
+            <Text style={[s.title, { color: colors.text }]}>Profile</Text>
+            <TouchableOpacity onPress={() => router.push("/settings" as any)}>
+              <Ionicons
+                name="settings-outline"
+                size={20}
+                color={colors.textSecondary}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Profile Info */}
+          <View style={s.profileRow}>
+            <View>
+              <Image
+                source={{
+                  uri: profile.avatar || "https://i.pravatar.cc/120?img=5",
+                }}
+                style={s.avatar}
+              />
+              <TouchableOpacity style={s.editBadge} onPress={pickImage}>
+                <Ionicons name="camera" size={14} color={colors.text} />
               </TouchableOpacity>
             </View>
 
-            <View style={s.profileRow}>
-              <View>
-                <Image
-                  source={{
-                    uri: profile.avatar || "https://i.pravatar.cc/120?img=5",
-                  }}
-                  style={s.avatar}
-                  contentFit="cover"
-                  transition={200}
-                />
-                <TouchableOpacity
-                  style={[
-                    s.editBadge,
-                    {
-                      backgroundColor: colors.surface,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                  onPress={pickImage}
-                >
-                  <Ionicons name="camera" size={14} color={colors.text} />
-                </TouchableOpacity>
-              </View>
-
-              <View style={s.infoCol}>
-                <Text
-                  style={[s.name, { color: colors.text }]}
-                  numberOfLines={1}
-                >
-                  {profile.displayName || profile.username || "User"}
+            <View style={s.info}>
+              <Text style={[s.name, { color: colors.text }]}>
+                {profile.displayName || "User"}
+              </Text>
+              <Text style={{ color: colors.textSecondary }}>
+                @{profile.username || "username"}
+              </Text>
+              {profile.prn && (
+                <Text style={{ color: colors.textSecondary }}>
+                  PRN: {profile.prn}
                 </Text>
-                <Text
-                  style={[s.meta, { color: colors.textSecondary }]}
-                  numberOfLines={1}
-                >
-                  @{profile.username || "username"}
+              )}
+              {profile.department && (
+                <Text style={{ color: colors.textSecondary }}>
+                  Dept: {profile.department}
                 </Text>
-                {profile.prn && (
-                  <Text
-                    style={[s.meta, { color: colors.textSecondary }]}
-                    numberOfLines={1}
-                  >
-                    PRN: {profile.prn}
-                  </Text>
-                )}
-                {profile.department && (
-                  <Text
-                    style={[s.meta, { color: colors.textSecondary }]}
-                    numberOfLines={1}
-                  >
-                    Department: {profile.department}
-                  </Text>
-                )}
-              </View>
+              )}
             </View>
           </View>
-
-          {/* Activity card */}
-          <ProfileActivity
-            posts={userPosts}
-            isOwnProfile
-            onCreatePost={handleCreatePostAction}
-            onUserPress={() => {}}
-            onLike={handleLike}
-            onRepost={handleRepost}
-            onComment={handleComment}
-            onShare={handleShare}
-          />
         </View>
+
+        {/* Activity */}
+        <ProfileActivity posts={userPosts} isOwnProfile />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const PAGE_MAX_WIDTH = 700;
-
-const styles = () =>
+const styles = (colors: any) =>
   StyleSheet.create({
     container: { flex: 1 },
-    headerSpacer: { height: 56 },
-    pageContent: {
-      paddingHorizontal: 16,
-      paddingBottom: 24,
-      alignItems: "center",
-    },
-    pageColumn: {
-      width: "100%",
-      maxWidth: PAGE_MAX_WIDTH,
-      alignSelf: "center",
-      gap: 16,
-    },
+    center: { flex: 1, justifyContent: "center", alignItems: "center" },
+    scroll: { padding: 16, alignItems: "center" },
     card: {
-      alignSelf: "center",
       width: "100%",
-      maxWidth: 720,
-      marginHorizontal: 16,
       borderRadius: 12,
       borderWidth: 1,
+      borderColor: colors?.border,
       padding: 16,
+      marginBottom: 16,
     },
-    headerRow: {
+    header: {
       flexDirection: "row",
-      alignItems: "center",
       justifyContent: "space-between",
+      alignItems: "center",
       marginBottom: 12,
     },
-    headerTitle: { fontSize: 18, fontWeight: "700" },
-    iconBtn: { padding: 6, borderRadius: 8 },
-    profileRow: { flexDirection: "row", gap: 12, alignItems: "center" },
+    title: { fontSize: 18, fontWeight: "700" },
+    profileRow: { flexDirection: "row", alignItems: "center", gap: 12 },
     avatar: { width: 84, height: 84, borderRadius: 42 },
     editBadge: {
       position: "absolute",
       right: -6,
       bottom: -6,
       padding: 6,
+      backgroundColor: colors?.surface,
       borderRadius: 999,
       borderWidth: 1,
+      borderColor: colors?.border,
     },
-    infoCol: { flex: 1, minWidth: 0 },
+    info: { flex: 1 },
     name: { fontSize: 18, fontWeight: "700" },
-    meta: { fontSize: 12, marginTop: 2 },
-    loadingContainer: {
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-      gap: 12,
-    },
-    loadingText: {
-      fontSize: 14,
-    },
-    errorContainer: {
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-      gap: 16,
-      paddingHorizontal: 32,
-    },
-    errorText: {
-      fontSize: 16,
-      fontWeight: "600",
-    },
-    retryButton: {
-      paddingHorizontal: 24,
-      paddingVertical: 12,
+    retryBtn: {
+      marginTop: 12,
+      paddingHorizontal: 20,
+      paddingVertical: 10,
       borderRadius: 8,
-      marginTop: 8,
     },
-    retryButtonText: {
-      color: "#FFFFFF",
-      fontSize: 14,
-      fontWeight: "600",
-    },
+    retryText: { color: "#fff", fontWeight: "600" },
   });

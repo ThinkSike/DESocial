@@ -11,8 +11,8 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface NewsRecommendation {
   id: string;
@@ -225,11 +225,34 @@ export default function SearchScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       {/* Search bar */}
-      <View style={[styles.searchHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-        <View style={[styles.searchBarContainer, { backgroundColor: colors.background, borderColor: isSearchFocused ? colors.primary : colors.border }]}>
-          <Ionicons name="search" size={20} color={colors.textSecondary} style={styles.searchIcon} />
+      <View
+        style={[
+          styles.searchHeader,
+          {
+            backgroundColor: colors.cardBackground,
+            borderBottomColor: colors.border,
+          },
+        ]}
+      >
+        <View
+          style={[
+            styles.searchBarContainer,
+            {
+              backgroundColor: colors.background,
+              borderColor: isSearchFocused ? colors.primary : colors.border,
+            },
+          ]}
+        >
+          <Ionicons
+            name="search"
+            size={20}
+            color={colors.textSecondary}
+            style={styles.searchIcon}
+          />
           <TextInput
             style={[styles.searchInput, { color: colors.text }]}
             placeholder="Search people, communities, topics..."
@@ -255,12 +278,14 @@ export default function SearchScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.contentContainer}  // center all sections
+        contentContainerStyle={styles.contentContainer} // center all sections
         showsVerticalScrollIndicator={false}
       >
         {/* Popular Searches */}
         <View style={styles.centerWrap}>
-          <Text style={[styles.h1, { color: colors.text }]}>Popular Searches</Text>
+          <Text style={[styles.h1, { color: colors.text }]}>
+            Popular Searches
+          </Text>
 
           <View style={styles.suggestionsContainer}>
             {searchSuggestions.map(renderSuggestion)}
@@ -270,9 +295,13 @@ export default function SearchScreen() {
         {/* Latest Updates */}
         <View style={styles.centerWrap}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={[styles.h1, { color: colors.text }]}>Latest Updates</Text>
+            <Text style={[styles.h1, { color: colors.text }]}>
+              Latest Updates
+            </Text>
             <TouchableOpacity>
-              <Text style={[styles.seeAll, { color: colors.textSecondary }]}>See all</Text>
+              <Text style={[styles.seeAll, { color: colors.textSecondary }]}>
+                See all
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -292,37 +321,42 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingTop: 8,
     paddingBottom: 24,
-    alignItems: 'center',
+    alignItems: "center",
   },
 
   // Centered column wrapper
   centerWrap: {
-    width: '100%',
+    width: "100%",
     maxWidth: MAX_COL_WIDTH,
     paddingHorizontal: 16,
     marginBottom: 16,
   },
 
   sectionHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 8,
   },
-  h1: { fontSize: 18, fontWeight: '700' },
+  h1: { fontSize: 18, fontWeight: "700" },
   seeAll: { fontSize: 12 },
 
   // Popular search list
   suggestionsContainer: {},
   suggestionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 12,
     borderRadius: 12,
     marginBottom: 8,
-    width: '100%',
+    width: "100%",
     ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2 },
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+      },
       android: { elevation: 2 },
     }),
   },
@@ -330,13 +364,13 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 12,
   },
   suggestionContent: { flex: 1 },
-  suggestionHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  suggestionTitle: { fontSize: 16, fontWeight: '600' },
+  suggestionHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
+  suggestionTitle: { fontSize: 16, fontWeight: "600" },
   suggestionSubtitle: { fontSize: 12 },
 
   // News
@@ -344,10 +378,15 @@ const styles = StyleSheet.create({
   newsCard: {
     borderRadius: 12,
     marginBottom: 16,
-    overflow: 'hidden',
-    width: '100%',
+    overflow: "hidden",
+    width: "100%",
     ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
       android: { elevation: 3 },
     }),
   },
@@ -367,7 +406,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   searchIcon: { marginRight: 12 },
-  searchInput: { flex: 1, fontSize: 16, fontWeight: '400' },
+  searchInput: { flex: 1, fontSize: 16, fontWeight: "400" },
   clearButton: { marginLeft: 8 },
 
   // Legacy section helpers (kept if referenced)
@@ -379,25 +418,54 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 8,
   },
-  sectionTitle: { fontSize: 20, fontWeight: '700', paddingHorizontal: 16, marginBottom: 8 },
-  sectionSubtitle: { fontSize: 14, paddingHorizontal: 16, marginBottom: 16, lineHeight: 20 },
-  seeAllText: { fontSize: 14, fontWeight: '600' },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  seeAllText: { fontSize: 14, fontWeight: "600" },
 
   // News card internals
-  newsImage: { width: '100%', height: 200, resizeMode: 'cover' },
+  newsImage: { width: "100%", height: 200, resizeMode: "cover" },
   newsContent: { padding: 16 },
-  newsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  newsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
   categoryBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
-  categoryText: { fontSize: 12, fontWeight: '600' },
-  trendingBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  trendingText: { fontSize: 12, fontWeight: '600' },
-  newsTitle: { fontSize: 18, fontWeight: '700', lineHeight: 24, marginBottom: 8 },
+  categoryText: { fontSize: 12, fontWeight: "600" },
+  trendingBadge: { flexDirection: "row", alignItems: "center", gap: 4 },
+  trendingText: { fontSize: 12, fontWeight: "600" },
+  newsTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    lineHeight: 24,
+    marginBottom: 8,
+  },
   newsSummary: { fontSize: 14, lineHeight: 20, marginBottom: 12 },
-  newsFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  newsSource: { fontSize: 12, fontWeight: '500' },
+  newsFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  newsSource: { fontSize: 12, fontWeight: "500" },
   newsTime: { fontSize: 12 },
 
-  topicsContainer: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, gap: 8 },
+  topicsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    paddingHorizontal: 16,
+    gap: 8,
+  },
   topicChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
-  topicText: { fontSize: 12, fontWeight: '600' },
+  topicText: { fontSize: 12, fontWeight: "600" },
 });

@@ -29,7 +29,7 @@ export default function ForumScreen() {
   const isTablet = width > 768;
 
   const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(
-    null,
+    null
   );
 
   // Get community data

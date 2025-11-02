@@ -11,9 +11,7 @@ export default function NotificationsScreen() {
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       <View style={styles.content}>
-        <Text
-          style={{ color: colors.text, fontSize: 18, fontWeight: "700" }}
-        >
+        <Text style={{ color: colors.text, fontSize: 18, fontWeight: "700" }}>
           Notifications
         </Text>
         <View style={styles.empty}>

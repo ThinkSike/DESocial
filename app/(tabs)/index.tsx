@@ -45,7 +45,7 @@ export default function HomeScreen() {
     (userId: string) => {
       router.push(`/profile?userId=${userId}` as any);
     },
-    [router],
+    [router]
   );
 
   const handleComment = useCallback((postId: string) => {
