@@ -1,6 +1,6 @@
 import { useThemeColors } from "@/constants/Colors";
 import { useUserProfile } from "@/hooks/useUserProfile";
-import { PostContent } from "@/types/post";
+import type { PostContent } from "@/types/post";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
@@ -24,57 +24,48 @@ interface PostCreatorProps {
 
 export default function PostCreator({ user, onCreatePost }: PostCreatorProps) {
   const colors = useThemeColors();
+  const { profile } = useUserProfile();
   const [text, setText] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [focused, setFocused] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const { profile } = useUserProfile();
 
-  const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  const styles = getStyles(colors);
+
+  const selectImages = async (fromCamera = false) => {
+    const request = fromCamera
+      ? ImagePicker.requestCameraPermissionsAsync
+      : ImagePicker.requestMediaLibraryPermissionsAsync;
+
+    const { status } = await request();
     if (status !== "granted") {
-      Alert.alert("Permission needed", "Please grant photo library access");
+      Alert.alert("Permission needed", "Please grant access");
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
+    const picker = fromCamera
+      ? ImagePicker.launchCameraAsync
+      : ImagePicker.launchImageLibraryAsync;
+
+    const result = await picker({
       mediaTypes: "images",
-      allowsMultipleSelection: true,
+      allowsMultipleSelection: !fromCamera,
       selectionLimit: 4,
       quality: 0.8,
     });
 
     if (!result.canceled) {
-      setImages((prev) =>
-        [...prev, ...result.assets.map((a) => a.uri)].slice(0, 4)
-      );
-      setFocused(true);
-    }
-  };
-
-  const takePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Permission needed", "Please grant camera access");
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: "images",
-      quality: 0.8,
-    });
-
-    if (!result.canceled) {
-      setImages((prev) => [...prev, result.assets[0].uri].slice(0, 4));
+      const uris = fromCamera
+        ? [result.assets[0].uri]
+        : result.assets.map((a) => a.uri);
+      setImages((prev) => [...prev, ...uris].slice(0, 4));
       setFocused(true);
     }
   };
 
   const handleSubmit = async () => {
-    if (!text.trim() && !images.length) {
-      Alert.alert("Empty post", "Add text or images");
-      return;
-    }
+    if (!text.trim() && !images.length)
+      return Alert.alert("Empty post", "Add text or images");
 
     setUploading(true);
     try {
@@ -82,50 +73,41 @@ export default function PostCreator({ user, onCreatePost }: PostCreatorProps) {
         text: text.trim() || undefined,
         images: images.length ? images : undefined,
       });
-
       setText("");
       setImages([]);
       setFocused(false);
       Alert.alert("Success", "Post created!");
-    } catch (error) {
+    } catch {
       Alert.alert("Error", "Failed to create post");
     } finally {
       setUploading(false);
     }
   };
 
-  const showImageOptions = () => {
-    if (Platform.OS === "web") {
-      pickImage();
-    } else {
-      Alert.alert("Add Photo", "Choose option", [
-        { text: "Camera", onPress: takePhoto },
-        { text: "Photo Library", onPress: pickImage },
-        { text: "Cancel", style: "cancel" },
-      ]);
-    }
+  const showOptions = () => {
+    if (Platform.OS === "web") return selectImages(false);
+    Alert.alert("Add Photo", "", [
+      { text: "Camera", onPress: () => selectImages(true) },
+      { text: "Gallery", onPress: () => selectImages(false) },
+      { text: "Cancel", style: "cancel" },
+    ]);
   };
 
   const canPost = (text.trim() || images.length) && !uploading;
 
   return (
-    <View style={styles(colors).container}>
-      <View style={styles(colors).inputSection}>
-        <Image
-          source={{
-            uri: profile?.avatar,
-          }}
-          style={styles(colors).avatar}
-        />
-        <TouchableOpacity
-          style={styles(colors).inputContainer}
-          onPress={() => setFocused(true)}
-        >
+    <View style={styles.container}>
+      {/* Input section */}
+      <View style={styles.row}>
+        <Image source={{ uri: profile?.avatar }} style={styles.avatar} />
+        <View style={styles.inputWrap}>
           {!focused && !images.length ? (
-            <Text style={styles(colors).placeholder}>Start a post</Text>
+            <TouchableOpacity onPress={() => setFocused(true)}>
+              <Text style={styles.placeholder}>Start a post</Text>
+            </TouchableOpacity>
           ) : (
             <TextInput
-              style={styles(colors).input}
+              style={styles.input}
               placeholder="What's on your mind?"
               placeholderTextColor={colors.textSecondary}
               multiline
@@ -133,33 +115,36 @@ export default function PostCreator({ user, onCreatePost }: PostCreatorProps) {
               onChangeText={setText}
               autoFocus={focused}
               onBlur={() => !text && !images.length && setFocused(false)}
+              maxLength={280}
             />
           )}
-        </TouchableOpacity>
+        </View>
       </View>
 
+      {/* Image previews */}
       {images.length > 0 && (
-        <ScrollView horizontal style={styles(colors).imageScroll}>
+        <ScrollView horizontal style={styles.imageScroll}>
           {images.map((uri, i) => (
-            <View key={i} style={styles(colors).imagePreview}>
-              <Image source={{ uri }} style={styles(colors).image} />
+            <View key={i} style={styles.imageBox}>
+              <Image source={{ uri }} style={styles.image} />
               <TouchableOpacity
-                style={styles(colors).removeBtn}
+                style={styles.removeBtn}
                 onPress={() =>
                   setImages((prev) => prev.filter((_, idx) => idx !== i))
                 }
               >
-                <Ionicons name="close-circle" size={24} color="#FFF" />
+                <Ionicons name="close-circle" size={22} color="#fff" />
               </TouchableOpacity>
             </View>
           ))}
         </ScrollView>
       )}
 
-      <View style={styles(colors).actions}>
+      {/* Actions */}
+      <View style={styles.actions}>
         <TouchableOpacity
-          style={styles(colors).actionBtn}
-          onPress={showImageOptions}
+          onPress={showOptions}
+          style={styles.actionBtn}
           disabled={images.length >= 4}
         >
           <Ionicons
@@ -167,27 +152,25 @@ export default function PostCreator({ user, onCreatePost }: PostCreatorProps) {
             size={20}
             color={images.length >= 4 ? colors.textSecondary : "#378FE9"}
           />
-          <Text style={styles(colors).actionText}>
+          <Text style={styles.actionText}>
             Photo {images.length > 0 && `(${images.length}/4)`}
           </Text>
         </TouchableOpacity>
       </View>
 
+      {/* Footer */}
       {(focused || images.length > 0) && (
-        <View style={styles(colors).footer}>
-          <Text style={styles(colors).charCount}>{text.length}/280</Text>
+        <View style={styles.footer}>
+          <Text style={styles.charCount}>{text.length}/280</Text>
           <TouchableOpacity
-            style={[
-              styles(colors).postBtn,
-              !canPost && styles(colors).postBtnDisabled,
-            ]}
-            onPress={handleSubmit}
+            style={[styles.postBtn, !canPost && styles.disabled]}
             disabled={!canPost}
+            onPress={handleSubmit}
           >
             {uploading ? (
               <ActivityIndicator color="#FFF" size="small" />
             ) : (
-              <Text style={styles(colors).postBtnText}>Post</Text>
+              <Text style={styles.postText}>Post</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -196,109 +179,63 @@ export default function PostCreator({ user, onCreatePost }: PostCreatorProps) {
   );
 }
 
-const styles = (colors: any) =>
+const getStyles = (c: any) =>
   StyleSheet.create({
     container: {
-      backgroundColor: colors.surface || "#FFF",
+      backgroundColor: c.surface,
       borderRadius: 12,
       margin: 16,
+      paddingBottom: 8,
       shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
       shadowRadius: 4,
-      elevation: 5,
+      elevation: 3,
     },
-    inputSection: {
-      flexDirection: "row",
-      padding: 16,
-    },
-    avatar: {
-      width: 48,
-      height: 48,
-      borderRadius: 24,
-      marginRight: 12,
-    },
-    inputContainer: {
+    row: { flexDirection: "row", padding: 16 },
+    avatar: { width: 48, height: 48, borderRadius: 24, marginRight: 12 },
+    inputWrap: {
       flex: 1,
-      minHeight: 48,
       borderWidth: 1,
-      borderColor: colors.border || "#E1E8ED",
+      borderColor: c.border,
       borderRadius: 24,
       paddingHorizontal: 16,
-      paddingVertical: 12,
       justifyContent: "center",
     },
-    placeholder: {
-      fontSize: 16,
-      color: colors.textSecondary,
-    },
-    input: {
-      fontSize: 16,
-      color: colors.text,
-      minHeight: 24,
-      maxHeight: 120,
-    },
-    imageScroll: {
-      paddingHorizontal: 16,
-      marginBottom: 12,
-    },
-    imagePreview: {
-      marginRight: 8,
-      position: "relative",
-    },
-    image: {
-      width: 100,
-      height: 100,
-      borderRadius: 8,
-    },
+    placeholder: { color: c.textSecondary, fontSize: 16 },
+    input: { color: c.text, fontSize: 16, minHeight: 40 },
+    imageScroll: { paddingHorizontal: 16, marginBottom: 8 },
+    imageBox: { marginRight: 8, position: "relative" },
+    image: { width: 100, height: 100, borderRadius: 8 },
     removeBtn: {
       position: "absolute",
-      top: -8,
-      right: -8,
+      top: -6,
+      right: -6,
       backgroundColor: "rgba(0,0,0,0.6)",
       borderRadius: 12,
     },
     actions: {
       flexDirection: "row",
-      paddingHorizontal: 16,
-      paddingBottom: 12,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border || "#E1E8ED",
-    },
-    actionBtn: {
-      flexDirection: "row",
       alignItems: "center",
-      padding: 8,
+      paddingHorizontal: 16,
+      borderTopWidth: 1,
+      borderColor: c.border,
     },
-    actionText: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      marginLeft: 6,
-    },
+    actionBtn: { flexDirection: "row", alignItems: "center", padding: 8 },
+    actionText: { color: c.textSecondary, marginLeft: 6 },
     footer: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      padding: 16,
+      paddingHorizontal: 16,
+      paddingTop: 8,
     },
-    charCount: {
-      fontSize: 12,
-      color: colors.textSecondary,
-    },
+    charCount: { color: c.textSecondary, fontSize: 12 },
     postBtn: {
-      backgroundColor: colors.primary,
-      paddingHorizontal: 24,
-      paddingVertical: 8,
+      backgroundColor: c.primary,
       borderRadius: 20,
-      minWidth: 70,
-      alignItems: "center",
+      paddingHorizontal: 20,
+      paddingVertical: 8,
     },
-    postBtnDisabled: {
-      opacity: 0.5,
-    },
-    postBtnText: {
-      color: "#FFF",
-      fontSize: 14,
-      fontWeight: "600",
-    },
+    disabled: { opacity: 0.5 },
+    postText: { color: "#FFF", fontWeight: "600" },
   });
