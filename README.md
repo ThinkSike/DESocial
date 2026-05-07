@@ -1,50 +1,130 @@
-# Welcome to your Expo app 👋
+# DESocial
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A social platform built for university communities. Monorepo with Expo mobile app + Hono backend + Postgres.
 
-## Get started
+## Structure
 
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+desocial/
+├── apps/
+│   ├── mobile/        # Expo SDK 54 (React Native + Web)
+│   └── server/        # Hono API + Drizzle ORM
+├── packages/
+│   └── shared/        # Shared types + Zod schemas
+├── docker-compose.yml # PostgreSQL 16
+├── turbo.json         # Turborepo config
+└── pnpm-workspace.yaml
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Prerequisites
 
-## Learn more
+- **Node.js** >= 18
+- **pnpm** >= 10 (`npm install -g pnpm`)
+- **Docker** (for Postgres)
 
-To learn more about developing your project with Expo, look at the following resources:
+## Quick Start
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+# 1. Install dependencies
+pnpm install
 
-## Join the community
+# 2. Start Postgres
+pnpm docker:up
 
-Join our community of developers creating universal apps.
+# 3. Push database schema
+pnpm db:push
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+# 4. Seed sample data (5 users, 6 communities, 12 posts)
+pnpm --filter server exec tsx src/db/seed.ts
+
+# 5. Start everything
+pnpm dev
+```
+
+- **Server**: http://localhost:3000
+- **Mobile** (Expo): http://localhost:8081
+- **Database**: `postgres://desocial:desocial@localhost:5434/desocial`
+
+## Test Accounts
+
+| Email | Password |
+|---|---|
+| alice@desocial.app | password123 |
+| bob@desocial.app | password123 |
+| carol@desocial.app | password123 |
+
+## Scripts
+
+| Command | Description |
+|---|---|
+| `pnpm dev` | Start server + mobile in dev mode |
+| `pnpm build` | Build all packages |
+| `pnpm typecheck` | Type-check all packages |
+| `pnpm docker:up` | Start Postgres container |
+| `pnpm docker:down` | Stop Postgres container |
+| `pnpm db:push` | Push Drizzle schema to DB |
+| `pnpm db:studio` | Open Drizzle Studio (DB browser) |
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Mobile | Expo SDK 54, React Native 0.81, Expo Router |
+| Backend | Hono, Drizzle ORM, PostgreSQL |
+| Auth | JWT (bcrypt + jsonwebtoken) |
+| Storage | Local filesystem (`apps/server/uploads/`) |
+| Monorepo | pnpm workspaces + Turborepo |
+| Types | TypeScript, Zod, shared `@desocial/shared` package |
+
+## API Endpoints
+
+### Auth
+- `POST /api/auth/register` — Register new user
+- `POST /api/auth/login` — Login
+- `GET /api/auth/me` — Get current user
+
+### Posts
+- `GET /api/posts` — List posts (paginated)
+- `POST /api/posts` — Create post
+- `POST /api/posts/:id/like` — Toggle like
+- `DELETE /api/posts/:id` — Delete post
+
+### Users
+- `GET /api/users/:id` — Get user profile
+- `PATCH /api/users/:id` — Update profile
+- `GET /api/users/:id/posts` — Get user's posts
+- `POST /api/users/:id/follow` — Follow user
+- `DELETE /api/users/:id/follow` — Unfollow
+
+### Communities
+- `GET /api/communities` — List communities
+- `GET /api/communities/:id` — Get community
+- `POST /api/communities` — Create community
+- `POST /api/communities/:id/join` — Join community
+- `DELETE /api/communities/:id/leave` — Leave
+
+### Uploads
+- `POST /uploads?type=avatars` — Upload file
+- `GET /uploads/:type/:filename` — Serve file
+
+## Troubleshooting
+
+### Port conflict (Postgres)
+If port 5434 is in use, edit `docker-compose.yml` and update all `DATABASE_URL` references.
+
+### Mobile can't reach server
+Set `EXPO_PUBLIC_API_URL` in `apps/mobile/.env` to your machine's LAN IP:
+```
+EXPO_PUBLIC_API_URL=http://192.168.x.x:3000
+```
+
+### Metro bundler cache issues
+```bash
+npx expo start --clear
+```
+
+### Stale node_modules
+```bash
+rm -rf node_modules apps/*/node_modules packages/*/node_modules pnpm-lock.yaml
+pnpm install
+```

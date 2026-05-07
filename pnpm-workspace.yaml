@@ -1,0 +1,17 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+allowBuilds:
+  ' ': true
+  '-': true
+  b: true
+  d: true
+  e: true
+  i: true
+  l: true
+  n: true
+  o: true
+  r: true
+  s: true
+  u: true
+  v: true
