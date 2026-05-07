@@ -12,5 +12,34 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  minio:
+    image: minio/minio:latest
+    container_name: desocial-minio
+    restart: unless-stopped
+    ports:
+      - "9002:9000"
+      - "9003:9001"
+    environment:
+      MINIO_ROOT_USER: desocial
+      MINIO_ROOT_PASSWORD: desocialminio
+    command: server /data --console-address ":9001"
+    volumes:
+      - miniodata:/data
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: desocial-minio-init
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc alias set desocial http://minio:9000 desocial desocialminio) do sleep 1; done;
+      /usr/bin/mc mb desocial/desocial-uploads --ignore-existing;
+      /usr/bin/mc anonymous set download desocial/desocial-uploads;
+      echo 'MinIO bucket ready';
+      exit 0;
+      "
+
 volumes:
   pgdata:
+  miniodata:

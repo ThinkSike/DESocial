@@ -44,13 +44,22 @@ posts.get("/", async (c) => {
 
     const results = await query;
 
+    const normalizeArray = (val: unknown): string[] | undefined => {
+      if (!val) return undefined;
+      if (Array.isArray(val)) return val as string[];
+      if (typeof val === "string") {
+        try { return JSON.parse(val); } catch { return [val]; }
+      }
+      return undefined;
+    };
+
     const formatted = results.map((row) => ({
       id: String(row.id),
       user: row.user,
       content: {
         text: row.text ?? undefined,
-        images: row.images ?? undefined,
-        hashtags: row.hashtags ?? undefined,
+        images: normalizeArray(row.images),
+        hashtags: normalizeArray(row.hashtags),
       },
       engagement: {
         likes: row.likesCount,

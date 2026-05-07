@@ -2,67 +2,57 @@ import Post from "@/components/Post";
 import { useThemeColors } from "@/constants/Colors";
 import { Post as PostType } from "@/types/post";
 import React from "react";
-import { FlatList, RefreshControl, StyleSheet } from "react-native";
+import { ScrollView, RefreshControl, StyleSheet } from "react-native";
 
 interface PostListProps {
   posts: PostType[];
   onRefresh?: () => void;
   refreshing?: boolean;
-  onLoadMore?: () => void;
   onUserPress?: (userId: string) => void;
   onLike?: (postId: string) => void;
   onComment?: (postId: string) => void;
-  ListHeaderComponent?: React.ReactNode;
 }
 
 export default function PostList({
   posts,
   onRefresh,
   refreshing = false,
-  onLoadMore,
   onUserPress,
   onLike,
   onComment,
-  ListHeaderComponent,
 }: PostListProps) {
   const colors = useThemeColors();
 
   return (
-    <FlatList
-      data={posts}
-      renderItem={({ item }) => (
-        <Post
-          post={item}
-          onUserPress={onUserPress}
-          onLike={onLike}
-          onComment={onComment}
-        />
-      )}
-      keyExtractor={(item) => item.id}
+    <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
       showsVerticalScrollIndicator={false}
-      ListHeaderComponent={
-        ListHeaderComponent as React.ReactElement<any> | undefined
-      }
       refreshControl={
-        onRefresh && (
+        onRefresh ? (
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor={colors.primary}
             colors={[colors.primary]}
           />
-        )
+        ) : undefined
       }
-      onEndReached={onLoadMore}
-      onEndReachedThreshold={0.1}
-    />
+    >
+      {posts.map((post) => (
+        <Post
+          key={String(post.id)}
+          post={post}
+          onUserPress={onUserPress}
+          onLike={onLike}
+          onComment={onComment}
+        />
+      ))}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 0,
   },
 });

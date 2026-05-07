@@ -34,9 +34,10 @@ export default function Post({
   const styles = createStyles(colors);
 
   const renderImages = () => {
-    if (!post.content.images || post.content.images.length === 0) return null;
-
-    const images = post.content.images;
+    const raw = post.content.images;
+    if (!raw) return null;
+    const images = Array.isArray(raw) ? raw : [raw];
+    if (images.length === 0) return null;
 
     if (images.length === 1) {
       return (
