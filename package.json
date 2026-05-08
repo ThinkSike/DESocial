@@ -3,6 +3,8 @@
   "private": true,
   "scripts": {
     "dev": "turbo dev",
+    "dev:mobile": "pnpm --filter @desocial/mobile dev",
+    "dev:server": "pnpm --filter @desocial/server dev",
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",

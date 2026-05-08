@@ -40,8 +40,12 @@ pnpm --filter server exec tsx src/db/seed.ts
 # 5. Seed image posts (40 posts with random images)
 pnpm --filter server exec tsx src/db/seed-images.ts
 
-# 6. Start dev servers
-pnpm dev
+# 6. Start dev (two terminals)
+# Terminal 1: backend
+pnpm dev:server
+
+# Terminal 2: Expo
+pnpm dev:mobile
 ```
 
 - **Server**: http://localhost:3000
@@ -85,7 +89,9 @@ pnpm --filter server exec tsx src/db/seed-images.ts
 
 | Command | Description |
 |---|---|
-| `pnpm dev` | Start server + mobile |
+| `pnpm dev:server` | Start backend (terminal 1) |
+| `pnpm dev:mobile` | Start Expo (terminal 2) |
+| `pnpm dev` | Start both (no Expo keyboard shortcuts) |
 | `pnpm build` | Build all packages |
 | `pnpm typecheck` | Type-check everything |
 | `pnpm docker:up` | Start Postgres + MinIO |
@@ -136,6 +142,13 @@ pnpm --filter server exec tsx src/db/seed-images.ts
 - `GET /uploads/:type/:filename` — serves from MinIO
 
 ## Troubleshooting
+
+### Expo keyboard shortcuts not working (`r`, `a`, `i`)
+`pnpm dev` uses Turbo which combines output and steals stdin. Always use **separate terminals**:
+```
+Terminal 1: pnpm dev:server
+Terminal 2: pnpm dev:mobile
+```
 
 ### Port conflicts
 Check if ports are in use: `netstat -ano | findstr :5434` or `findstr :9002`
