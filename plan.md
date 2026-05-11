@@ -7,153 +7,158 @@
 ---
 
 ## Summary
-We currently have an Expo (SDK 54) app at `apps/mobile` (Expo Router + several Expo modules). You want to migrate to **bare React Native** (no Expo Go, no Expo-managed runtime).
+We currently have an Expo (SDK 54) app at `apps/mobile` (Expo Router + Expo modules). The goal is to migrate to **bare React Native** (RN CLI; no Expo Go; no Expo-managed runtime) while keeping **iOS + Android + Web** support.
 
-You also want **iOS + Android + Web**, but web is **not** intended to be a 1:1 mirror of mobile (some content/features will be web-only).
-
-This document captures:
-- decisions you already made
-- open decisions I need from you before implementing anything that locks us in
-- a phased migration approach that minimizes dead-ends
+Web will not be a 1:1 mirror of mobile: some content will be **web-only** and some mobile content may be hidden on web.
 
 ---
 
 ## Goals
-- Convert `apps/mobile` into a **bare RN CLI** app with native projects:
+- Convert `apps/mobile` into a bare React Native app with:
   - `apps/mobile/android`
   - `apps/mobile/ios`
-- Keep working monorepo + shared code via `packages/shared`.
-- Maintain feature parity for existing **mobile** functionality (auth, feeds, posts, uploads) unless you explicitly choose to drop something.
-- Introduce/maintain **web** support, acknowledging it will have **different routes/content** than mobile.
+- Keep the monorepo + shared code via `packages/shared`.
+- Preserve existing mobile product behavior unless explicitly dropped.
+- Keep web support via **React Native Web** (single codebase), with platform-gated routes/content.
 
 ## Non-goals (unless you tell me otherwise)
-- Major backend refactors in `apps/server` (except for any unavoidable CORS / upload / URL changes).
-- Adding OTA update infrastructure (Expo Updates replacement) during the initial migration.
+- Major backend refactors in `apps/server` (except unavoidable CORS / URL / upload tweaks).
+- Adding OTA updates during initial migration.
 
 ---
 
 ## Confirmed decisions (from you)
-1) **Migration strategy:** in-place conversion (no parallel “new mobile app” folder).
-2) **Platforms:** iOS + Android + Web.
-3) **Web:** required; will serve a different purpose than mobile (not all mobile features).
-4) **Versions:** upgrade to the **most stable** React Native version directly.
-5) **Architecture choice:** use the most **performance-centric** and **mature** approach.
-6) **Expo feature scope:** expect to drop many Expo-provided features; I should ask you what to keep vs remove.
+- **Web approach:** **A2** — one codebase using `react-native-web` (not a separate web app).
+- **Navigation:** **B1** — React Navigation.
+- **Versioning principle:** prioritize **maximum stability** over chasing newest versions; align `react` to whatever the chosen stable RN version requires.
+- **Architecture:** **D2** — enable the **New Architecture** from the start (acceptable risk on this branch).
+- **Replacements you want:**
+  - Image picker: `react-native-image-picker`
+  - Images: `react-native-fast-image`
+  - Video: `react-native-video`
+  - Haptics: `react-native-haptic-feedback`
+  - In-app browser: I’ll choose a mature option (plan below)
+  - Splash: `react-native-bootsplash`
+  - Fonts: native font linking
+  - Env/config: `react-native-config`
+  - Status bar/system UI: RN `StatusBar` + native config
+- **Routing preference:** file-based routing is highly desired.
 
 ---
 
-## Open decisions I need from you (before implementation)
-These are the big ones that affect the whole approach:
+## Key architecture notes (what this implies)
+### 1) React Native Web (A2) is still a “web app” build pipeline
+Even with a single codebase, we still need a web bundler/dev server. The plan is to:
+- run the same component tree on web using `react-native-web`
+- use React Navigation on web with linking
+- platform-gate content/routes so web-only UX can exist
 
-### A) Web approach (most important)
-Bare RN + “web” can mean two very different architectures:
+**Open (small) choice we’ll make during Phase 0:** pick the web bundler approach (Vite vs Webpack vs other). I’ll default to the most stable/boring choice that works well with RN Web.
 
-**Option A1 — Separate web app (recommended given web-only content):**
-- Keep `apps/mobile` as *native-only* (RN CLI).
-- Create a dedicated `apps/web` (likely Next.js or Vite+React) for web-only UX.
-- Share types/schemas via `packages/shared` (and optionally share some UI via a `packages/ui` later).
+### 2) File-based routing without Expo Router
+Expo Router is a major Expo-specific piece. Since you want file-based routing but we’re going bare RN, we will need one of these:
+- **Custom route codegen**: keep `apps/mobile/app/**` as the source of truth and generate a React Navigation route config.
+- **Manual routes** (fallback): React Navigation config written by hand.
 
-**Option A2 — Single codebase with React Native Web:**
-- Keep one `apps/mobile` app that runs on iOS/Android and also bundles for web using `react-native-web`.
-- Use platform routing/feature flags to show different content on web.
-
-✅ **Question:** Do you want **A1 (separate `apps/web`)** or **A2 (React Native Web in the same app)**?
-
-(If you pick A1, it does *not* contradict “in-place conversion” for mobile; it just means web is a separate product surface, which matches your requirement.)
-
-### B) Navigation / routing choice (performance + maturity)
-For iOS/Android, the most common mature option is **React Navigation** with native primitives (`react-native-screens`, native stack).
-A more “native-first performance” option is **Wix `react-native-navigation`**, but it’s heavier on native setup and ecosystem.
-
-✅ **Question:** Do you prefer:
-- **B1:** React Navigation (mature, huge ecosystem, solid performance with `native-stack`)
-- **B2:** react-native-navigation (native-driven nav, high performance, more native complexity)
-
-### C) “Most stable RN version” definition
-When we start implementation, I’ll align to:
-- the latest stable `react-native` release
-- the matching supported `react` version (RN sometimes lags React major versions)
-
-✅ **Question:** Are you okay if this means changing React from `19.x` to whatever RN stable supports, if necessary?
-
-### D) New Architecture / Hermes
-Performance-centric usually implies Hermes and (possibly) New Architecture, but stability and library compatibility matters.
-
-✅ **Question:** For the initial migration milestone, do you want:
-- **D1:** New Architecture OFF (maximize compatibility) then evaluate later
-- **D2:** New Architecture ON from day one (opt-in early; may require more troubleshooting)
+Given your preference, we’ll plan on **custom route codegen**, but we’ll design the conventions with you first (because this is “custom code”).
 
 ---
 
-## Expo feature audit (I will not assume — you decide)
-Current Expo-related capabilities in `apps/mobile/package.json` and likely replacements:
+## Library plan (agreed replacements)
+### Navigation / routing
+- **React Navigation** (B1)
+- **File-based routing layer:** custom generator → React Navigation route config
+- **Web routing:** React Navigation linking config + web entry
 
-| Capability | Expo package today | Bare RN replacement candidates | Keep on Mobile? | Keep on Web? |
-|---|---|---|---:|---:|
-| File-based routing | `expo-router` | React Navigation / RNN | ? | ? |
-| Image picking | `expo-image-picker` | `react-native-image-picker` | ? | N/A |
-| Image rendering | `expo-image` | RN `<Image>` / `react-native-fast-image` | ? | ? |
-| Video | `expo-video` | `react-native-video` | ? | ? |
-| Haptics | `expo-haptics` | `react-native-haptic-feedback` | ? | N/A |
-| In-app browser | `expo-web-browser` | `Linking.openURL` / in-app browser lib | ? | ? |
-| Splash screen | `expo-splash-screen` | `react-native-bootsplash` / native | ? | ? |
-| Fonts | `expo-font` | native font linking | ? | ? |
-| Constants/env | `expo-constants` + `EXPO_PUBLIC_*` | `react-native-config` / build-time env | ? | ? |
-| Status bar/system UI | `expo-status-bar`, `expo-system-ui` | RN `StatusBar` + native config | ? | ? |
+### Media
+- **Pick images:** `react-native-image-picker`
+- **Render images:** `react-native-fast-image` (native). On web, we’ll fall back to standard RN `<Image>` behavior unless you want a dedicated web image strategy.
+- **Video:** `react-native-video` (native). For web, we may need a platform-specific wrapper (because web video is an HTML `<video>` under the hood).
 
-✅ **Question:** Tell me which items above are **must-have** vs **nice-to-have** vs **drop** (especially Video, Haptics, In-app browser, custom fonts/splash polish).
+### Device features
+- **Haptics:** `react-native-haptic-feedback`
+- **In-app browser:** default plan is `react-native-inappbrowser-reborn` with fallback to `Linking.openURL` where unavailable.
+
+### UX polish
+- **Splash:** `react-native-bootsplash`
+- **Fonts:** native font linking (iOS `Info.plist` + Android font resources or bundling strategy)
+- **Status bar:** RN `StatusBar` + native config
+
+### Config / env
+- **`react-native-config`** for native env values
+- A small `src/config/env.ts` wrapper to keep a single `API_URL` interface across **native + web**.
+
+---
+
+## Expo feature audit (locked-in for now)
+| Capability | Expo today | Replacement | Keep (Mobile) | Keep (Web) | Notes |
+|---|---|---|---:|---:|---|
+| File-based routing | `expo-router` | React Navigation + custom file-based codegen | Yes | Yes | Requires custom generator + linking config |
+| Image picking | `expo-image-picker` | `react-native-image-picker` | Yes | N/A | Native permission + URI differences to handle |
+| Image rendering | `expo-image` | `react-native-fast-image` | Yes | Yes* | Web likely uses fallback behavior |
+| Video | `expo-video` | `react-native-video` | Yes | Yes* | Web needs wrapper/compat approach |
+| Haptics | `expo-haptics` | `react-native-haptic-feedback` | Yes | N/A | |
+| In-app browser | `expo-web-browser` | `react-native-inappbrowser-reborn` / `Linking` | Yes | Yes | Web likely just uses normal navigation |
+| Splash screen | `expo-splash-screen` | `react-native-bootsplash` | Yes | N/A | Web can have its own loading shell |
+| Fonts | `expo-font` | native font linking | Yes | Yes | Web uses CSS/font-face if needed |
+| Constants/env | `expo-constants` + `EXPO_PUBLIC_*` | `react-native-config` + env wrapper | Yes | Yes | Web env strategy depends on bundler |
+| Status bar/system UI | `expo-status-bar`, `expo-system-ui` | RN `StatusBar` + native config | Yes | N/A | |
+
+`*` = “supported” but may require platform-specific implementation.
 
 ---
 
 ## Migration plan (phased, in-place)
-> I will not start these steps until the “Open decisions” are answered.
+> Implementation will start only after you confirm the remaining consult-heavy items in Phase 0.
 
-### Phase 0 — Design + compatibility checks
-- Decide web approach (A1/A2), navigation (B1/B2), New Architecture (D1/D2).
-- Choose the “stable” RN target version and confirm React version alignment.
-- Identify Expo-only features actually used in code (not just installed).
+### Phase 0 — Design + consult checkpoints (no refactors yet)
+- **File-based routing design** (consult-heavy):
+  - Keep existing `app/` directory structure?
+  - Dynamic route convention? (`[id].tsx` etc.)
+  - Route groups for web-only vs mobile-only content?
+- Confirm web-only content boundaries (what appears on web, what must not).
+- Pick stable target RN version + matching React version.
+- Choose web bundler approach that’s stable with RN Web.
+- Validate New Architecture compatibility risks for:
+  - `react-native-fast-image`
+  - `react-native-video`
 
-### Phase 1 — Create a bare RN baseline inside `apps/mobile`
-In-place conversion generally means:
-- Generate native projects (`android/`, `ios/`) and baseline RN tooling.
-- Replace Expo entrypoints with RN entrypoints (`index.js`, App root).
-- Keep the monorepo wiring intact (pnpm + Turborepo).
+### Phase 1 — Replace Expo runtime with bare RN baseline (in `apps/mobile`)
+- Add native projects (`android/`, `ios/`) and RN CLI tooling.
+- Replace Expo entrypoints with RN entrypoints.
+- Keep pnpm workspace + Turborepo wiring intact.
 
-Key risk area: Metro + pnpm workspaces + `packages/shared` resolution.
+### Phase 2 — Navigation + file-based routing (React Navigation)
+- Set up React Navigation.
+- Implement the file-based route generator (after we agree on conventions).
+- Add linking config so routes work on web.
 
-### Phase 2 — Replace Expo Router with chosen navigation
-- Establish a top-level navigation structure.
-- Port routing logic from file-based routes → navigation config.
+### Phase 3 — Swap Expo modules → chosen libraries
+- Replace image picking, image rendering, video, haptics, splash, env, etc.
+- Add necessary native configuration (Info.plist, Android manifest, Gradle).
 
-### Phase 3 — Replace Expo modules one-by-one (consult-heavy)
-- For each Expo capability we keep, swap to a bare RN equivalent.
-- For each capability we drop, remove code and dependencies.
-- For ambiguous areas (uploads, permissions, URI handling), I will stop and ask you before committing to an approach.
+### Phase 4 — Web support (RN Web)
+- Add web entry and bundler config.
+- Implement platform-gated route registration:
+  - web-only screens/routes
+  - mobile-only screens/routes
 
-### Phase 4 — Web implementation
-Depending on A1/A2:
-- **A1:** scaffold `apps/web` and implement the web-only surface.
-- **A2:** configure RN Web bundling/routing and implement web-only content gates.
-
-### Phase 5 — Stabilization
-- Debug build pipelines (Android release, iOS build, web build).
-- Reduce bundle size and improve runtime performance (profiling-driven).
+### Phase 5 — Stabilization + performance
+- Ensure all three targets build/run.
+- Profile performance and address bottlenecks.
 
 ---
 
-## Areas where I will consult you before writing custom logic
-- Upload pipeline (device file URIs → multipart → API → MinIO URLs)
-- Permissions UX and exact requirements (photos/camera)
-- Any deep linking / universal links expectations
-- Web-only content boundaries (what must/ must not appear on mobile)
-- Asset pipeline decisions (fonts, splash, icons) and desired polish level
+## Consult-heavy items (I will stop and ask you before coding)
+- File-based routing conventions and route group design (web-only vs mobile-only)
+- Upload pipeline from device file URIs (esp. image-picker) → multipart → API
+- Permissions UX requirements (photos/camera)
+- Web-only content requirements and navigation rules
 
 ---
 
 ## Next action (you)
-Reply with:
-1) Web approach: **A1** or **A2**
-2) Navigation: **B1** or **B2**
-3) React version flexibility: ok to align React to RN stable? (yes/no)
-4) New Architecture: **D1** or **D2**
-5) For the Expo feature audit table: mark each capability as **must-have / nice-to-have / drop**
+Answer these so Phase 0 can be finalized:
+1) For file-based routing, do you want to keep the current Expo Router-style conventions (like `app/(tabs)/index.tsx`, `app/posts/[id].tsx`), or do you want a simpler convention?
+2) How do you want to express web-only vs mobile-only routes in the file tree (e.g. `app/(web)/**` and `app/(mobile)/**`, or `*.web.tsx` / `*.native.tsx` patterns)?
+3) Is the web surface authenticated (requires login) or public/SEO-oriented?
