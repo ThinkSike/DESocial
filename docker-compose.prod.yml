@@ -1,0 +1,100 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: desocial-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-desocial}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-desocial}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-desocial}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - desocial
+
+  minio:
+    image: minio/minio:latest
+    container_name: desocial-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-desocial}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    command: server /data --console-address ":9001"
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - desocial
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: desocial-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set desocial http://minio:9000 ${MINIO_ROOT_USER:-desocial} ${MINIO_ROOT_PASSWORD};
+      mc mb desocial/${S3_BUCKET:-desocial-uploads} --ignore-existing;
+      mc anonymous set download desocial/${S3_BUCKET:-desocial-uploads};
+      echo 'MinIO bucket ready';
+      exit 0;
+      "
+    networks:
+      - desocial
+
+  server:
+    image: aryamaddel/desocial-server:latest
+    container_name: desocial-server
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-desocial}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-desocial}
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: "3000"
+      S3_ENDPOINT: http://minio:9000
+      S3_REGION: us-east-1
+      S3_BUCKET: ${S3_BUCKET:-desocial-uploads}
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-desocial}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    networks:
+      - desocial
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: desocial-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - server
+    networks:
+      - desocial
+
+volumes:
+  pgdata:
+  miniodata:
+  caddy_data:
+  caddy_config:
+
+networks:
+  desocial:
+    driver: bridge
