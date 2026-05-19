@@ -1,12 +1,12 @@
 import { z } from "zod";
 
 export const LoginSchema = z.object({
-  email: z.string().email(),
+  prn: z.string().regex(/^\d{10}$/, "PRN must be 10 digits"),
   password: z.string().min(6),
 });
 
 export const RegisterSchema = z.object({
-  email: z.string().email(),
+  prn: z.string().regex(/^\d{10}$/, "PRN must be 10 digits"),
   password: z.string().min(6),
   username: z.string().min(2).max(30),
   displayName: z.string().min(1).max(50),

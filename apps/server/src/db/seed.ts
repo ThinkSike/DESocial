@@ -1,6 +1,6 @@
+import bcrypt from "bcryptjs";
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
-import bcrypt from "bcryptjs";
 import * as schema from "./schema";
 
 const pool = new pg.Pool({
@@ -56,6 +56,30 @@ async function seed() {
   }).returning();
 
   console.log("Users seeded: 5");
+
+  // Add PRN accounts requested
+  const prnList = [
+    "1012412071",
+    "1012412074",
+    "1012412073",
+    "1012412079",
+  ];
+
+  for (const [i, prn] of prnList.entries()) {
+    const id = `user-00${6 + i}`;
+    const email = `${prn}@despu.edu.in`;
+    await db.insert(schema.users).values({
+      id,
+      email,
+      username: `stud${prn}`,
+      displayName: `Student ${prn}`,
+      passwordHash,
+      prn,
+      verified: true,
+    });
+  }
+
+  console.log(`PRN users seeded: ${prnList.length}`);
 
   // Create communities
   const [csClub] = await db.insert(schema.communities).values({

@@ -1,21 +1,23 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-} from "react-native";
 import { useThemeColors } from "@/constants/Colors";
+import { api } from "@/lib/api";
 import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
-import { api } from "@/lib/api";
+import React, { useState } from "react";
+import {
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from "react-native";
 
 export default function ForgotPasswordScreen() {
   const colors = useThemeColors();
-  const [email, setEmail] = useState("");
+  const [prn, setPrn] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+  const isValidPrn = /^\d{10}$/.test(prn.trim());
+  const resolvedEmail = isValidPrn ? `${prn.trim()}@despu.edu.in` : "";
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -23,7 +25,7 @@ export default function ForgotPasswordScreen() {
         Reset Password
       </Text>
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-        Enter your email to receive reset instructions.
+        Enter your PRN to receive reset instructions by email.
       </Text>
 
       <TextInput
@@ -31,10 +33,11 @@ export default function ForgotPasswordScreen() {
           styles.input,
           { borderColor: colors.border, color: colors.textPrimary },
         ]}
-        placeholder="Email"
+        placeholder="PRN (10 digits)"
         placeholderTextColor={colors.textSecondary}
-        value={email}
-        onChangeText={setEmail}
+        keyboardType="number-pad"
+        value={prn}
+        onChangeText={setPrn}
       />
 
       {message ? (
@@ -51,15 +54,24 @@ export default function ForgotPasswordScreen() {
       <TouchableOpacity
         style={[styles.button, { backgroundColor: colors.primary }]}
         onPress={async () => {
-          if (!email) {
+          if (!prn) {
             setStatus("error");
-            setMessage("Please enter your email.");
+            setMessage("Please enter your PRN.");
+            return;
+          }
+          if (!isValidPrn) {
+            setStatus("error");
+            setMessage("PRN must be 10 digits.");
             return;
           }
           try {
-            await api.post("/api/auth/forgot-password", { email: email.trim() }, { auth: false });
+            const data = await api.post<{ message: string }>(
+              "/api/auth/forgot-password",
+              { email: resolvedEmail },
+              { auth: false },
+            );
             setStatus("success");
-            setMessage("Reset email sent. Check your inbox.");
+            setMessage(data.message || `Reset link sent to ${resolvedEmail}.`);
           } catch (e: any) {
             setStatus("error");
             setMessage(e?.message ?? "Failed to send reset email");

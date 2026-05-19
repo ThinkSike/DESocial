@@ -1,5 +1,5 @@
-import { create } from "zustand";
 import { api, setToken } from "@/lib/api";
+import { create } from "zustand";
 
 interface AppUser {
   id: string;
@@ -16,8 +16,8 @@ type AuthState = {
   error: string | null;
 };
 type AuthActions = {
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (data: { email: string; password: string; username: string; displayName: string }) => Promise<void>;
+  signIn: (prn: string, password: string) => Promise<void>;
+  signUp: (data: { prn: string; password: string; username: string; displayName: string }) => Promise<void>;
   signOut: () => void;
   hydrate: () => Promise<void>;
   clearError: () => void;
@@ -36,12 +36,12 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
       set({ user: null, initializing: false });
     }
   },
-  signIn: async (email, password) => {
+  signIn: async (prn, password) => {
     set({ error: null });
     try {
       const data = await api.post<{ user: AppUser; token: string }>(
         "/api/auth/login",
-        { email: email.trim(), password },
+        { prn: prn.trim(), password },
         { auth: false },
       );
       setToken(data.token);
@@ -51,12 +51,12 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
       throw e;
     }
   },
-  signUp: async ({ email, password, username, displayName }) => {
+  signUp: async ({ prn, password, username, displayName }) => {
     set({ error: null });
     try {
       const data = await api.post<{ user: AppUser; token: string }>(
         "/api/auth/register",
-        { email: email.trim(), password, username, displayName },
+        { prn: prn.trim(), password, username, displayName },
         { auth: false },
       );
       setToken(data.token);
