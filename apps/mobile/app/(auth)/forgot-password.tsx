@@ -17,6 +17,7 @@ export default function ForgotPasswordScreen() {
   const [message, setMessage] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const isValidPrn = /^\d{10}$/.test(prn.trim());
+  const resolvedEmail = isValidPrn ? `${prn.trim()}@despu.edu.in` : "";
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -24,7 +25,7 @@ export default function ForgotPasswordScreen() {
         Reset Password
       </Text>
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-        Enter your PRN to receive reset instructions.
+        Enter your PRN to receive reset instructions by email.
       </Text>
 
       <TextInput
@@ -64,13 +65,13 @@ export default function ForgotPasswordScreen() {
             return;
           }
           try {
-            await api.post(
+            const data = await api.post<{ message: string }>(
               "/api/auth/forgot-password",
-              { prn: prn.trim() },
+              { email: resolvedEmail },
               { auth: false },
             );
             setStatus("success");
-            setMessage("Reset request sent. Check your inbox.");
+            setMessage(data.message || `Reset link sent to ${resolvedEmail}.`);
           } catch (e: any) {
             setStatus("error");
             setMessage(e?.message ?? "Failed to send reset email");

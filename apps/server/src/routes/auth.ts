@@ -144,7 +144,7 @@ auth.post("/forgot-password", async (c) => {
   // In production, send email with reset link
   // For local dev, just acknowledge the request
   console.log(`Password reset requested for: ${resolvedEmail}`);
-  return c.json({ message: "If the email exists, a reset link has been sent." });
+  return c.json({ message: `Reset link sent to ${resolvedEmail}.` });
 });
 
 export default auth;
