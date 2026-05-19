@@ -5,10 +5,11 @@ services:
     restart: unless-stopped
     ports:
       - "5434:5432"
+    env_file: .env.local
     environment:
-      POSTGRES_USER: desocial
-      POSTGRES_PASSWORD: desocial
-      POSTGRES_DB: desocial
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
 
@@ -19,9 +20,10 @@ services:
     ports:
       - "9002:9000"
       - "9003:9001"
+    env_file: .env.local
     environment:
-      MINIO_ROOT_USER: desocial
-      MINIO_ROOT_PASSWORD: desocialminio
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     command: server /data --console-address ":9001"
     volumes:
       - miniodata:/data
@@ -31,11 +33,12 @@ services:
     container_name: desocial-minio-init
     depends_on:
       - minio
+    env_file: .env.local
     entrypoint: >
       /bin/sh -c "
-      until (/usr/bin/mc alias set desocial http://minio:9000 desocial desocialminio) do sleep 1; done;
-      /usr/bin/mc mb desocial/desocial-uploads --ignore-existing;
-      /usr/bin/mc anonymous set download desocial/desocial-uploads;
+      until (/usr/bin/mc alias set desocial http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD}) do sleep 1; done;
+      /usr/bin/mc mb desocial/${S3_BUCKET} --ignore-existing;
+      /usr/bin/mc anonymous set download desocial/${S3_BUCKET};
       echo 'MinIO bucket ready';
       exit 0;
       "

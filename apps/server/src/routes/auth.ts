@@ -1,9 +1,9 @@
-import { Hono } from "hono";
+import { LoginSchema, RegisterSchema } from "@desocial/shared";
 import bcrypt from "bcryptjs";
+import { eq } from "drizzle-orm";
+import { Hono } from "hono";
 import jwt from "jsonwebtoken";
 import { db, schema } from "../db";
-import { eq } from "drizzle-orm";
-import { LoginSchema, RegisterSchema } from "@desocial/shared";
 import { JWT_SECRET, authMiddleware, type JwtPayload } from "../middleware/auth";
 import { uuidv4 } from "./_utils";
 
@@ -17,16 +17,25 @@ auth.post("/register", async (c) => {
       return c.json({ error: parsed.error.flatten() }, 400);
     }
 
-    const { email, password, username, displayName } = parsed.data;
+    const { prn, password, username, displayName } = parsed.data;
 
-    const existing = await db
+    const email = `${prn}@despu.edu.in`;
+
+    // check by PRN or email to avoid duplicates
+    const existingByPrn = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.prn, prn))
+      .limit(1);
+
+    const existingByEmail = await db
       .select()
       .from(schema.users)
       .where(eq(schema.users.email, email))
       .limit(1);
 
-    if (existing.length > 0) {
-      return c.json({ error: "Email already registered" }, 409);
+    if (existingByPrn.length > 0 || existingByEmail.length > 0) {
+      return c.json({ error: "Account with this PRN already exists" }, 409);
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -40,6 +49,7 @@ auth.post("/register", async (c) => {
         username,
         displayName,
         passwordHash,
+        prn,
       })
       .returning();
 
@@ -65,13 +75,26 @@ auth.post("/login", async (c) => {
       return c.json({ error: parsed.error.flatten() }, 400);
     }
 
-    const { email, password } = parsed.data;
+    const { prn, password } = parsed.data;
+    const email = `${prn}@despu.edu.in`;
 
-    const [user] = await db
+    let user = (await db
       .select()
       .from(schema.users)
-      .where(eq(schema.users.email, email))
-      .limit(1);
+      .where(eq(schema.users.prn, prn))
+      .limit(1))[0];
+
+    // fallback to email lookup if PRN lookup didn't find a user
+    if (!user) {
+      const byEmail = (await db
+        .select()
+        .from(schema.users)
+        .where(eq(schema.users.email, email))
+        .limit(1))[0];
+      if (byEmail) {
+        user = byEmail;
+      }
+    }
 
     if (!user) {
       return c.json({ error: "Invalid credentials" }, 401);
@@ -113,10 +136,14 @@ auth.get("/me", authMiddleware, async (c) => {
 });
 
 auth.post("/forgot-password", async (c) => {
-  const { email } = await c.req.json();
+  const { email, prn } = await c.req.json();
+  const resolvedEmail = prn ? `${String(prn).trim()}@despu.edu.in` : email;
+  if (!resolvedEmail) {
+    return c.json({ error: "PRN or email is required" }, 400);
+  }
   // In production, send email with reset link
   // For local dev, just acknowledge the request
-  console.log(`Password reset requested for: ${email}`);
+  console.log(`Password reset requested for: ${resolvedEmail}`);
   return c.json({ message: "If the email exists, a reset link has been sent." });
 });
 

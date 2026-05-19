@@ -1,33 +1,34 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-} from "react-native";
 import { useThemeColors } from "@/constants/Colors";
+import { useAuthStore } from "@/store/auth";
 import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
-import { useAuthStore } from "@/store/auth";
+import React, { useState } from "react";
+import {
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from "react-native";
 
 export default function LoginScreen() {
   const colors = useThemeColors();
   const { signIn, error, clearError } = useAuthStore();
 
-  const [email, setEmail] = useState("");
+  const [prn, setPrn] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const isValidPrn = /^\d{10}$/.test(prn.trim());
 
   const handleLogin = async () => {
-    if (!email || !password || busy) return;
+    if (!isValidPrn || !password || busy) return;
     clearError();
     setBusy(true);
     try {
-      await signIn(email, password);
+      await signIn(prn, password);
     } finally {
       setBusy(false);
     }
@@ -47,12 +48,12 @@ export default function LoginScreen() {
             styles.input,
             { borderColor: colors.border, color: colors.textPrimary },
           ]}
-          placeholder="Email"
+          placeholder="PRN (10 digits)"
           placeholderTextColor={colors.textSecondary}
           autoCapitalize="none"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
+          keyboardType="number-pad"
+          value={prn}
+          onChangeText={setPrn}
         />
         <TextInput
           style={[
@@ -82,11 +83,11 @@ export default function LoginScreen() {
             styles.button,
             {
               backgroundColor: colors.primary,
-              opacity: busy || !email || !password ? 0.6 : 1,
+              opacity: busy || !isValidPrn || !password ? 0.6 : 1,
             },
           ]}
           onPress={handleLogin}
-          disabled={busy || !email || !password}
+          disabled={busy || !isValidPrn || !password}
         >
           {busy ? (
             <ActivityIndicator color={colors.surface} />
