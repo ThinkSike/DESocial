@@ -1,7 +1,7 @@
+import { UpdateProfileSchema } from "@desocial/shared";
+import { desc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { db, schema } from "../db";
-import { eq } from "drizzle-orm";
-import { UpdateProfileSchema } from "@desocial/shared";
 import { authMiddleware, optionalAuth } from "../middleware/auth";
 
 const users = new Hono();
@@ -29,6 +29,10 @@ users.get("/:id", optionalAuth, async (c) => {
       schema.posts,
       eq(schema.posts.userId, id),
     );
+    const commentsCount = await db.$count(
+      schema.comments,
+      eq(schema.comments.userId, id),
+    );
 
     const { passwordHash: _, ...safeUser } = user;
     return c.json({
@@ -37,6 +41,7 @@ users.get("/:id", optionalAuth, async (c) => {
         followers: followersCount,
         following: followingCount,
         posts: postsCount,
+        comments: commentsCount,
       },
     });
   } catch (error) {
@@ -101,7 +106,7 @@ users.get("/:id/posts", async (c) => {
       .from(schema.posts)
       .leftJoin(schema.users, eq(schema.posts.userId, schema.users.id))
       .where(eq(schema.posts.userId, id))
-      .orderBy(eq(schema.posts.createdAt, schema.posts.createdAt))
+      .orderBy(desc(schema.posts.createdAt))
       .limit(limit);
 
     const normalizeArray = (val: unknown): string[] | undefined => {
@@ -131,6 +136,65 @@ users.get("/:id/posts", async (c) => {
   } catch (error) {
     console.error("Get user posts error:", error);
     return c.json({ error: "Failed to fetch user posts" }, 500);
+  }
+});
+
+users.get("/:id/comments", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const limit = Math.min(Number(c.req.query("limit")) || 20, 50);
+
+    const rows = await db
+      .select({
+        id: schema.comments.id,
+        text: schema.comments.text,
+        createdAt: schema.comments.createdAt,
+        post: {
+          id: schema.posts.id,
+          text: schema.posts.text,
+          images: schema.posts.images,
+          createdAt: schema.posts.createdAt,
+          user: {
+            id: schema.users.id,
+            username: schema.users.username,
+            displayName: schema.users.displayName,
+            avatar: schema.users.avatar,
+            verified: schema.users.verified,
+          },
+        },
+      })
+      .from(schema.comments)
+      .leftJoin(schema.posts, eq(schema.comments.postId, schema.posts.id))
+      .leftJoin(schema.users, eq(schema.posts.userId, schema.users.id))
+      .where(eq(schema.comments.userId, id))
+      .orderBy(desc(schema.comments.createdAt))
+      .limit(limit);
+
+    const normalizeArray = (val: unknown): string[] | undefined => {
+      if (!val) return undefined;
+      if (Array.isArray(val)) return val as string[];
+      if (typeof val === "string") {
+        try { return JSON.parse(val); } catch { return [val]; }
+      }
+      return undefined;
+    };
+
+    const formatted = rows.map((row) => ({
+      id: row.id,
+      text: row.text,
+      createdAt: row.createdAt,
+      post: row.post
+        ? {
+            ...row.post,
+            images: normalizeArray(row.post.images),
+          }
+        : null,
+    }));
+
+    return c.json(formatted);
+  } catch (error) {
+    console.error("Get user comments error:", error);
+    return c.json({ error: "Failed to fetch user comments" }, 500);
   }
 });
 

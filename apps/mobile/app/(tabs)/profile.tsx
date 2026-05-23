@@ -1,22 +1,22 @@
 import ProfileActivity from "@/components/profile/ProfileActivity";
+import ProfileAnalytics from "@/components/profile/ProfileAnalytics";
+import ProfileHeader from "@/components/profile/ProfileHeader";
 import { useThemeColors } from "@/constants/Colors";
 import { useUserProfile } from "@/hooks/useUserProfile";
-import { useAuthStore } from "@/store/auth";
 import { api } from "@/lib/api";
+import { useAuthStore } from "@/store/auth";
 import type { Post } from "@/types/post";
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -26,6 +26,7 @@ export default function ProfileScreen() {
   const { user: authUser } = useAuthStore();
   const { profile, loading: profileLoading, updateAvatar } = useUserProfile();
   const [userPosts, setUserPosts] = useState<Post[]>([]);
+  const [userComments, setUserComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -33,8 +34,12 @@ export default function ProfileScreen() {
     if (!authUser?.id) return;
     try {
       setLoading(true);
-      const posts = await api.get<Post[]>(`/api/users/${authUser.id}/posts`);
+      const [posts, comments] = await Promise.all([
+        api.get<Post[]>(`/api/users/${authUser.id}/posts`),
+        api.get<any[]>(`/api/users/${authUser.id}/comments`),
+      ]);
       setUserPosts(posts);
+      setUserComments(comments);
     } catch (error) {
       Alert.alert("Error", "Failed to load posts");
     } finally {
@@ -128,56 +133,19 @@ export default function ProfileScreen() {
           />
         }
       >
-        {/* Header */}
-        <View style={[s.card, { backgroundColor: colors.surface }]}>
-          <View style={s.header}>
-            <Text style={[s.title, { color: colors.text }]}>Profile</Text>
-            <TouchableOpacity onPress={() => router.push("/settings" as any)}>
-              <Ionicons
-                name="settings-outline"
-                size={20}
-                color={colors.textSecondary}
-              />
-            </TouchableOpacity>
-          </View>
+        {/* Rich profile header with cover photo + centered avatar */}
+        <ProfileHeader
+          user={profile}
+          isOwnProfile
+          onAvatarPress={pickImage}
+          onSettingsPress={() => router.push("/settings" as any)}
+        />
 
-          {/* Profile Info */}
-          <View style={s.profileRow}>
-            <View>
-              <Image
-                source={{
-                  uri: profile.avatar || "https://i.pravatar.cc/120?img=5",
-                }}
-                style={s.avatar}
-              />
-              <TouchableOpacity style={s.editBadge} onPress={pickImage}>
-                <Ionicons name="camera" size={14} color={colors.text} />
-              </TouchableOpacity>
-            </View>
+        {/* Analytics card */}
+        <ProfileAnalytics />
 
-            <View style={s.info}>
-              <Text style={[s.name, { color: colors.text }]}>
-                {profile.displayName || "User"}
-              </Text>
-              <Text style={{ color: colors.textSecondary }}>
-                @{profile.username || "username"}
-              </Text>
-              {profile.prn && (
-                <Text style={{ color: colors.textSecondary }}>
-                  PRN: {profile.prn}
-                </Text>
-              )}
-              {profile.department && (
-                <Text style={{ color: colors.textSecondary }}>
-                  Dept: {profile.department}
-                </Text>
-              )}
-            </View>
-          </View>
-        </View>
-
-        {/* Activity */}
-        <ProfileActivity posts={userPosts} isOwnProfile />
+        {/* Activity / posts */}
+        <ProfileActivity posts={userPosts} comments={userComments} isOwnProfile />
       </ScrollView>
     </SafeAreaView>
   );
@@ -187,36 +155,11 @@ const styles = (colors: any) =>
   StyleSheet.create({
     container: { flex: 1 },
     center: { flex: 1, justifyContent: "center", alignItems: "center" },
-    scroll: { padding: 16, alignItems: "center" },
-    card: {
-      width: "100%",
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: colors?.border,
-      padding: 16,
-      marginBottom: 16,
-    },
-    header: {
-      flexDirection: "row",
-      justifyContent: "space-between",
+    scroll: {
+      paddingHorizontal: 16,
+      paddingVertical: 16,
       alignItems: "center",
-      marginBottom: 12,
     },
-    title: { fontSize: 18, fontWeight: "700" },
-    profileRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-    avatar: { width: 84, height: 84, borderRadius: 42 },
-    editBadge: {
-      position: "absolute",
-      right: -6,
-      bottom: -6,
-      padding: 6,
-      backgroundColor: colors?.surface,
-      borderRadius: 999,
-      borderWidth: 1,
-      borderColor: colors?.border,
-    },
-    info: { flex: 1 },
-    name: { fontSize: 18, fontWeight: "700" },
     retryBtn: {
       marginTop: 12,
       paddingHorizontal: 20,

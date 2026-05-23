@@ -5,6 +5,7 @@ import "dotenv/config";
 
 import authRoutes from "./routes/auth";
 import postRoutes from "./routes/posts";
+import commentRoutes from "./routes/comments";
 import userRoutes from "./routes/users";
 import communityRoutes from "./routes/communities";
 import uploadRoutes from "./routes/upload";
@@ -15,6 +16,7 @@ app.use("*", cors());
 
 app.route("/api/auth", authRoutes);
 app.route("/api/posts", postRoutes);
+app.route("/api/posts", commentRoutes);
 app.route("/api/users", userRoutes);
 app.route("/api/communities", communityRoutes);
 app.route("/uploads", uploadRoutes);

@@ -1,16 +1,18 @@
 import { useThemeColors } from "@/constants/Colors";
-import { formatEngagementNumber, getTimeAgo } from "@/utils/format";
 import { Post as PostType } from "@/types/post";
+import { formatEngagementNumber, getTimeAgo } from "@/utils/format";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import React from "react";
+import React, { useState } from "react";
 import {
-  Dimensions,
-  Platform,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    Modal,
+    Platform,
+    Pressable,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 interface PostProps {
@@ -18,10 +20,11 @@ interface PostProps {
   onUserPress?: (userId: string) => void;
   onLike?: (postId: string) => void;
   onComment?: (postId: string) => void;
+  onDelete?: (postId: string) => void | Promise<void>;
+  /** ID of the currently logged-in user — used to show/hide delete */
+  currentUserId?: string;
 }
 
-Dimensions.get("window");
-// Limit max width on web, use full width on mobile
 const MAX_CONTENT_WIDTH = 600;
 
 export default function Post({
@@ -29,9 +32,42 @@ export default function Post({
   onUserPress,
   onLike,
   onComment,
+  onDelete,
+  currentUserId,
 }: PostProps) {
   const colors = useThemeColors();
   const styles = createStyles(colors);
+  const [menuVisible, setMenuVisible] = useState(false);
+
+  const isOwnPost = !!currentUserId && currentUserId === post.user.id;
+  const likedByMe = !!post.likedByMe;
+  const hasComments = (post.engagement?.comments ?? 0) > 0;
+  const likeColor = likedByMe ? "#E53935" : colors.textSecondary;
+  const commentColor = hasComments ? colors.primary : colors.textSecondary;
+  const likeCountColor = colors.textSecondary;
+
+  const handleDeletePress = () => {
+    setMenuVisible(false);
+    Alert.alert(
+      "Delete post",
+      "This can't be undone. Are you sure?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            const result = onDelete?.(post.id);
+            if (result instanceof Promise) {
+              result.catch(() =>
+                Alert.alert("Error", "Could not delete post. Please try again."),
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const renderImages = () => {
     const raw = post.content.images;
@@ -73,7 +109,6 @@ export default function Post({
       );
     }
 
-    // 3 or more images - simple grid
     return (
       <View style={styles.imageGrid}>
         {images.slice(0, 4).map((image, index) => (
@@ -98,6 +133,7 @@ export default function Post({
       </View>
     );
   };
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -127,8 +163,23 @@ export default function Post({
             <Text style={styles.username}>@{post.user.username}</Text>
           </View>
         </TouchableOpacity>
-        <View style={styles.timestampContainer}>
+
+        {/* Timestamp + three-dot menu */}
+        <View style={styles.headerRight}>
           <Text style={styles.timestamp}>{getTimeAgo(post.timestamp)}</Text>
+          {isOwnPost && (
+            <TouchableOpacity
+              style={styles.menuBtn}
+              onPress={() => setMenuVisible(true)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons
+                name="ellipsis-horizontal"
+                size={18}
+                color={colors.textSecondary}
+              />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
@@ -147,11 +198,11 @@ export default function Post({
           onPress={() => onLike?.(post.id)}
         >
           <Ionicons
-            name="heart-outline"
+            name={likedByMe ? "heart" : "heart-outline"}
             size={18}
-            color={colors.textSecondary}
+            color={likeColor}
           />
-          <Text style={styles.engagementText}>
+          <Text style={[styles.engagementText, { color: likeCountColor }]}>
             {formatEngagementNumber(post.engagement.likes)}
           </Text>
         </TouchableOpacity>
@@ -161,15 +212,47 @@ export default function Post({
           onPress={() => onComment?.(post.id)}
         >
           <Ionicons
-            name="chatbubble-outline"
+            name={hasComments ? "chatbubble" : "chatbubble-outline"}
             size={18}
-            color={colors.textSecondary}
+            color={commentColor}
           />
-          <Text style={styles.engagementText}>
+          <Text style={[styles.engagementText, { color: commentColor }]}>
             {formatEngagementNumber(post.engagement.comments)}
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Options bottom sheet / modal */}
+      <Modal
+        visible={menuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMenuVisible(false)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setMenuVisible(false)}>
+          <Pressable style={[styles.menuSheet, { backgroundColor: colors.surface }]}>
+            {/* Delete */}
+            <TouchableOpacity style={styles.menuItem} onPress={handleDeletePress}>
+              <Ionicons name="trash-outline" size={20} color="#E53935" />
+              <Text style={[styles.menuItemText, { color: "#E53935" }]}>
+                Delete post
+              </Text>
+            </TouchableOpacity>
+
+            {/* Cancel */}
+            <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => setMenuVisible(false)}
+            >
+              <Ionicons name="close-outline" size={20} color={colors.textSecondary} />
+              <Text style={[styles.menuItemText, { color: colors.textSecondary }]}>
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -183,16 +266,15 @@ const createStyles = (colors: any) =>
       borderRadius: 12,
       paddingHorizontal: 16,
       paddingVertical: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
       shadowColor: "#000",
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: 0.1,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
       shadowRadius: 3.84,
-      elevation: 5,
+      elevation: 3,
       ...(Platform.OS === "web" && {
-        maxWidth: MAX_CONTENT_WIDTH + 32, // Add padding
+        maxWidth: MAX_CONTENT_WIDTH + 32,
         alignSelf: "center",
         width: "100%",
       }),
@@ -213,47 +295,42 @@ const createStyles = (colors: any) =>
       borderRadius: 20,
       marginRight: 12,
     },
-    userDetails: {
-      flex: 1,
-    },
-    nameRow: {
-      flexDirection: "row",
-      alignItems: "center",
-    },
+    userDetails: { flex: 1 },
+    nameRow: { flexDirection: "row", alignItems: "center" },
     displayName: {
       fontSize: 16,
       fontWeight: "600",
-      color: colors.textPrimary,
+      color: colors.textPrimary || colors.text,
     },
-    verifiedIcon: {
-      marginLeft: 4,
-    },
+    verifiedIcon: { marginLeft: 4 },
     username: {
       fontSize: 14,
       color: colors.textSecondary,
       marginTop: 1,
     },
-    timestampContainer: {
-      marginLeft: 8,
+    headerRight: {
+      alignItems: "flex-end",
+      gap: 4,
     },
     timestamp: {
-      fontSize: 14,
+      fontSize: 13,
       color: colors.textSecondary,
     },
-    content: {
-      marginBottom: 12,
+    menuBtn: {
+      padding: 2,
     },
+    content: { marginBottom: 12 },
     postText: {
       fontSize: 16,
       lineHeight: 22,
-      color: colors.textPrimary,
+      color: colors.textPrimary || colors.text,
       marginBottom: 12,
     },
     singleImage: {
       width: "100%",
       height: 300,
       borderRadius: 12,
-      backgroundColor: colors.surface || colors.background,
+      backgroundColor: colors.background,
     },
     imageRow: {
       flexDirection: "row",
@@ -264,7 +341,7 @@ const createStyles = (colors: any) =>
       width: "100%",
       height: 200,
       borderRadius: 8,
-      backgroundColor: colors.surface || colors.background,
+      backgroundColor: colors.background,
     },
     imageGrid: {
       flexDirection: "row",
@@ -272,15 +349,12 @@ const createStyles = (colors: any) =>
       gap: 8,
       width: "100%",
     },
-    gridItem: {
-      width: "48%",
-      position: "relative",
-    },
+    gridItem: { width: "48%", position: "relative" },
     gridImage: {
       width: "100%",
       height: 150,
       borderRadius: 8,
-      backgroundColor: colors.surface || colors.background,
+      backgroundColor: colors.background,
     },
     overlay: {
       position: "absolute",
@@ -288,30 +362,57 @@ const createStyles = (colors: any) =>
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: "rgba(0, 0, 0, 0.6)",
+      backgroundColor: "rgba(0,0,0,0.6)",
       borderRadius: 8,
       justifyContent: "center",
       alignItems: "center",
     },
-    overlayText: {
-      color: "white",
-      fontSize: 24,
-      fontWeight: "700",
-    },
+    overlayText: { color: "white", fontSize: 24, fontWeight: "700" },
     engagement: {
       flexDirection: "row",
       justifyContent: "space-between",
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      paddingTop: 8,
+      marginTop: 4,
     },
     engagementButton: {
       flexDirection: "row",
       alignItems: "center",
       flex: 1,
       justifyContent: "center",
-      paddingVertical: 8,
+      paddingVertical: 6,
     },
     engagementText: {
       fontSize: 14,
       color: colors.textSecondary,
       marginLeft: 6,
+    },
+    // Modal / sheet
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.4)",
+      justifyContent: "flex-end",
+    },
+    menuSheet: {
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      paddingVertical: 8,
+      paddingBottom: Platform.OS === "ios" ? 32 : 8,
+    },
+    menuItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 20,
+      paddingVertical: 16,
+      gap: 14,
+    },
+    menuItemText: {
+      fontSize: 16,
+      fontWeight: "500",
+    },
+    menuDivider: {
+      height: 1,
+      marginHorizontal: 16,
     },
   });

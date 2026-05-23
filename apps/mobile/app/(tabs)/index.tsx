@@ -1,21 +1,22 @@
+import CommentsSheet from "@/components/CommentsSheet";
 import NewsSidebar from "@/components/NewsSidebar";
 import PostCreator from "@/components/PostCreator";
 import PostList from "@/components/PostList";
 import UserProfileSidebar from "@/components/UserProfileSidebar";
 import { useThemeColors } from "@/constants/Colors";
 import { usePosts } from "@/hooks/usePosts";
+import { useAuthStore } from "@/store/auth";
 import { openMaps } from "@/utils/maps";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import {
-  Alert,
-  Dimensions,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  ActivityIndicator,
+    ActivityIndicator,
+    Dimensions,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -24,8 +25,8 @@ export default function HomeScreen() {
   const screenWidth = Dimensions.get("window").width;
   const isTablet = screenWidth > 768;
   const router = useRouter();
+  const { user } = useAuthStore();
 
-  // Use the Firestore hook
   const {
     posts,
     loading,
@@ -35,7 +36,11 @@ export default function HomeScreen() {
     loadMore,
     handleCreatePost,
     handleLike,
+    handleDeletePost,
+    updateCommentCount,
   } = usePosts();
+
+  const [openPostId, setOpenPostId] = useState<string | null>(null);
 
   const handleRefresh = useCallback(async () => {
     await fetchPosts(true);
@@ -49,7 +54,7 @@ export default function HomeScreen() {
   );
 
   const handleComment = useCallback((postId: string) => {
-    Alert.alert("Comments", `Navigate to comments for post: ${postId}`);
+    setOpenPostId(postId);
   }, []);
 
   const handleOpenMaps = React.useCallback(() => {
@@ -110,7 +115,8 @@ export default function HomeScreen() {
       LEFT_WIDTH + CENTER_MAX_WIDTH + RIGHT_WIDTH + CONTENT_GAP * 2;
 
     return (
-      <SafeAreaView style={styles(colors).container}>
+      <>
+        <SafeAreaView style={styles(colors).container}>
         <View style={styles(colors).header}>
           <TouchableOpacity
             onPress={handleOpenMaps}
@@ -167,6 +173,8 @@ export default function HomeScreen() {
                   onUserPress={handleUserPress}
                   onLike={handleLike}
                   onComment={handleComment}
+                  onDelete={handleDeletePost}
+                  currentUserId={user?.id}
                   ListHeaderComponent={
                     <PostCreator onCreatePost={handleCreatePost} />
                   }
@@ -180,6 +188,14 @@ export default function HomeScreen() {
           </View>
         </View>
       </SafeAreaView>
+
+      <CommentsSheet
+        postId={openPostId}
+        visible={openPostId !== null}
+        onClose={() => setOpenPostId(null)}
+        onCommentCountChange={updateCommentCount}
+      />
+    </>
     );
   }
 
@@ -223,9 +239,18 @@ export default function HomeScreen() {
           onUserPress={handleUserPress}
           onLike={handleLike}
           onComment={handleComment}
+          onDelete={handleDeletePost}
+          currentUserId={user?.id}
           ListHeaderComponent={<PostCreator onCreatePost={handleCreatePost} />}
         />
       </View>
+
+      <CommentsSheet
+        postId={openPostId}
+        visible={openPostId !== null}
+        onClose={() => setOpenPostId(null)}
+        onCommentCountChange={updateCommentCount}
+      />
     </SafeAreaView>
   );
 }

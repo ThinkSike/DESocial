@@ -1,13 +1,14 @@
+import { CreatePostSchema } from "@desocial/shared";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db, schema } from "../db";
-import { eq, desc, and, sql } from "drizzle-orm";
-import { CreatePostSchema } from "@desocial/shared";
-import { authMiddleware } from "../middleware/auth";
+import { authMiddleware, optionalAuth } from "../middleware/auth";
 
 const posts = new Hono();
 
-posts.get("/", async (c) => {
+posts.get("/", optionalAuth, async (c) => {
   try {
+    const user = c.get("user");
     const limit = Math.min(Number(c.req.query("limit")) || 20, 50);
     const cursor = c.req.query("cursor");
 
@@ -43,6 +44,22 @@ posts.get("/", async (c) => {
     }
 
     const results = await query;
+    const userId = user?.userId;
+    let likedSet = new Set<number>();
+
+    if (userId && results.length > 0) {
+      const postIds = results.map((row) => row.id);
+      const likedRows = await db
+        .select({ postId: schema.likes.postId })
+        .from(schema.likes)
+        .where(
+          and(
+            eq(schema.likes.userId, userId),
+            inArray(schema.likes.postId, postIds),
+          ),
+        );
+      likedSet = new Set(likedRows.map((row) => row.postId));
+    }
 
     const normalizeArray = (val: unknown): string[] | undefined => {
       if (!val) return undefined;
@@ -65,6 +82,7 @@ posts.get("/", async (c) => {
         likes: row.likesCount,
         comments: row.commentsCount,
       },
+      likedByMe: likedSet.has(row.id),
       community: row.communityId
         ? { id: String(row.communityId), name: "", icon: "" }
         : undefined,

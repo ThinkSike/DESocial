@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
-import type { Post, PostContent, PostUser } from "@desocial/shared";
 import { useAuthStore } from "@/store/auth";
+import type { Post, PostContent } from "@desocial/shared";
+import { useCallback, useEffect, useState } from "react";
 
 interface PostResponse {
   posts: Post[];
@@ -51,25 +51,33 @@ export const usePosts = () => {
       if (!user) throw new Error("Not authenticated");
 
       try {
-        const body: any = { content };
-        const post = await api.post<Post>("/api/posts", body);
-
+        // 1. Upload images first (if any) to get real server URLs before creating the post
+        let imageUrls: string[] | undefined;
         if (content.images?.length) {
-          const imageUrls = await Promise.all(
+          imageUrls = await Promise.all(
             content.images.map(async (uri, i) => {
               const ext = uri.split(".").pop() || "jpg";
               const result = await api.upload(
-                `/uploads?type=posts`,
-                { uri, name: `post_${post.id}_${i}.${ext}`, type: `image/${ext}` },
+                "/uploads",
+                { uri, name: `post_img_${Date.now()}_${i}.${ext}`, type: `image/${ext}` },
                 "posts",
               );
               return result.url;
             }),
           );
-          post.content.images = imageUrls;
-          setPosts((prev) => prev.map((p) => (p.id === post.id ? post : p)));
         }
 
+        // 2. Create the post with real image URLs (local file:// URIs are never sent to server)
+        const body = {
+          content: {
+            text: content.text,
+            images: imageUrls,
+            hashtags: content.hashtags,
+          },
+        };
+        await api.post<Post>("/api/posts", body);
+
+        // 3. Refresh the feed so the new post appears at the top
         await fetchPosts(true);
       } catch (error) {
         console.error("Error creating post:", error);
@@ -84,32 +92,64 @@ export const usePosts = () => {
       if (!user) return;
 
       try {
-        const liked = await api.get<{ liked: boolean }>(
+        const result = await api.post<{ liked: boolean }>(
           `/api/posts/${postId}/like`,
         );
 
         setPosts((prev) =>
-          prev.map((post) =>
-            post.id === postId
-              ? {
-                  ...post,
-                  engagement: {
-                    ...post.engagement,
-                    likes: post.engagement.likes + (liked.liked ? -1 : 1),
-                  },
-                }
-              : post,
-          ),
-        );
+          prev.map((post) => {
+            if (post.id !== postId) return post;
+            const nextLiked = result.liked;
+            const prevLiked = !!post.likedByMe;
+            const delta = nextLiked === prevLiked ? 0 : nextLiked ? 1 : -1;
 
-        if (liked.liked) {
-          await api.delete(`/api/posts/${postId}/like`);
-        } else {
-          await api.post(`/api/posts/${postId}/like`);
-        }
+            return {
+              ...post,
+              likedByMe: nextLiked,
+              engagement: {
+                ...post.engagement,
+                likes: Math.max(post.engagement.likes + delta, 0),
+              },
+            };
+          }),
+        );
       } catch (error) {
         console.error("Error liking post:", error);
         await fetchPosts(true);
+      }
+    },
+    [user, fetchPosts],
+  );
+
+  const updateCommentCount = useCallback((postId: string, delta: number) => {
+    setPosts((prev) =>
+      prev.map((post) =>
+        post.id === postId
+          ? {
+              ...post,
+              engagement: {
+                ...post.engagement,
+                comments: Math.max(post.engagement.comments + delta, 0),
+              },
+            }
+          : post,
+      ),
+    );
+  }, []);
+
+  const handleDeletePost = useCallback(
+    async (postId: string) => {
+      if (!user) return;
+      // Optimistic removal — feels instant
+      setPosts((prev) => prev.filter((p) => p.id !== postId));
+      try {
+        await api.delete(`/api/posts/${postId}`);
+        await fetchPosts(true);
+      } catch (error) {
+        console.error("Error deleting post:", error);
+        // Roll back by re-fetching if the server rejected it
+        await fetchPosts(true);
+        throw error;
       }
     },
     [user, fetchPosts],
@@ -128,5 +168,7 @@ export const usePosts = () => {
     loadMore,
     handleCreatePost,
     handleLike,
+    handleDeletePost,
+    updateCommentCount,
   };
 };

@@ -132,7 +132,7 @@ auth.get("/me", authMiddleware, async (c) => {
   }
 
   const { passwordHash: _, ...safeUser } = user;
-  return c.json(safeUser);
+  return c.json({ user: safeUser });
 });
 
 auth.post("/forgot-password", async (c) => {

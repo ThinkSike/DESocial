@@ -4,15 +4,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import React, { useState } from "react";
 import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 interface ProfileActivityProps {
   posts: PostType[];
+  comments?: ProfileComment[];
   isOwnProfile?: boolean;
   onCreatePost?: () => void;
   onUserPress?: (userId: string) => void;
@@ -22,76 +23,34 @@ interface ProfileActivityProps {
   onShare?: (postId: string) => void;
 }
 
-type ActivityTab = "posts" | "comments";
+interface ProfileComment {
+  id: number;
+  text: string;
+  createdAt: string | Date;
+  post: {
+    id: number | string;
+    text?: string | null;
+    images?: string[] | null;
+    createdAt?: string | Date;
+    user?: {
+      id: string;
+      username: string;
+      displayName: string;
+      avatar?: string | null;
+      verified?: boolean;
+    } | null;
+  } | null;
+}
 
 export default function ProfileActivity({
   posts,
+  comments = [],
   isOwnProfile = false,
   onCreatePost,
 }: ProfileActivityProps) {
   const colors = useThemeColors();
-  const [activeTab, setActiveTab] = useState<ActivityTab>("posts");
-  const [showAll, setShowAll] = useState(false);
-
-  const filterPostsByTab = (tab: ActivityTab) => {
-    switch (tab) {
-      case "posts":
-        return posts;
-      case "comments":
-        return posts.filter((post) => post.content.text?.includes("@"));
-      default:
-        return posts;
-    }
-  };
-
-  const getTabIcon = (tab: ActivityTab) => {
-    switch (tab) {
-      case "posts":
-        return "document-text";
-      case "comments":
-        return "chatbubble";
-      default:
-        return "document-text";
-    }
-  };
-
-  const getTabCount = (tab: ActivityTab) => {
-    return filterPostsByTab(tab).length;
-  };
-
-  const ActivityTab = ({ tab, label }: { tab: ActivityTab; label: string }) => (
-    <TouchableOpacity
-      style={[
-        styles(colors).tab,
-        activeTab === tab && styles(colors).activeTab,
-      ]}
-      onPress={() => setActiveTab(tab)}
-    >
-      <Ionicons
-        name={getTabIcon(tab) as any}
-        size={18}
-        color={activeTab === tab ? colors.primary : colors.textSecondary}
-      />
-      <Text
-        style={[
-          styles(colors).tabLabel,
-          activeTab === tab && styles(colors).activeTabLabel,
-        ]}
-      >
-        {label}
-      </Text>
-      <Text
-        style={[
-          styles(colors).tabCount,
-          activeTab === tab && styles(colors).activeTabCount,
-        ]}
-      >
-        {getTabCount(tab)}
-      </Text>
-    </TouchableOpacity>
-  );
-
-  const filteredPosts = filterPostsByTab(activeTab);
+  const [showAllPosts, setShowAllPosts] = useState(false);
+  const [showAllComments, setShowAllComments] = useState(false);
 
   const safeDate = (value: any) => {
     const d = value instanceof Date ? value : new Date(value);
@@ -116,61 +75,55 @@ export default function ProfileActivity({
         </View>
       )}
 
-      <View style={styles(colors).tabsContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles(colors).tabsScrollContent}
-        >
-          <ActivityTab tab="posts" label="Posts" />
-          <ActivityTab tab="comments" label="Comments" />
-        </ScrollView>
-      </View>
-
       <View style={styles(colors).contentContainer}>
-        {filteredPosts.length > 0 ? (
+        <View style={styles(colors).sectionHeader}>
+          <Text style={styles(colors).sectionTitle}>Posts</Text>
+          <Text style={styles(colors).sectionCount}>{posts.length}</Text>
+        </View>
+
+        {posts.length > 0 ? (
           <View style={styles(colors).postsContainer}>
-            {(showAll ? filteredPosts : filteredPosts.slice(0, 3)).map(
-              (post) => (
-                <View key={post.id} style={styles(colors).postItem}>
-                  {post.content.images?.length > 0 && (
-                    <Image
-                      source={{ uri: post.content.images[0] }}
-                      style={styles(colors).postImage}
-                      contentFit="cover" // Added for expo-image
-                      transition={200} // Smooth transition for image loading
-                    />
-                  )}
-                  <Text style={styles(colors).postText} numberOfLines={3}>
-                    {post.content.text}
+            {(showAllPosts ? posts : posts.slice(0, 3)).map((post) => (
+              <View key={post.id} style={styles(colors).postItem}>
+                {post.content.images?.length > 0 && (
+                  <Image
+                    source={{ uri: post.content.images[0] }}
+                    style={styles(colors).postImage}
+                    contentFit="cover"
+                    transition={200}
+                  />
+                )}
+                <Text style={styles(colors).postText} numberOfLines={3}>
+                  {post.content.text}
+                </Text>
+                <View style={styles(colors).postMeta}>
+                  <Text style={styles(colors).postDate}>
+                    {safeDate(post.timestamp)}
                   </Text>
-                  <View style={styles(colors).postMeta}>
-                    <Text style={styles(colors).postDate}>
-                      {safeDate(post.timestamp)}
+                  <View style={styles(colors).postStats}>
+                    <Text style={styles(colors).postStat}>
+                      {post.engagement.likes} likes
                     </Text>
-                    <View style={styles(colors).postStats}>
-                      <Text style={styles(colors).postStat}>
-                        {post.engagement.likes} likes
-                      </Text>
-                      <Text style={styles(colors).postStat}>
-                        {post.engagement.comments} comments
-                      </Text>
-                    </View>
+                    <Text style={styles(colors).postStat}>
+                      {post.engagement.comments} comments
+                    </Text>
                   </View>
                 </View>
-              )
-            )}
+              </View>
+            ))}
 
-            {!showAll && filteredPosts.length > 3 && (
+            {posts.length > 3 && (
               <TouchableOpacity
                 style={styles(colors).showAllButton}
-                onPress={() => setShowAll(true)}
+                onPress={() => setShowAllPosts((prev) => !prev)}
               >
                 <Text style={styles(colors).showAllText}>
-                  Show all {activeTab} ({filteredPosts.length})
+                  {showAllPosts
+                    ? "Show less"
+                    : `Show more (${posts.length})`}
                 </Text>
                 <Ionicons
-                  name="arrow-forward"
+                  name={showAllPosts ? "chevron-up" : "chevron-down"}
                   size={16}
                   color={colors.textSecondary}
                 />
@@ -179,15 +132,9 @@ export default function ProfileActivity({
           </View>
         ) : (
           <View style={styles(colors).emptyState}>
-            <Ionicons
-              name={getTabIcon(activeTab) as any}
-              size={48}
-              color={colors.textSecondary}
-            />
-            <Text style={styles(colors).emptyStateText}>
-              No {activeTab} yet
-            </Text>
-            {isOwnProfile && activeTab === "posts" && (
+            <Ionicons name="document-text" size={48} color={colors.textSecondary} />
+            <Text style={styles(colors).emptyStateText}>No posts yet</Text>
+            {isOwnProfile && (
               <TouchableOpacity
                 style={styles(colors).emptyStateButton}
                 onPress={onCreatePost}
@@ -197,6 +144,56 @@ export default function ProfileActivity({
                 </Text>
               </TouchableOpacity>
             )}
+          </View>
+        )}
+
+        <View style={styles(colors).sectionHeader}>
+          <Text style={styles(colors).sectionTitle}>Comments</Text>
+          <Text style={styles(colors).sectionCount}>{comments.length}</Text>
+        </View>
+
+        {comments.length > 0 ? (
+          <View style={styles(colors).postsContainer}>
+            {(showAllComments ? comments : comments.slice(0, 3)).map((comment) => (
+              <View key={comment.id} style={styles(colors).postItem}>
+                <Text style={styles(colors).postText} numberOfLines={3}>
+                  {comment.text}
+                </Text>
+                {comment.post?.text && (
+                  <Text style={styles(colors).commentPostText} numberOfLines={2}>
+                    On: {comment.post.text}
+                  </Text>
+                )}
+                <View style={styles(colors).postMeta}>
+                  <Text style={styles(colors).postDate}>
+                    {safeDate(comment.createdAt)}
+                  </Text>
+                </View>
+              </View>
+            ))}
+
+            {comments.length > 3 && (
+              <TouchableOpacity
+                style={styles(colors).showAllButton}
+                onPress={() => setShowAllComments((prev) => !prev)}
+              >
+                <Text style={styles(colors).showAllText}>
+                  {showAllComments
+                    ? "Show less"
+                    : `Show more (${comments.length})`}
+                </Text>
+                <Ionicons
+                  name={showAllComments ? "chevron-up" : "chevron-down"}
+                  size={16}
+                  color={colors.textSecondary}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : (
+          <View style={styles(colors).emptyState}>
+            <Ionicons name="chatbubble" size={48} color={colors.textSecondary} />
+            <Text style={styles(colors).emptyStateText}>No comments yet</Text>
           </View>
         )}
       </View>
@@ -250,45 +247,24 @@ const styles = (colors: any) =>
       fontWeight: "500",
       color: colors.primary,
     },
-    tabsContainer: {
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    tabsScrollContent: {
-      paddingHorizontal: 16,
-    },
-    tab: {
-      flexDirection: "row",
-      alignItems: "center",
-      paddingVertical: 12,
-      paddingHorizontal: 16,
-      marginRight: 8,
-      borderBottomWidth: 2,
-      borderBottomColor: "transparent",
-    },
-    activeTab: {
-      borderBottomColor: colors.primary,
-    },
-    tabLabel: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      marginLeft: 6,
-      marginRight: 4,
-    },
-    activeTabLabel: {
-      color: colors.primary,
-      fontWeight: "500",
-    },
-    tabCount: {
-      fontSize: 12,
-      color: colors.textSecondary,
-    },
-    activeTabCount: {
-      color: colors.primary,
-      fontWeight: "500",
-    },
     contentContainer: {
       padding: 16,
+    },
+    sectionHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 12,
+      marginTop: 8,
+    },
+    sectionTitle: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: colors.text,
+    },
+    sectionCount: {
+      fontSize: 12,
+      color: colors.textSecondary,
     },
     postsContainer: {
       gap: 16,
@@ -314,6 +290,11 @@ const styles = (colors: any) =>
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
+    },
+    commentPostText: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      marginBottom: 6,
     },
     postDate: {
       fontSize: 12,

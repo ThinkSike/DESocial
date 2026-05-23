@@ -104,6 +104,8 @@ const styles = (colors: any) =>
       backgroundColor: colors.surface || "#FFFFFF",
       borderRadius: 12,
       marginBottom: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
@@ -156,6 +158,8 @@ const styles = (colors: any) =>
     quickAccessSection: {
       backgroundColor: colors.surface || "#FFFFFF",
       borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,

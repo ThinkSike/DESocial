@@ -22,6 +22,8 @@ export interface Post {
   user: PostUser;
   content: PostContent;
   engagement: PostEngagement;
+  /** Whether the current user liked this post (optional, auth-dependent). */
+  likedByMe?: boolean;
   timestamp: Date;
   community?: {
     id: string;
@@ -53,6 +55,7 @@ export interface UserProfile {
     followers: number;
     following: number;
     posts: number;
+    comments: number;
   };
   createdAt: Date;
   updatedAt: Date;

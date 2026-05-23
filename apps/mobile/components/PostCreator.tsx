@@ -186,6 +186,8 @@ const getStyles = (c: any) =>
       borderRadius: 12,
       margin: 16,
       paddingBottom: 8,
+      borderWidth: 1,
+      borderColor: c.border,
       shadowColor: "#000",
       shadowOpacity: 0.1,
       shadowRadius: 4,

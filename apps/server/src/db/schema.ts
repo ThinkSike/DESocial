@@ -1,16 +1,14 @@
-import {
-  pgTable,
-  text,
-  timestamp,
-  integer,
-  boolean,
-  pgEnum,
-  serial,
-  jsonb,
-  uniqueIndex,
-  index,
-} from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+import {
+    boolean,
+    integer,
+    pgEnum,
+    pgTable,
+    serial,
+    text,
+    timestamp,
+    uniqueIndex
+} from "drizzle-orm/pg-core";
 
 export const communityTypeEnum = pgEnum("community_type", [
   "academic",
@@ -119,13 +117,38 @@ export const comments = pgTable("comments", {
   postId: integer("post_id")
     .notNull()
     .references(() => posts.id, { onDelete: "cascade" }),
+  parentId: integer("parent_id").references(() => comments.id, {
+    onDelete: "cascade",
+  }),
   userId: text("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   text: text("text").notNull(),
+  images: text("images").array(),
+  likesCount: integer("likes_count").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+export const commentLikes = pgTable(
+  "comment_likes",
+  {
+    id: serial("id").primaryKey(),
+    commentId: integer("comment_id")
+      .notNull()
+      .references(() => comments.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    uniqueCommentLike: uniqueIndex("unique_comment_like").on(
+      table.commentId,
+      table.userId,
+    ),
+  }),
+);
 
 export const follows = pgTable(
   "follows",
@@ -152,6 +175,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   posts: many(posts),
   likes: many(likes),
   comments: many(comments),
+  commentLikes: many(commentLikes),
   communityMembers: many(communityMembers),
   followers: many(follows, { relationName: "followers" }),
   following: many(follows, { relationName: "following" }),
@@ -165,6 +189,22 @@ export const postsRelations = relations(posts, ({ one, many }) => ({
   }),
   likes: many(likes),
   comments: many(comments),
+}));
+
+export const commentsRelations = relations(comments, ({ one, many }) => ({
+  post: one(posts, { fields: [comments.postId], references: [posts.id] }),
+  user: one(users, { fields: [comments.userId], references: [users.id] }),
+  parent: one(comments, { fields: [comments.parentId], references: [comments.id] }),
+  replies: many(comments),
+  commentLikes: many(commentLikes),
+}));
+
+export const commentLikesRelations = relations(commentLikes, ({ one }) => ({
+  comment: one(comments, {
+    fields: [commentLikes.commentId],
+    references: [comments.id],
+  }),
+  user: one(users, { fields: [commentLikes.userId], references: [users.id] }),
 }));
 
 export const communitiesRelations = relations(communities, ({ many }) => ({

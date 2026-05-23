@@ -93,9 +93,7 @@ export const api = {
     const query = type ? `?type=${type}` : "";
     const response = await fetch(`${API_URL}/uploads${query}`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       body: formData,
     });
 
