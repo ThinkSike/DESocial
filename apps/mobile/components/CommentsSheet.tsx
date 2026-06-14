@@ -1,3 +1,4 @@
+import ReportSheet from "@/components/ReportSheet";
 import { useThemeColors } from "@/constants/Colors";
 import { type Comment, useComments } from "@/hooks/useComments";
 import { useAuthStore } from "@/store/auth";
@@ -51,6 +52,7 @@ export default function CommentsSheet({
   const [replyTo, setReplyTo] = useState<Comment | null>(null);
   const [showEmoji, setShowEmoji] = useState(false);
   const [expandedThreads, setExpandedThreads] = useState<Record<number, boolean>>({});
+  const [reportTarget, setReportTarget] = useState<number | null>(null);
   const inputRef = useRef<TextInput>(null);
 
   const QUICK_EMOJIS = [
@@ -325,13 +327,24 @@ export default function CommentsSheet({
               </TouchableOpacity>
             )}
 
-            {isOwn && (
+            {isOwn ? (
               <TouchableOpacity
                 style={s.actionBtn}
                 onPress={() => handleDeleteComment(item)}
               >
                 <Ionicons
                   name="trash-outline"
+                  size={15}
+                  color={colors.textSecondary}
+                />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={s.actionBtn}
+                onPress={() => setReportTarget(item.id)}
+              >
+                <Ionicons
+                  name="flag-outline"
                   size={15}
                   color={colors.textSecondary}
                 />
@@ -523,6 +536,13 @@ export default function CommentsSheet({
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      <ReportSheet
+        visible={reportTarget !== null}
+        targetType="comment"
+        targetId={reportTarget ?? 0}
+        onClose={() => setReportTarget(null)}
+      />
     </Modal>
   );
 }

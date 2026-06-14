@@ -1,29 +1,47 @@
 import { relations } from "drizzle-orm";
 import {
-    boolean,
-    integer,
-    pgEnum,
-    pgTable,
-    serial,
-    text,
-    timestamp,
-    uniqueIndex
+  boolean,
+  index,
+  integer,
+  pgEnum,
+  pgTable,
+  serial,
+  text,
+  timestamp,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
 export const communityTypeEnum = pgEnum("community_type", [
-  "academic",
-  "sports",
-  "cultural",
-  "technical",
-  "social",
-  "hobby",
+  "academic", "sports", "cultural", "technical", "social", "hobby",
 ]);
 
 export const memberRoleEnum = pgEnum("member_role", [
-  "member",
-  "moderator",
-  "admin",
+  "member", "moderator", "admin",
 ]);
+
+/** Who can see this user account / role on the platform */
+export const userRoleEnum = pgEnum("user_role", [
+  "student", "teacher", "alumni", "fresher", "admin",
+]);
+
+/** Who can see a post */
+export const postVisibilityEnum = pgEnum("post_visibility", [
+  "public",     // visible to all logged-in users
+  "followers",  // visible only to followers of the author
+  "community",  // visible only to members of the post's community
+]);
+
+/** Report target type */
+export const reportTargetEnum = pgEnum("report_target", ["post", "comment"]);
+
+/** Report status */
+export const reportStatusEnum = pgEnum("report_status", [
+  "pending", "reviewed", "dismissed",
+]);
+
+// ─── Tables ───────────────────────────────────────────────────────────────────
 
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
@@ -33,9 +51,15 @@ export const users = pgTable("users", {
   passwordHash: text("password_hash").notNull(),
   avatar: text("avatar"),
   bio: text("bio"),
-  prn: text("prn"),
+  prn: text("prn").unique(),
   department: text("department"),
   verified: boolean("verified").default(false),
+  /** Platform role */
+  role: userRoleEnum("role").default("student").notNull(),
+  /** Admin can deactivate an account without deleting it */
+  isActive: boolean("is_active").default(true).notNull(),
+  /** Forces the user to change their password on next login */
+  mustChangePassword: boolean("must_change_password").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -51,6 +75,7 @@ export const posts = pgTable("posts", {
   communityId: integer("community_id").references(() => communities.id, {
     onDelete: "set null",
   }),
+  visibility: postVisibilityEnum("visibility").default("public").notNull(),
   likesCount: integer("likes_count").default(0).notNull(),
   commentsCount: integer("comments_count").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -170,7 +195,36 @@ export const follows = pgTable(
   }),
 );
 
-// Relations
+/** Reports submitted by users against posts or comments */
+export const reports = pgTable(
+  "reports",
+  {
+    id: serial("id").primaryKey(),
+    reporterId: text("reporter_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    targetType: reportTargetEnum("target_type").notNull(),
+    targetId: integer("target_id").notNull(),
+    reason: text("reason").notNull(), // "spam" | "harassment" | "inappropriate" | "misinformation" | "other"
+    description: text("description"),
+    status: reportStatusEnum("status").default("pending").notNull(),
+    reviewedBy: text("reviewed_by").references(() => users.id),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    // One report per user per target
+    uniqueReport: uniqueIndex("unique_report").on(
+      table.reporterId,
+      table.targetType,
+      table.targetId,
+    ),
+    targetIdx: index("reports_target_idx").on(table.targetType, table.targetId),
+  }),
+);
+
+// ─── Relations ────────────────────────────────────────────────────────────────
+
 export const usersRelations = relations(users, ({ many }) => ({
   posts: many(posts),
   likes: many(likes),
@@ -179,6 +233,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   communityMembers: many(communityMembers),
   followers: many(follows, { relationName: "followers" }),
   following: many(follows, { relationName: "following" }),
+  reports: many(reports, { relationName: "submittedReports" }),
 }));
 
 export const postsRelations = relations(posts, ({ one, many }) => ({
@@ -210,4 +265,16 @@ export const commentLikesRelations = relations(commentLikes, ({ one }) => ({
 export const communitiesRelations = relations(communities, ({ many }) => ({
   members: many(communityMembers),
   posts: many(posts),
+}));
+
+export const reportsRelations = relations(reports, ({ one }) => ({
+  reporter: one(users, {
+    fields: [reports.reporterId],
+    references: [users.id],
+    relationName: "submittedReports",
+  }),
+  reviewer: one(users, {
+    fields: [reports.reviewedBy],
+    references: [users.id],
+  }),
 }));

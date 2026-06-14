@@ -10,25 +10,42 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Modal,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ProfileScreen() {
   const colors = useThemeColors();
+  const { bottom } = require("react-native-safe-area-context").useSafeAreaInsets();
   const router = useRouter();
-  const { user: authUser } = useAuthStore();
+  const { user: authUser, hydrate } = useAuthStore();
   const { profile, loading: profileLoading, updateAvatar } = useUserProfile();
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [userComments, setUserComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [editVisible, setEditVisible] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [displayName, setDisplayName] = useState("");
+  const [username, setUsername] = useState("");
+  const [bio, setBio] = useState("");
+
+  useEffect(() => {
+    if (!profile) return;
+    setDisplayName(profile.displayName || "");
+    setUsername(profile.username || "");
+    setBio(profile.bio || "");
+  }, [profile]);
 
   const fetchUserPosts = useCallback(async () => {
     if (!authUser?.id) return;
@@ -76,12 +93,43 @@ export default function ProfileScreen() {
       if (!res.canceled && res.assets?.[0]?.uri) {
         Alert.alert("Updating", "Uploading your new picture...");
         await updateAvatar(res.assets[0].uri);
+        await hydrate();
         Alert.alert("Done", "Profile picture updated!");
       }
     } catch {
       Alert.alert("Error", "Could not update profile picture");
     }
-  }, [authUser?.id, updateAvatar]);
+  }, [authUser?.id, hydrate, updateAvatar]);
+
+  const saveProfile = useCallback(async () => {
+    if (!profile) return;
+
+    const nextDisplayName = displayName.trim();
+    const nextUsername = username.trim();
+    const nextBio = bio.trim();
+
+    if (!nextDisplayName || !nextUsername) {
+      Alert.alert("Missing info", "Display name and username are required.");
+      return;
+    }
+
+    try {
+      setSavingProfile(true);
+      await api.patch(`/api/users/${profile.id}`, {
+        displayName: nextDisplayName,
+        username: nextUsername,
+        bio: nextBio,
+      });
+      await hydrate();
+      await fetchUserPosts();
+      setEditVisible(false);
+      Alert.alert("Saved", "Profile updated successfully.");
+    } catch (error: any) {
+      Alert.alert("Error", error?.message ?? "Could not update profile");
+    } finally {
+      setSavingProfile(false);
+    }
+  }, [bio, displayName, fetchUserPosts, hydrate, profile, username]);
 
   const s = styles(colors);
 
@@ -137,6 +185,7 @@ export default function ProfileScreen() {
         <ProfileHeader
           user={profile}
           isOwnProfile
+          onEditProfile={() => setEditVisible(true)}
           onAvatarPress={pickImage}
           onSettingsPress={() => router.push("/settings" as any)}
         />
@@ -147,6 +196,77 @@ export default function ProfileScreen() {
         {/* Activity / posts */}
         <ProfileActivity posts={userPosts} comments={userComments} isOwnProfile />
       </ScrollView>
+
+      <Modal
+        visible={editVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setEditVisible(false)}
+      >
+        <TouchableOpacity
+          style={s.modalBackdrop}
+          activeOpacity={1}
+          onPress={() => setEditVisible(false)}
+        />
+        <KeyboardAvoidingView
+          behavior="padding"
+          style={[s.modalSheet, { paddingBottom: bottom + 16, backgroundColor: colors.surface }]}
+        >
+          <View style={s.modalHandle} />
+          <View style={s.modalHeader}>
+            <Text style={[s.modalTitle, { color: colors.text }]}>Edit profile</Text>
+            <TouchableOpacity onPress={() => setEditVisible(false)}>
+              <Ionicons name="close" size={22} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={s.fieldGroup}>
+            <Text style={[s.fieldLabel, { color: colors.textSecondary }]}>Display name</Text>
+            <TextInput
+              style={[s.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+              value={displayName}
+              onChangeText={setDisplayName}
+              placeholder="Your name"
+              placeholderTextColor={colors.textSecondary}
+            />
+          </View>
+
+          <View style={s.fieldGroup}>
+            <Text style={[s.fieldLabel, { color: colors.textSecondary }]}>Username</Text>
+            <TextInput
+              style={[s.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+              placeholder="username"
+              placeholderTextColor={colors.textSecondary}
+            />
+          </View>
+
+          <View style={s.fieldGroup}>
+            <Text style={[s.fieldLabel, { color: colors.textSecondary }]}>Bio</Text>
+            <TextInput
+              style={[s.textArea, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+              value={bio}
+              onChangeText={setBio}
+              placeholder="Write a short bio"
+              placeholderTextColor={colors.textSecondary}
+              multiline
+              maxLength={500}
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[s.saveButton, { backgroundColor: savingProfile ? colors.border : colors.primary }]}
+            onPress={saveProfile}
+            disabled={savingProfile}
+          >
+            <Text style={s.saveButtonText}>
+              {savingProfile ? "Saving..." : "Save changes"}
+            </Text>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -167,4 +287,68 @@ const styles = (colors: any) =>
       borderRadius: 8,
     },
     retryText: { color: "#fff", fontWeight: "600" },
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.45)",
+    },
+    modalSheet: {
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      paddingHorizontal: 16,
+      paddingTop: 10,
+      marginTop: "auto",
+    },
+    modalHandle: {
+      width: 40,
+      height: 4,
+      borderRadius: 2,
+      alignSelf: "center",
+      backgroundColor: colors.border,
+      marginBottom: 14,
+    },
+    modalHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 16,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: "700",
+    },
+    fieldGroup: {
+      marginBottom: 14,
+    },
+    fieldLabel: {
+      fontSize: 13,
+      marginBottom: 6,
+      fontWeight: "500",
+    },
+    input: {
+      borderWidth: 1,
+      borderRadius: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      fontSize: 15,
+    },
+    textArea: {
+      borderWidth: 1,
+      borderRadius: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      fontSize: 15,
+      minHeight: 96,
+      textAlignVertical: "top",
+    },
+    saveButton: {
+      borderRadius: 12,
+      paddingVertical: 14,
+      alignItems: "center",
+      marginTop: 4,
+    },
+    saveButtonText: {
+      color: "#fff",
+      fontWeight: "700",
+      fontSize: 15,
+    },
   });

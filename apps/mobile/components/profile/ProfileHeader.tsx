@@ -4,11 +4,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import React from "react";
 import {
-    Dimensions,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 interface ProfileHeaderProps {
@@ -42,15 +42,11 @@ export default function ProfileHeader({
     if (isOwnProfile) {
       return (
         <View style={s.actionButtonsContainer}>
-          <TouchableOpacity style={s.addProfileButton} onPress={() => {}}>
+          <TouchableOpacity style={s.addProfileButton} onPress={onEditProfile}>
             <Text style={s.addProfileButtonText}>Add profile section</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={s.enhanceProfileButton} onPress={() => {}}>
-            <Text style={s.enhanceProfileButtonText}>Enhance profile</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={s.resourcesButton} onPress={() => {}}>
+          <TouchableOpacity style={s.resourcesButton} onPress={onSettingsPress}>
             <Text style={s.resourcesButtonText}>Resources</Text>
           </TouchableOpacity>
         </View>
@@ -83,6 +79,8 @@ export default function ProfileHeader({
           style={s.profilePictureContainer}
           onPress={isOwnProfile ? onAvatarPress : undefined}
           activeOpacity={isOwnProfile ? 0.8 : 1}
+          accessibilityRole={isOwnProfile ? "button" : undefined}
+          accessibilityLabel={isOwnProfile ? "Change profile picture" : undefined}
         >
           <Image
             source={{ uri: user.avatar || "https://i.pravatar.cc/120?img=5" }}

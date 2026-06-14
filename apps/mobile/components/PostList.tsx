@@ -67,8 +67,6 @@ export default function PostList({
       keyExtractor={keyExtractor}
       style={[styles.container, { backgroundColor: colors.background }]}
       showsVerticalScrollIndicator={false}
-      decelerationRate="fast"
-      scrollEventThrottle={16}
       ListHeaderComponent={ListHeaderComponent}
       refreshControl={
         onRefresh ? (
@@ -81,11 +79,15 @@ export default function PostList({
         ) : undefined
       }
       onEndReached={onLoadMore}
-      onEndReachedThreshold={0.2}
+      onEndReachedThreshold={0.4}
       removeClippedSubviews={true}
-      maxToRenderPerBatch={10}
-      windowSize={10}
-      initialNumToRender={5}
+      maxToRenderPerBatch={8}
+      windowSize={8}
+      initialNumToRender={8}
+      decelerationRate="normal"
+      scrollEventThrottle={16}
+      keyboardDismissMode="on-drag"
+      keyboardShouldPersistTaps="handled"
     />
   );
 }

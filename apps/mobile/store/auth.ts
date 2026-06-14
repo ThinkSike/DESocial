@@ -8,6 +8,8 @@ interface AppUser {
   displayName: string;
   avatar?: string | null;
   verified?: boolean;
+  role?: "student" | "teacher" | "alumni" | "fresher" | "admin";
+  mustChangePassword?: boolean;
 }
 
 type AuthState = {
@@ -16,8 +18,7 @@ type AuthState = {
   error: string | null;
 };
 type AuthActions = {
-  signIn: (prn: string, password: string) => Promise<void>;
-  signUp: (data: { prn: string; password: string; username: string; displayName: string }) => Promise<void>;
+  signIn: (identifier: string, password: string) => Promise<void>;
   signOut: () => void;
   hydrate: () => Promise<void>;
   clearError: () => void;
@@ -29,19 +30,27 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   error: null,
   hydrate: async () => {
     try {
-      const data = await api.get<{ user: AppUser }>("/api/auth/me");
-      set({ user: data.user, initializing: false });
+      // /api/auth/me returns the user object directly (not wrapped in { user })
+      const user = await api.get<AppUser>("/api/auth/me");
+      set({ user, initializing: false });
     } catch {
       setToken(null);
       set({ user: null, initializing: false });
     }
   },
-  signIn: async (prn, password) => {
+  signIn: async (identifier, password) => {
     set({ error: null });
     try {
+      // If identifier is 10 digits → student enrollment number
+      // Otherwise → full email (teacher / alumni)
+      const isEnrollment = /^\d{10}$/.test(identifier.trim());
+      const loginPayload = isEnrollment
+        ? { prn: identifier.trim(), password }
+        : { email: identifier.trim(), password };
+
       const data = await api.post<{ user: AppUser; token: string }>(
         "/api/auth/login",
-        { prn: prn.trim(), password },
+        loginPayload,
         { auth: false },
       );
       setToken(data.token);
@@ -51,24 +60,12 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
       throw e;
     }
   },
-  signUp: async ({ prn, password, username, displayName }) => {
-    set({ error: null });
-    try {
-      const data = await api.post<{ user: AppUser; token: string }>(
-        "/api/auth/register",
-        { prn: prn.trim(), password, username, displayName },
-        { auth: false },
-      );
-      setToken(data.token);
-      set({ user: data.user });
-    } catch (e: any) {
-      set({ error: e?.message ?? "Registration failed" });
-      throw e;
-    }
-  },
   signOut: () => {
     setToken(null);
     set({ user: null });
   },
   clearError: () => set({ error: null }),
 }));
+
+export type { AppUser };
+

@@ -1,3 +1,4 @@
+import ReportSheet from "@/components/ReportSheet";
 import { useThemeColors } from "@/constants/Colors";
 import { Post as PostType } from "@/types/post";
 import { formatEngagementNumber, getTimeAgo } from "@/utils/format";
@@ -38,6 +39,7 @@ export default function Post({
   const colors = useThemeColors();
   const styles = createStyles(colors);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [reportVisible, setReportVisible] = useState(false);
 
   const isOwnPost = !!currentUserId && currentUserId === post.user.id;
   const likedByMe = !!post.likedByMe;
@@ -56,11 +58,13 @@ export default function Post({
         {
           text: "Delete",
           style: "destructive",
-          onPress: () => {
-            const result = onDelete?.(post.id);
-            if (result instanceof Promise) {
-              result.catch(() =>
-                Alert.alert("Error", "Could not delete post. Please try again."),
+          onPress: async () => {
+            try {
+              await onDelete?.(post.id);
+            } catch (e: any) {
+              Alert.alert(
+                "Could not delete",
+                e?.message ?? "Please try again.",
               );
             }
           },
@@ -167,19 +171,17 @@ export default function Post({
         {/* Timestamp + three-dot menu */}
         <View style={styles.headerRight}>
           <Text style={styles.timestamp}>{getTimeAgo(post.timestamp)}</Text>
-          {isOwnPost && (
-            <TouchableOpacity
-              style={styles.menuBtn}
-              onPress={() => setMenuVisible(true)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Ionicons
-                name="ellipsis-horizontal"
-                size={18}
-                color={colors.textSecondary}
-              />
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            style={styles.menuBtn}
+            onPress={() => setMenuVisible(true)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons
+              name="ellipsis-horizontal"
+              size={18}
+              color={colors.textSecondary}
+            />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -231,13 +233,26 @@ export default function Post({
       >
         <Pressable style={styles.modalBackdrop} onPress={() => setMenuVisible(false)}>
           <Pressable style={[styles.menuSheet, { backgroundColor: colors.surface }]}>
-            {/* Delete */}
-            <TouchableOpacity style={styles.menuItem} onPress={handleDeletePress}>
-              <Ionicons name="trash-outline" size={20} color="#E53935" />
-              <Text style={[styles.menuItemText, { color: "#E53935" }]}>
-                Delete post
-              </Text>
-            </TouchableOpacity>
+            {isOwnPost ? (
+              /* Own post — show Delete */
+              <TouchableOpacity style={styles.menuItem} onPress={handleDeletePress}>
+                <Ionicons name="trash-outline" size={20} color="#E53935" />
+                <Text style={[styles.menuItemText, { color: "#E53935" }]}>
+                  Delete post
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              /* Other's post — show Report */
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => { setMenuVisible(false); setReportVisible(true); }}
+              >
+                <Ionicons name="flag-outline" size={20} color="#f97316" />
+                <Text style={[styles.menuItemText, { color: "#f97316" }]}>
+                  Report post
+                </Text>
+              </TouchableOpacity>
+            )}
 
             {/* Cancel */}
             <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
@@ -253,9 +268,18 @@ export default function Post({
           </Pressable>
         </Pressable>
       </Modal>
+
+      {/* Report sheet */}
+      <ReportSheet
+        visible={reportVisible}
+        targetType="post"
+        targetId={Number(post.id)}
+        onClose={() => setReportVisible(false)}
+      />
     </View>
   );
 }
+
 
 const createStyles = (colors: any) =>
   StyleSheet.create({

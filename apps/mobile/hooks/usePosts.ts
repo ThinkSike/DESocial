@@ -140,15 +140,15 @@ export const usePosts = () => {
   const handleDeletePost = useCallback(
     async (postId: string) => {
       if (!user) return;
-      // Optimistic removal — feels instant
+      // Optimistic removal — instant feedback
       setPosts((prev) => prev.filter((p) => p.id !== postId));
       try {
-        await api.delete(`/api/posts/${postId}`);
+        await api.delete<{ success: boolean }>(`/api/posts/${postId}`);
+      } catch (error: any) {
+        console.error("Delete post failed:", error?.message);
+        // Roll back the optimistic removal
         await fetchPosts(true);
-      } catch (error) {
-        console.error("Error deleting post:", error);
-        // Roll back by re-fetching if the server rejected it
-        await fetchPosts(true);
+        // Let the caller know so it can show an alert
         throw error;
       }
     },

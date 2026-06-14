@@ -9,6 +9,8 @@ import commentRoutes from "./routes/comments";
 import userRoutes from "./routes/users";
 import communityRoutes from "./routes/communities";
 import uploadRoutes from "./routes/upload";
+import adminRoutes from "./routes/admin";
+import reportRoutes from "./routes/reports";
 
 const app = new Hono();
 
@@ -20,6 +22,8 @@ app.route("/api/posts", commentRoutes);
 app.route("/api/users", userRoutes);
 app.route("/api/communities", communityRoutes);
 app.route("/uploads", uploadRoutes);
+app.route("/api/admin", adminRoutes);
+app.route("/api/reports", reportRoutes);
 
 app.get("/health", (c) => c.json({ status: "ok" }));
 

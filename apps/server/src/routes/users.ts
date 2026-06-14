@@ -63,6 +63,29 @@ users.patch("/:id", authMiddleware, async (c) => {
       return c.json({ error: parsed.error.flatten() }, 400);
     }
 
+    if (parsed.data.username) {
+      const normalizedUsername = parsed.data.username.trim();
+      const [existingUsername] = await db
+        .select({ id: schema.users.id })
+        .from(schema.users)
+        .where(eq(schema.users.username, normalizedUsername))
+        .limit(1);
+
+      if (existingUsername && existingUsername.id !== id) {
+        return c.json({ error: "Username is already taken" }, 409);
+      }
+
+      parsed.data.username = normalizedUsername;
+    }
+
+    if (parsed.data.displayName) {
+      parsed.data.displayName = parsed.data.displayName.trim();
+    }
+
+    if (parsed.data.bio !== undefined) {
+      parsed.data.bio = parsed.data.bio.trim();
+    }
+
     const [user] = await db
       .update(schema.users)
       .set({ ...parsed.data, updatedAt: new Date() })
@@ -162,7 +185,7 @@ users.get("/:id/comments", async (c) => {
             verified: schema.users.verified,
           },
         },
-      })
+      } as any)
       .from(schema.comments)
       .leftJoin(schema.posts, eq(schema.comments.postId, schema.posts.id))
       .leftJoin(schema.users, eq(schema.posts.userId, schema.users.id))
@@ -185,8 +208,8 @@ users.get("/:id/comments", async (c) => {
       createdAt: row.createdAt,
       post: row.post
         ? {
-            ...row.post,
-            images: normalizeArray(row.post.images),
+            ...(row.post as any),
+            images: normalizeArray((row.post as any).images),
           }
         : null,
     }));
