@@ -1,6 +1,7 @@
 import { useThemeColors } from "@/constants/Colors";
 import { Community } from "@/types/community";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -20,6 +21,7 @@ export default function DiscoverCommunitiesSidebar({
   onJoinCommunity,
 }: DiscoverCommunitiesSidebarProps) {
   const colors = useThemeColors();
+  const router = useRouter();
 
   const getCategoryColor = (type: Community['type']) => {
     switch (type) {
@@ -130,7 +132,10 @@ export default function DiscoverCommunitiesSidebar({
         )}
 
         {/* Discover More */}
-        <TouchableOpacity style={styles(colors).discoverButton}>
+        <TouchableOpacity
+          style={styles(colors).discoverButton}
+          onPress={() => router.push("/browse-communities" as any)}
+        >
           <Ionicons name="compass" size={20} color={colors.primary} />
           <Text style={styles(colors).discoverButtonText}>Explore All Communities</Text>
         </TouchableOpacity>
@@ -142,9 +147,9 @@ export default function DiscoverCommunitiesSidebar({
 const styles = (colors: any) =>
   StyleSheet.create({
     container: {
-      width: 300,
-      marginLeft: 'auto',
-      marginRight: 'auto',
+      width: "100%",
+      maxWidth: 300,
+      alignSelf: "stretch",
       borderRadius: 12,
       borderWidth: 1,
       shadowColor: '#000',

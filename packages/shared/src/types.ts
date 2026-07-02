@@ -56,6 +56,7 @@ export interface UserProfile {
     following: number;
     posts: number;
     comments: number;
+    profileViews: number;
   };
   createdAt: Date;
   updatedAt: Date;

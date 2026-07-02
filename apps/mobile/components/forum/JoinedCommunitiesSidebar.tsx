@@ -1,6 +1,7 @@
 import { useThemeColors } from "@/constants/Colors";
 import { Community } from "@/types/community";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -16,6 +17,7 @@ export default function JoinedCommunitiesSidebar({
   onCommunitySelect,
 }: JoinedCommunitiesSidebarProps) {
   const colors = useThemeColors();
+  const router = useRouter();
 
   const getCategoryColor = (type: Community['type']) => {
     switch (type) {
@@ -117,7 +119,10 @@ export default function JoinedCommunitiesSidebar({
         )}
 
         {/* Browse More */}
-        <TouchableOpacity style={styles(colors).browseButton}>
+        <TouchableOpacity
+          style={styles(colors).browseButton}
+          onPress={() => router.push("/browse-communities" as any)}
+        >
           <Ionicons name="add-circle" size={20} color={colors.primary} />
           <Text style={styles(colors).browseButtonText}>Browse Communities</Text>
         </TouchableOpacity>
@@ -131,9 +136,9 @@ export default function JoinedCommunitiesSidebar({
 const styles = (colors: any) =>
   StyleSheet.create({
     container: {
-      width: 280,
-      marginRight: 'auto', 
-      marginLeft: 'auto',
+      width: "100%",
+      maxWidth: 280,
+      alignSelf: "stretch",
       borderRadius: 12,
       borderWidth: 1,
       shadowColor: '#000',

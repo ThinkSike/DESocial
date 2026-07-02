@@ -1,6 +1,6 @@
 import { useThemeColors } from "@/constants/Colors";
-import { formatEngagementNumber } from "@/utils/format";
 import { UserProfile } from "@/types/profile";
+import { formatEngagementNumber } from "@/utils/format";
 import React from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -57,12 +57,15 @@ export const UserSearchResult: React.FC<UserSearchResultProps> = ({
           )}
           <View style={styles.statsRow}>
             <Text style={[styles.stat, { color: colors.textSecondary }]}>
-              {formatEngagementNumber(user.stats.followersCount)} followers
+              {formatEngagementNumber(user.stats.followers)} followers
             </Text>
             <Text style={[styles.stat, { color: colors.textSecondary }]}>
-              {formatEngagementNumber(user.stats.postsCount)} posts
+              {formatEngagementNumber(user.stats.following)} following
             </Text>
           </View>
+          <Text style={[styles.stat, { color: colors.textSecondary }]}>
+            {formatEngagementNumber(user.stats.posts)} posts
+          </Text>
         </View>
       </View>
     </TouchableOpacity>

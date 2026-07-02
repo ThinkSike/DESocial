@@ -1,11 +1,12 @@
+import TopNotificationBanner from "@/components/TopNotificationBanner";
 import { useAuthStore } from "@/store/auth";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, View, useWindowDimensions } from "react-native";
 import {
-  SafeAreaProvider,
-  initialWindowMetrics,
+    SafeAreaProvider,
+    initialWindowMetrics,
 } from "react-native-safe-area-context";
 
 export default function RootLayout() {
@@ -63,6 +64,7 @@ function RootNavigationEngine({ user }: { user: any }) {
   return (
     <View style={[styles.outerContainer, isLargeScreen && styles.centeredWrapper]}>
       <View style={[styles.innerContent, isLargeScreen && { maxWidth, width: "100%" }]}>
+        <TopNotificationBanner />
         <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
           {/* Group allocations match the clean file movement setup */}
           <Stack.Screen name="(auth)" />

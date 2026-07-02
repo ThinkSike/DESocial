@@ -4,11 +4,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import React from "react";
 import {
-  Dimensions,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Dimensions,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 interface ProfileHeaderProps {
@@ -19,6 +19,7 @@ interface ProfileHeaderProps {
   onMessagePress?: () => void;
   onSettingsPress?: () => void;
   isFollowing?: boolean;
+  isFollowLoading?: boolean;
   onAvatarPress?: () => void;
 }
 
@@ -33,6 +34,7 @@ export default function ProfileHeader({
   onMessagePress,
   onSettingsPress,
   isFollowing = false,
+  isFollowLoading = false,
   onAvatarPress,
 }: ProfileHeaderProps) {
   const colors = useThemeColors();
@@ -55,9 +57,13 @@ export default function ProfileHeader({
 
     return (
       <View style={s.actionButtonsContainer}>
-        <TouchableOpacity style={s.followButton} onPress={onFollowToggle}>
+        <TouchableOpacity
+          style={s.followButton}
+          onPress={onFollowToggle}
+          disabled={isFollowLoading}
+        >
           <Text style={s.followButtonText}>
-            {isFollowing ? "Following" : "Follow"}
+            {isFollowLoading ? "Saving..." : isFollowing ? "Following" : "Follow"}
           </Text>
         </TouchableOpacity>
 

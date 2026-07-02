@@ -7,20 +7,20 @@ import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import type { Post } from "@/types/post";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Modal,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Modal,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -28,32 +28,57 @@ export default function ProfileScreen() {
   const colors = useThemeColors();
   const { bottom } = require("react-native-safe-area-context").useSafeAreaInsets();
   const router = useRouter();
+  const { userId: routeUserId } = useLocalSearchParams<{ userId?: string | string[] }>();
   const { user: authUser, hydrate } = useAuthStore();
-  const { profile, loading: profileLoading, updateAvatar } = useUserProfile();
+  const viewedUserId = useMemo(() => {
+    if (typeof routeUserId === "string") return routeUserId;
+    return undefined;
+  }, [routeUserId]);
+  const targetUserId = viewedUserId || authUser?.id;
+  const isOwnProfile = !viewedUserId || viewedUserId === authUser?.id;
+  const { profile, loading: profileLoading, updateAvatar } = useUserProfile(targetUserId);
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [userComments, setUserComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [editVisible, setEditVisible] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
+  const [followingActionLoading, setFollowingActionLoading] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followerDelta, setFollowerDelta] = useState(0);
+  const isWaitingForOwnProfile = !viewedUserId && !authUser?.id;
 
   useEffect(() => {
     if (!profile) return;
     setDisplayName(profile.displayName || "");
     setUsername(profile.username || "");
     setBio(profile.bio || "");
+    setIsFollowing(Boolean((profile as any).isFollowing));
+    setFollowerDelta(0);
   }, [profile]);
 
+  const displayedProfile = useMemo(() => {
+    if (!profile) return null;
+
+    return {
+      ...profile,
+      stats: {
+        ...profile.stats,
+        followers: Math.max(0, profile.stats.followers + followerDelta),
+      },
+    };
+  }, [followerDelta, profile]);
+
   const fetchUserPosts = useCallback(async () => {
-    if (!authUser?.id) return;
+    if (!targetUserId) return;
     try {
       setLoading(true);
       const [posts, comments] = await Promise.all([
-        api.get<Post[]>(`/api/users/${authUser.id}/posts`),
-        api.get<any[]>(`/api/users/${authUser.id}/comments`),
+        api.get<Post[]>(`/api/users/${targetUserId}/posts`),
+        api.get<any[]>(`/api/users/${targetUserId}/comments`),
       ]);
       setUserPosts(posts);
       setUserComments(comments);
@@ -62,11 +87,32 @@ export default function ProfileScreen() {
     } finally {
       setLoading(false);
     }
-  }, [authUser?.id]);
+  }, [targetUserId]);
 
   useEffect(() => {
     fetchUserPosts();
   }, [fetchUserPosts]);
+
+  const handleFollowToggle = useCallback(async () => {
+    if (!targetUserId || isOwnProfile) return;
+
+    try {
+      setFollowingActionLoading(true);
+      if (isFollowing) {
+        await api.delete(`/api/users/${targetUserId}/follow`);
+        setIsFollowing(false);
+        setFollowerDelta((prev) => prev - 1);
+      } else {
+        await api.post(`/api/users/${targetUserId}/follow`);
+        setIsFollowing(true);
+        setFollowerDelta((prev) => prev + 1);
+      }
+    } catch (error: any) {
+      Alert.alert("Error", error?.message ?? "Could not update follow status");
+    } finally {
+      setFollowingActionLoading(false);
+    }
+  }, [isFollowing, isOwnProfile, targetUserId]);
 
   const pickImage = useCallback(async () => {
     if (!authUser?.id) {
@@ -133,7 +179,7 @@ export default function ProfileScreen() {
 
   const s = styles(colors);
 
-  if (profileLoading || loading) {
+  if (profileLoading || loading || isWaitingForOwnProfile) {
     return (
       <SafeAreaView style={[s.center, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -183,18 +229,31 @@ export default function ProfileScreen() {
       >
         {/* Rich profile header with cover photo + centered avatar */}
         <ProfileHeader
-          user={profile}
-          isOwnProfile
-          onEditProfile={() => setEditVisible(true)}
+          user={displayedProfile}
+          isOwnProfile={isOwnProfile}
+          onEditProfile={isOwnProfile ? () => setEditVisible(true) : undefined}
+          onFollowToggle={isOwnProfile ? undefined : handleFollowToggle}
           onAvatarPress={pickImage}
-          onSettingsPress={() => router.push("/settings" as any)}
+          onSettingsPress={isOwnProfile ? () => router.push("/settings" as any) : undefined}
+          isFollowing={isFollowing}
+          isFollowLoading={followingActionLoading}
         />
 
         {/* Analytics card */}
-        <ProfileAnalytics />
+        <ProfileAnalytics
+          analytics={{
+            profileViews: displayedProfile?.stats.profileViews ?? 0,
+            followers: displayedProfile?.stats.followers ?? 0,
+            following: displayedProfile?.stats.following ?? 0,
+          }}
+        />
 
         {/* Activity / posts */}
-        <ProfileActivity posts={userPosts} comments={userComments} isOwnProfile />
+        <ProfileActivity
+          posts={userPosts}
+          comments={userComments}
+          isOwnProfile={isOwnProfile}
+        />
       </ScrollView>
 
       <Modal

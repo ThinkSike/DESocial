@@ -55,6 +55,7 @@ export const users = pgTable("users", {
   prn: text("prn").unique(),
   department: text("department"),
   verified: boolean("verified").default(false),
+  profileViews: integer("profile_views").default(0).notNull(),
   /** Platform role */
   role: userRoleEnum("role").default("student").notNull(),
   /** Admin can deactivate an account without deleting it */

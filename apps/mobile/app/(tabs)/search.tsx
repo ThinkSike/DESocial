@@ -1,16 +1,22 @@
+import { PostSearchResult } from "@/components/search/PostSearchResult";
+import { UserSearchResult } from "@/components/search/UserSearchResult";
 import { useThemeColors } from "@/constants/Colors";
+import { api } from "@/lib/api";
+import type { Post } from "@/types/post";
+import type { UserProfile } from "@/types/profile";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import { useRouter } from "expo-router";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  Dimensions,
-  Image,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Dimensions,
+    Image,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -129,10 +135,79 @@ const searchSuggestions: SearchSuggestion[] = [
 
 export default function SearchScreen() {
   const colors = useThemeColors();
+  const router = useRouter();
   const { width } = Dimensions.get("window");
   const isTablet = width > 768;
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [matchedUsers, setMatchedUsers] = useState<UserProfile[]>([]);
+  const [matchedPosts, setMatchedPosts] = useState<Post[]>([]);
+  const [searchingUsers, setSearchingUsers] = useState(false);
+  const [searchingPosts, setSearchingPosts] = useState(false);
+
+  const trimmedQuery = useMemo(() => searchQuery.trim(), [searchQuery]);
+
+  useEffect(() => {
+    let active = true;
+
+    if (!trimmedQuery) {
+      setMatchedUsers([]);
+      setMatchedPosts([]);
+      setSearchingUsers(false);
+      setSearchingPosts(false);
+      return;
+    }
+
+    const timeout = setTimeout(async () => {
+      try {
+        setSearchingUsers(true);
+        setSearchingPosts(true);
+
+        const [usersResult, postsResult] = await Promise.all([
+          api.get<{ users: UserProfile[] }>(
+            `/api/users/search?q=${encodeURIComponent(trimmedQuery)}&limit=10`,
+          ),
+          api.get<{ posts: Post[] }>("/api/posts?limit=50"),
+        ]);
+
+        if (!active) return;
+        setMatchedUsers(usersResult.users);
+
+        const normalizedQuery = trimmedQuery.toLowerCase();
+        setMatchedPosts(
+          postsResult.posts.filter((post) => {
+            const haystacks = [
+              post.content.text,
+              post.user.displayName,
+              post.user.username,
+              post.community?.name,
+              ...(post.content.hashtags ?? []),
+            ]
+              .filter(Boolean)
+              .map((value) => String(value).toLowerCase());
+
+            return haystacks.some((value) => value.includes(normalizedQuery));
+          }),
+        );
+      } catch (error) {
+        console.error("Error searching users:", error);
+        if (active) {
+          setMatchedUsers([]);
+          setMatchedPosts([]);
+        }
+      } finally {
+        if (active) {
+          setSearchingUsers(false);
+          setSearchingPosts(false);
+        }
+      }
+    }, 250);
+
+    return () => {
+      active = false;
+      clearTimeout(timeout);
+    };
+  }, [trimmedQuery]);
 
   const renderNewsCard = (news: NewsRecommendation) => (
     <TouchableOpacity
@@ -224,6 +299,29 @@ export default function SearchScreen() {
     </TouchableOpacity>
   );
 
+  const renderUserResult = (user: UserProfile) => (
+    <View key={user.id} style={styles.resultCardWrap}>
+      <UserSearchResult
+        user={user}
+        onPress={(userId) => router.push(`/profile?userId=${userId}` as any)}
+      />
+    </View>
+  );
+
+  const renderPostResult = (post: Post) => (
+    <View key={post.id} style={styles.resultCardWrap}>
+      <PostSearchResult
+        post={post}
+        onPress={() => {
+          if (post.community?.id) {
+            router.push(`/forum?community=${encodeURIComponent(post.community.id)}` as any);
+          }
+        }}
+        onUserPress={(userId) => router.push(`/profile?userId=${userId}` as any)}
+      />
+    </View>
+  );
+
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
@@ -233,6 +331,7 @@ export default function SearchScreen() {
         style={[
           styles.searchHeader,
           {
+            marginTop: 20,
             backgroundColor: colors.cardBackground,
             borderBottomColor: colors.border,
           },
@@ -281,34 +380,102 @@ export default function SearchScreen() {
         contentContainerStyle={styles.contentContainer} // center all sections
         showsVerticalScrollIndicator={false}
       >
-        {/* Popular Searches */}
-        <View style={styles.centerWrap}>
-          <Text style={[styles.h1, { color: colors.text }]}>
-            Popular Searches
-          </Text>
+        {trimmedQuery.length > 0 ? (
+          <>
+            <View style={styles.centerWrap}>
+              <Text style={[styles.h1, { color: colors.text }]}>People</Text>
 
-          <View style={styles.suggestionsContainer}>
-            {searchSuggestions.map(renderSuggestion)}
-          </View>
-        </View>
+              {searchingUsers ? (
+                <View style={[styles.emptyState, { borderColor: colors.border }]}>
+                  <Ionicons
+                    name="search-outline"
+                    size={44}
+                    color={colors.textSecondary}
+                  />
+                  <Text style={[styles.emptyTitle, { color: colors.text }]}>Searching profiles...</Text>
+                </View>
+              ) : matchedUsers.length > 0 ? (
+                <View style={styles.resultsContainer}>
+                  {matchedUsers.map(renderUserResult)}
+                </View>
+              ) : (
+                <View style={[styles.emptyState, { borderColor: colors.border }]}>
+                  <Ionicons
+                    name="person-circle-outline"
+                    size={48}
+                    color={colors.textSecondary}
+                  />
+                  <Text style={[styles.emptyTitle, { color: colors.text }]}>Person doesn't exist on the app</Text>
+                  <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
+                    Try another name or username.
+                  </Text>
+                </View>
+              )}
+            </View>
 
-        {/* Latest Updates */}
-        <View style={styles.centerWrap}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={[styles.h1, { color: colors.text }]}>
-              Latest Updates
-            </Text>
-            <TouchableOpacity>
-              <Text style={[styles.seeAll, { color: colors.textSecondary }]}>
-                See all
+            <View style={styles.centerWrap}>
+              <Text style={[styles.h1, { color: colors.text }]}>Posts</Text>
+
+              {searchingPosts ? (
+                <View style={[styles.emptyState, { borderColor: colors.border }]}>
+                  <Ionicons
+                    name="search-outline"
+                    size={44}
+                    color={colors.textSecondary}
+                  />
+                  <Text style={[styles.emptyTitle, { color: colors.text }]}>Searching posts...</Text>
+                </View>
+              ) : matchedPosts.length > 0 ? (
+                <View style={styles.resultsContainer}>
+                  {matchedPosts.map(renderPostResult)}
+                </View>
+              ) : (
+                <View style={[styles.emptyState, { borderColor: colors.border }]}>
+                  <Ionicons
+                    name="chatbubble-ellipses-outline"
+                    size={48}
+                    color={colors.textSecondary}
+                  />
+                  <Text style={[styles.emptyTitle, { color: colors.text }]}>No matching posts found</Text>
+                  <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
+                    Try a community name, hashtag, or a different phrase.
+                  </Text>
+                </View>
+              )}
+            </View>
+          </>
+        ) : (
+          <>
+            {/* Popular Searches */}
+            <View style={styles.centerWrap}>
+              <Text style={[styles.h1, { color: colors.text }]}>
+                Popular Searches
               </Text>
-            </TouchableOpacity>
-          </View>
 
-          <View style={styles.newsContainer}>
-            {newsRecommendations.map(renderNewsCard)}
-          </View>
-        </View>
+              <View style={styles.suggestionsContainer}>
+                {searchSuggestions.map(renderSuggestion)}
+              </View>
+            </View>
+
+            {/* Latest Updates */}
+            <View style={styles.centerWrap}>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={[styles.h1, { color: colors.text }]}>
+                  Latest Updates
+                </Text>
+                <TouchableOpacity>
+                  <Text style={[styles.seeAll, { color: colors.textSecondary }]}>
+                    See all
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.newsContainer}>
+                {newsRecommendations.map(renderNewsCard)}
+              </View>
+            </View>
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -340,6 +507,33 @@ const styles = StyleSheet.create({
   },
   h1: { fontSize: 18, fontWeight: "700" },
   seeAll: { fontSize: 12 },
+  resultsContainer: {
+    gap: 8,
+  },
+  resultCardWrap: {
+    width: "100%",
+  },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    borderRadius: 16,
+    backgroundColor: "rgba(0,0,0,0.02)",
+  },
+  emptyTitle: {
+    marginTop: 12,
+    fontSize: 18,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  emptySubtitle: {
+    marginTop: 6,
+    fontSize: 13,
+    textAlign: "center",
+    lineHeight: 18,
+  },
 
   // Popular search list
   suggestionsContainer: {},
@@ -395,7 +589,10 @@ const styles = StyleSheet.create({
   searchHeader: {
     paddingHorizontal: 16,
     paddingVertical: 12,
+    marginHorizontal: 16,
+    zIndex: 2,
     borderBottomWidth: 1,
+    borderRadius: 16,
   },
   searchBarContainer: {
     flexDirection: "row",

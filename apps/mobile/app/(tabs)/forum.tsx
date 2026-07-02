@@ -2,28 +2,39 @@ import { CommunityFeed } from "@/components/forum/CommunityFeed";
 import DiscoverCommunitiesSidebar from "@/components/forum/DiscoverCommunitiesSidebar";
 import JoinedCommunitiesSidebar from "@/components/forum/JoinedCommunitiesSidebar";
 import { useThemeColors } from "@/constants/Colors";
+import { browseCommunities, browseCommunityPosts } from "@/data/browseCommunities";
 import { useCommunities } from "@/hooks/useCommunities";
 import { api } from "@/lib/api";
 import type { Community, Post } from "@/types/community";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  Dimensions,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
+    Dimensions,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ForumScreen() {
   const colors = useThemeColors();
+  const router = useRouter();
+  const params = useLocalSearchParams<{ community?: string | string[] }>();
   const { width } = Dimensions.get("window");
-  const isTablet = width > 768;
+  const isDesktop = width >= 1200;
   const { communities, loading } = useCommunities();
 
   const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
+
+  const selectedBrowseCommunityId = Array.isArray(params.community)
+    ? params.community[0]
+    : params.community;
+  const selectedBrowseCommunity = selectedBrowseCommunityId
+    ? browseCommunities.find((community) => community.id === selectedBrowseCommunityId)
+    : null;
 
   const joinedCommunities = communities.filter((c) => c.isJoined);
   const suggestedCommunities = communities.filter((c) => !c.isJoined);
@@ -31,6 +42,11 @@ export default function ForumScreen() {
 
   const fetchPosts = useCallback(async () => {
     try {
+      if (selectedBrowseCommunity) {
+        setPosts(browseCommunityPosts[selectedBrowseCommunity.id] ?? []);
+        return;
+      }
+
       const result = await api.get<{ posts: Post[] }>("/api/posts?limit=50");
       const allPosts = result.posts;
       if (selectedCommunity) {
@@ -41,13 +57,22 @@ export default function ForumScreen() {
     } catch (error) {
       console.error("Error fetching posts:", error);
     }
-  }, [selectedCommunity]);
+  }, [selectedBrowseCommunity, selectedCommunity]);
 
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
 
+  useEffect(() => {
+    if (selectedBrowseCommunity) {
+      setSelectedCommunity(null);
+    }
+  }, [selectedBrowseCommunity]);
+
   const handleCommunitySelect = (community: Community | null) => {
+    if (selectedBrowseCommunityId) {
+      router.replace("/forum");
+    }
     setSelectedCommunity(community);
   };
 
@@ -59,12 +84,12 @@ export default function ForumScreen() {
     }
   };
 
-  if (isTablet) {
+  if (isDesktop) {
     return (
       <SafeAreaView
         style={[styles.container, { backgroundColor: colors.background }]}
       >
-        <View style={styles.tabletLayout}>
+        <View style={styles.desktopLayout}>
           <JoinedCommunitiesSidebar
             joinedCommunities={joinedCommunities}
             selectedCommunity={selectedCommunity}
@@ -74,7 +99,7 @@ export default function ForumScreen() {
           <View style={styles.mainContent}>
             <CommunityFeed
               posts={posts}
-              selectedCommunity={selectedCommunity?.id}
+              selectedCommunity={selectedBrowseCommunity?.id ?? selectedCommunity?.id}
             />
           </View>
 
@@ -94,10 +119,7 @@ export default function ForumScreen() {
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
     >
-      <ScrollView
-        style={styles.mobileLayout}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView style={styles.mobileLayout} showsVerticalScrollIndicator={false}>
         <View
           style={[
             styles.mobileHeader,
@@ -114,8 +136,26 @@ export default function ForumScreen() {
 
         <CommunityFeed
           posts={posts}
-          selectedCommunity={selectedCommunity?.id}
+          selectedCommunity={selectedBrowseCommunity?.id ?? selectedCommunity?.id}
         />
+
+        <View style={styles.stackedSection}>
+          <JoinedCommunitiesSidebar
+            joinedCommunities={joinedCommunities}
+            selectedCommunity={selectedCommunity}
+            onCommunitySelect={handleCommunitySelect}
+          />
+        </View>
+
+        <View style={styles.stackedSection}>
+          <DiscoverCommunitiesSidebar
+            suggestedCommunities={suggestedCommunities}
+            trendingCommunities={trendingCommunities}
+            selectedCommunity={selectedCommunity}
+            onCommunitySelect={handleCommunitySelect}
+            onJoinCommunity={handleJoinCommunity}
+          />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -125,7 +165,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  tabletLayout: {
+  desktopLayout: {
     flexDirection: "row",
     flex: 1,
     padding: 16,
@@ -133,10 +173,15 @@ const styles = StyleSheet.create({
   },
   mainContent: {
     flex: 1,
-    maxWidth: 500,
+    minWidth: 0,
+    maxWidth: 560,
   },
   mobileLayout: {
     flex: 1,
+  },
+  stackedSection: {
+    paddingHorizontal: 16,
+    marginBottom: 16,
   },
   mobileHeader: {
     paddingHorizontal: 16,

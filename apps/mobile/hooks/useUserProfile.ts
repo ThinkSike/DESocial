@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
-import type { UserProfile } from "@desocial/shared";
 import { useAuthStore } from "@/store/auth";
+import type { UserProfile } from "@desocial/shared";
+import { useCallback, useEffect, useState } from "react";
 
 export const useUserProfile = (userId?: string) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -11,7 +11,10 @@ export const useUserProfile = (userId?: string) => {
   const targetUserId = userId || user?.id;
 
   const fetchProfile = useCallback(async () => {
-    if (!targetUserId) return;
+    if (!targetUserId) {
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);

@@ -1,20 +1,21 @@
 import { useThemeColors } from "@/constants/Colors";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { useNotificationStore } from "@/store/notification";
 import type { PostContent } from "@/types/post";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Image,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 interface PostCreatorProps {
@@ -25,6 +26,7 @@ interface PostCreatorProps {
 export default function PostCreator({ user, onCreatePost }: PostCreatorProps) {
   const colors = useThemeColors();
   const { profile } = useUserProfile();
+  const showNotification = useNotificationStore((state) => state.showNotification);
   const [text, setText] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [focused, setFocused] = useState(false);
@@ -76,7 +78,11 @@ export default function PostCreator({ user, onCreatePost }: PostCreatorProps) {
       setText("");
       setImages([]);
       setFocused(false);
-      Alert.alert("Success", "Post created!");
+      showNotification({
+        title: "Post created",
+        message: "Your post is live now.",
+        icon: "success",
+      });
     } catch {
       Alert.alert("Error", "Failed to create post");
     } finally {

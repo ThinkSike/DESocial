@@ -1,14 +1,85 @@
 import { UpdateProfileSchema } from "@desocial/shared";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db, schema } from "../db";
 import { authMiddleware, optionalAuth } from "../middleware/auth";
 
 const users = new Hono();
 
+users.get("/search", optionalAuth, async (c) => {
+  try {
+    const query = c.req.query("q")?.trim();
+    if (!query) {
+      return c.json({ users: [] });
+    }
+
+    const limit = Math.min(Number(c.req.query("limit")) || 20, 50);
+    const matches = await db
+      .select({
+        id: schema.users.id,
+        username: schema.users.username,
+        displayName: schema.users.displayName,
+        email: schema.users.email,
+        avatar: schema.users.avatar,
+        bio: schema.users.bio,
+        prn: schema.users.prn,
+        department: schema.users.department,
+        verified: schema.users.verified,
+        profileViews: schema.users.profileViews,
+        createdAt: schema.users.createdAt,
+        updatedAt: schema.users.updatedAt,
+      })
+      .from(schema.users)
+      .where(
+        or(
+          ilike(schema.users.username, `%${query}%`),
+          ilike(schema.users.displayName, `%${query}%`),
+        ),
+      )
+      .orderBy(desc(schema.users.createdAt))
+      .limit(limit);
+
+    const usersWithStats = await Promise.all(
+      matches.map(async (user) => {
+        const [followers, following, posts, comments] = await Promise.all([
+          db.$count(schema.follows, eq(schema.follows.followingId, user.id)),
+          db.$count(schema.follows, eq(schema.follows.followerId, user.id)),
+          db.$count(schema.posts, eq(schema.posts.userId, user.id)),
+          db.$count(schema.comments, eq(schema.comments.userId, user.id)),
+        ]);
+
+        return {
+          ...user,
+          stats: {
+            followers,
+            following,
+            posts,
+            comments,
+            profileViews: user.profileViews ?? 0,
+          },
+        };
+      }),
+    );
+
+    return c.json({ users: usersWithStats });
+  } catch (error) {
+    console.error("Search users error:", error);
+    return c.json({ error: "Failed to search users" }, 500);
+  }
+});
+
 users.get("/:id", optionalAuth, async (c) => {
   try {
     const id = c.req.param("id");
+    const viewerId = c.get("user")?.userId;
+
+    if (viewerId && viewerId !== id) {
+      await db
+        .update(schema.users)
+        .set({ profileViews: sql`${schema.users.profileViews} + 1` })
+        .where(eq(schema.users.id, id));
+    }
+
     const [user] = await db
       .select()
       .from(schema.users)
@@ -34,6 +105,19 @@ users.get("/:id", optionalAuth, async (c) => {
       eq(schema.comments.userId, id),
     );
 
+    const isFollowing = viewerId
+      ? (await db
+          .select({ id: schema.follows.id })
+          .from(schema.follows)
+          .where(
+            and(
+              eq(schema.follows.followerId, viewerId),
+              eq(schema.follows.followingId, id),
+            ),
+          )
+          .limit(1)).length > 0
+      : false;
+
     const { passwordHash: _, ...safeUser } = user;
     return c.json({
       ...safeUser,
@@ -42,7 +126,9 @@ users.get("/:id", optionalAuth, async (c) => {
         following: followingCount,
         posts: postsCount,
         comments: commentsCount,
+        profileViews: user.profileViews ?? 0,
       },
+      isFollowing,
     });
   } catch (error) {
     console.error("Get user error:", error);
@@ -86,15 +172,15 @@ users.patch("/:id", authMiddleware, async (c) => {
       parsed.data.bio = parsed.data.bio.trim();
     }
 
-    const [user] = await db
+    const [updatedUser] = await db
       .update(schema.users)
       .set({ ...parsed.data, updatedAt: new Date() })
       .where(eq(schema.users.id, id))
       .returning();
 
-    if (!user) return c.json({ error: "User not found" }, 404);
+    if (!updatedUser) return c.json({ error: "User not found" }, 404);
 
-    const { passwordHash: _, ...safeUser } = user;
+    const { passwordHash: __, ...safeUser } = updatedUser;
     return c.json(safeUser);
   } catch (error) {
     console.error("Update user error:", error);
@@ -136,7 +222,11 @@ users.get("/:id/posts", async (c) => {
       if (!val) return undefined;
       if (Array.isArray(val)) return val as string[];
       if (typeof val === "string") {
-        try { return JSON.parse(val); } catch { return [val]; }
+        try {
+          return JSON.parse(val);
+        } catch {
+          return [val];
+        }
       }
       return undefined;
     };
@@ -197,7 +287,11 @@ users.get("/:id/comments", async (c) => {
       if (!val) return undefined;
       if (Array.isArray(val)) return val as string[];
       if (typeof val === "string") {
-        try { return JSON.parse(val); } catch { return [val]; }
+        try {
+          return JSON.parse(val);
+        } catch {
+          return [val];
+        }
       }
       return undefined;
     };
@@ -225,7 +319,10 @@ users.post("/:id/follow", authMiddleware, async (c) => {
   try {
     const { userId } = c.get("user");
     const targetId = c.req.param("id");
-    if (userId === targetId) return c.json({ error: "Cannot follow yourself" }, 400);
+
+    if (userId === targetId) {
+      return c.json({ error: "Cannot follow yourself" }, 400);
+    }
 
     await db.insert(schema.follows).values({
       followerId: userId,
@@ -247,10 +344,7 @@ users.delete("/:id/follow", authMiddleware, async (c) => {
 
     await db
       .delete(schema.follows)
-      .where(
-        eq(schema.follows.followerId, userId) &&
-        eq(schema.follows.followingId, targetId),
-      );
+      .where(and(eq(schema.follows.followerId, userId), eq(schema.follows.followingId, targetId)));
 
     return c.json({ following: false });
   } catch (error) {

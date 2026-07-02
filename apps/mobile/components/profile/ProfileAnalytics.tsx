@@ -5,8 +5,8 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface AnalyticsData {
   profileViews: number;
-  postImpressions: number;
-  searchAppearances: number;
+  followers: number;
+  following: number;
 }
 
 interface ProfileAnalyticsProps {
@@ -16,8 +16,8 @@ interface ProfileAnalyticsProps {
 
 const PLACEHOLDER_ANALYTICS: AnalyticsData = {
   profileViews: 128,
-  postImpressions: 342,
-  searchAppearances: 47,
+  followers: 42,
+  following: 18,
 };
 
 export default function ProfileAnalytics({
@@ -56,32 +56,22 @@ export default function ProfileAnalytics({
 
         <View style={s.metric}>
           <View style={s.metricHeader}>
-            <Ionicons
-              name="trending-up"
-              size={16}
-              color={colors.textSecondary}
-            />
+            <Ionicons name="people" size={16} color={colors.textSecondary} />
             <Text style={s.metricValue}>
-              {formatNumber(analytics.postImpressions)}
+              {formatNumber(analytics.followers)}
             </Text>
           </View>
-          <Text style={s.metricLabel}>post impressions</Text>
-          <Text style={s.metricSubtext}>
-            Check out who's engaging with your posts
-          </Text>
+          <Text style={s.metricLabel}>followers</Text>
+          <Text style={s.metricSubtext}>People following your profile</Text>
         </View>
 
         <View style={s.metric}>
           <View style={s.metricHeader}>
-            <Ionicons name="search" size={16} color={colors.textSecondary} />
-            <Text style={s.metricValue}>
-              {formatNumber(analytics.searchAppearances)}
-            </Text>
+            <Ionicons name="person-add" size={16} color={colors.textSecondary} />
+            <Text style={s.metricValue}>{formatNumber(analytics.following)}</Text>
           </View>
-          <Text style={s.metricLabel}>search appearances</Text>
-          <Text style={s.metricSubtext}>
-            See how often you appear in searches
-          </Text>
+          <Text style={s.metricLabel}>following</Text>
+          <Text style={s.metricSubtext}>Profiles you follow</Text>
         </View>
       </View>
 
