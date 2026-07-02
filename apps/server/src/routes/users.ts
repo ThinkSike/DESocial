@@ -202,7 +202,7 @@ users.get("/:id/comments", async (c) => {
       return undefined;
     };
 
-    const formatted = rows.map((row) => ({
+    const formatted = (rows as any[]).map((row) => ({
       id: row.id,
       text: row.text,
       createdAt: row.createdAt,

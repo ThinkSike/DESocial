@@ -1,6 +1,6 @@
-import { Hono } from "hono";
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
+import { Hono } from "hono";
 import { authMiddleware } from "../middleware/auth";
 
 const s3 = new S3Client({
@@ -27,7 +27,8 @@ upload.get("/:type/:filename", async (c) => {
     const response = await s3.send(cmd);
     const buffer = await response.Body!.transformToByteArray();
     const contentType = response.ContentType || "application/octet-stream";
-    return new Response(buffer, { headers: { "Content-Type": contentType, "Cache-Control": "public, max-age=31536000" } });
+    const body = Buffer.from(buffer);
+    return new Response(body, { headers: { "Content-Type": contentType, "Cache-Control": "public, max-age=31536000" } });
   } catch {
     return c.json({ error: "File not found" }, 404);
   }

@@ -1,14 +1,15 @@
 import { relations } from "drizzle-orm";
 import {
-  boolean,
-  index,
-  integer,
-  pgEnum,
-  pgTable,
-  serial,
-  text,
-  timestamp,
-  uniqueIndex,
+    boolean,
+    foreignKey,
+    index,
+    integer,
+    pgEnum,
+    pgTable,
+    serial,
+    text,
+    timestamp,
+    uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
@@ -142,9 +143,7 @@ export const comments = pgTable("comments", {
   postId: integer("post_id")
     .notNull()
     .references(() => posts.id, { onDelete: "cascade" }),
-  parentId: integer("parent_id").references(() => comments.id, {
-    onDelete: "cascade",
-  }),
+  parentId: integer("parent_id"),
   userId: text("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
@@ -153,7 +152,14 @@ export const comments = pgTable("comments", {
   likesCount: integer("likes_count").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+},
+  (table) => ({
+    parentCommentFk: foreignKey({
+      columns: [table.parentId],
+      foreignColumns: [table.id],
+    }).onDelete("cascade"),
+  }),
+);
 
 export const commentLikes = pgTable(
   "comment_likes",
