@@ -5,18 +5,20 @@ import { useThemeColors } from "@/constants/Colors";
 import { browseCommunities, browseCommunityPosts } from "@/data/browseCommunities";
 import { useCommunities } from "@/hooks/useCommunities";
 import { api } from "@/lib/api";
+import { useAuthStore } from "@/store/auth";
 import type { Community, Post } from "@/types/community";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-    Dimensions,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Dimensions,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+type MobileTab = "feed" | "communities";
 
 export default function ForumScreen() {
   const colors = useThemeColors();
@@ -24,21 +26,27 @@ export default function ForumScreen() {
   const params = useLocalSearchParams<{ community?: string | string[] }>();
   const { width } = Dimensions.get("window");
   const isDesktop = width >= 1200;
-  const { communities, loading } = useCommunities();
+  const { communities, loading, handleJoinCommunity } = useCommunities();
+  const { user } = useAuthStore();
 
   const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [mobileTab, setMobileTab] = useState<MobileTab>("feed");
 
   const selectedBrowseCommunityId = Array.isArray(params.community)
     ? params.community[0]
     : params.community;
   const selectedBrowseCommunity = selectedBrowseCommunityId
-    ? browseCommunities.find((community) => community.id === selectedBrowseCommunityId)
+    ? browseCommunities.find((c) => c.id === selectedBrowseCommunityId)
     : null;
 
   const joinedCommunities = communities.filter((c) => c.isJoined);
   const suggestedCommunities = communities.filter((c) => !c.isJoined);
   const trendingCommunities = communities.filter((c) => c.trending);
+
+  const isInJoinedCommunity =
+    selectedCommunity !== null &&
+    joinedCommunities.some((c) => c.id === selectedCommunity.id);
 
   const fetchPosts = useCallback(async () => {
     try {
@@ -74,32 +82,42 @@ export default function ForumScreen() {
       router.replace("/forum");
     }
     setSelectedCommunity(community);
+    // Switch to feed tab when a community is selected on mobile
+    if (community !== null) {
+      setMobileTab("feed");
+    }
   };
 
-  const handleJoinCommunity = async (communityId: string) => {
+  const handleJoinPress = async (communityId: string) => {
     try {
-      await api.post(`/api/communities/${communityId}/join`);
+      await handleJoinCommunity(communityId);
     } catch (error) {
       console.error("Error joining community:", error);
     }
   };
 
+  const handleLocalPost = (newPost: Post) => {
+    setPosts((prev) => [newPost, ...prev]);
+  };
+
+  // ── Desktop 3-column layout ──────────────────────────────────────────────
   if (isDesktop) {
     return (
-      <SafeAreaView
-        style={[styles.container, { backgroundColor: colors.background }]}
-      >
-        <View style={styles.desktopLayout}>
+      <SafeAreaView style={[styles(colors).container, { backgroundColor: colors.background }]}>
+        <View style={styles(colors).desktopLayout}>
           <JoinedCommunitiesSidebar
             joinedCommunities={joinedCommunities}
             selectedCommunity={selectedCommunity}
             onCommunitySelect={handleCommunitySelect}
           />
 
-          <View style={styles.mainContent}>
+          <View style={styles(colors).mainContent}>
             <CommunityFeed
               posts={posts}
               selectedCommunity={selectedBrowseCommunity?.id ?? selectedCommunity?.id}
+              isJoinedCommunity={isInJoinedCommunity}
+              currentUser={user}
+              onLocalPost={handleLocalPost}
             />
           </View>
 
@@ -108,101 +126,180 @@ export default function ForumScreen() {
             trendingCommunities={trendingCommunities}
             selectedCommunity={selectedCommunity}
             onCommunitySelect={handleCommunitySelect}
-            onJoinCommunity={handleJoinCommunity}
+            onJoinCommunity={handleJoinPress}
           />
         </View>
       </SafeAreaView>
     );
   }
 
+  // ── Mobile layout with tab switcher ─────────────────────────────────────
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
-      <ScrollView style={styles.mobileLayout} showsVerticalScrollIndicator={false}>
-        <View
+    <SafeAreaView style={[styles(colors).container, { backgroundColor: colors.background }]}>
+      {/* Tab switcher */}
+      <View style={[styles(colors).tabBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        <TouchableOpacity
           style={[
-            styles.mobileHeader,
-            {
-              backgroundColor: colors.cardBackground,
-              borderBottomColor: colors.border,
-            },
+            styles(colors).tabItem,
+            mobileTab === "feed" && styles(colors).tabItemActive,
+            mobileTab === "feed" && { borderBottomColor: colors.primary },
           ]}
+          onPress={() => setMobileTab("feed")}
         >
-          <Text style={[styles.mobileHeaderTitle, { color: colors.text }]}>
+          <Text
+            style={[
+              styles(colors).tabLabel,
+              { color: mobileTab === "feed" ? colors.primary : colors.textSecondary },
+            ]}
+          >
+            Feed
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles(colors).tabItem,
+            mobileTab === "communities" && styles(colors).tabItemActive,
+            mobileTab === "communities" && { borderBottomColor: colors.primary },
+          ]}
+          onPress={() => setMobileTab("communities")}
+        >
+          <Text
+            style={[
+              styles(colors).tabLabel,
+              { color: mobileTab === "communities" ? colors.primary : colors.textSecondary },
+            ]}
+          >
             Communities
           </Text>
-        </View>
+          {joinedCommunities.length > 0 && (
+            <View style={[styles(colors).tabBadge, { backgroundColor: colors.primary }]}>
+              <Text style={styles(colors).tabBadgeText}>{joinedCommunities.length}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
 
+      {/* Selected community info bar */}
+      {selectedCommunity && mobileTab === "feed" && (
+        <View style={[styles(colors).communityBar, { backgroundColor: colors.primary + "12", borderBottomColor: colors.border }]}>
+          <Text style={[styles(colors).communityBarText, { color: colors.primary }]} numberOfLines={1}>
+            📌 {selectedCommunity.name}
+          </Text>
+          <TouchableOpacity onPress={() => setSelectedCommunity(null)}>
+            <Text style={[styles(colors).communityBarClear, { color: colors.textSecondary }]}>
+              Clear
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Feed tab */}
+      {mobileTab === "feed" && (
         <CommunityFeed
           posts={posts}
           selectedCommunity={selectedBrowseCommunity?.id ?? selectedCommunity?.id}
+          isJoinedCommunity={isInJoinedCommunity}
+          currentUser={user}
+          onLocalPost={handleLocalPost}
         />
+      )}
 
-        <View style={styles.stackedSection}>
+      {/* Communities tab */}
+      {mobileTab === "communities" && (
+        <View style={styles(colors).communitiesPanel}>
           <JoinedCommunitiesSidebar
             joinedCommunities={joinedCommunities}
             selectedCommunity={selectedCommunity}
             onCommunitySelect={handleCommunitySelect}
           />
-        </View>
 
-        <View style={styles.stackedSection}>
           <DiscoverCommunitiesSidebar
             suggestedCommunities={suggestedCommunities}
             trendingCommunities={trendingCommunities}
             selectedCommunity={selectedCommunity}
             onCommunitySelect={handleCommunitySelect}
-            onJoinCommunity={handleJoinCommunity}
+            onJoinCommunity={handleJoinPress}
           />
         </View>
-      </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  desktopLayout: {
-    flexDirection: "row",
-    flex: 1,
-    padding: 16,
-    gap: 16,
-  },
-  mainContent: {
-    flex: 1,
-    minWidth: 0,
-    maxWidth: 560,
-  },
-  mobileLayout: {
-    flex: 1,
-  },
-  stackedSection: {
-    paddingHorizontal: 16,
-    marginBottom: 16,
-  },
-  mobileHeader: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    margin: 16,
-    borderRadius: 12,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
-  },
-  mobileHeaderTitle: {
-    fontSize: 24,
-    fontWeight: "700",
-  },
-});
+const styles = (colors: any) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    // Desktop
+    desktopLayout: {
+      flexDirection: "row",
+      flex: 1,
+      padding: 16,
+      gap: 16,
+    },
+    mainContent: {
+      flex: 1,
+      minWidth: 0,
+      maxWidth: 560,
+    },
+    // Mobile tab bar
+    tabBar: {
+      flexDirection: "row",
+      borderBottomWidth: 1,
+    },
+    tabItem: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: 13,
+      gap: 6,
+      borderBottomWidth: 2.5,
+      borderBottomColor: "transparent",
+    },
+    tabItemActive: {
+      // borderBottomColor is applied inline with colors.primary
+    },
+    tabLabel: {
+      fontSize: 14,
+      fontWeight: "600",
+    },
+    tabBadge: {
+      borderRadius: 10,
+      paddingHorizontal: 6,
+      paddingVertical: 1,
+      minWidth: 20,
+      alignItems: "center",
+    },
+    tabBadgeText: {
+      fontSize: 11,
+      fontWeight: "700",
+      color: "#FFFFFF",
+    },
+    // Community info bar
+    communityBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+    },
+    communityBarText: {
+      fontSize: 13,
+      fontWeight: "600",
+      flex: 1,
+    },
+    communityBarClear: {
+      fontSize: 13,
+      marginLeft: 12,
+    },
+    // Communities panel (mobile)
+    communitiesPanel: {
+      flex: 1,
+      padding: 16,
+      gap: 16,
+    },
+  });

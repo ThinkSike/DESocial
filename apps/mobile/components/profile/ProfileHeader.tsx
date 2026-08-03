@@ -16,7 +16,6 @@ interface ProfileHeaderProps {
   isOwnProfile?: boolean;
   onEditProfile?: () => void;
   onFollowToggle?: () => void;
-  onMessagePress?: () => void;
   onSettingsPress?: () => void;
   isFollowing?: boolean;
   isFollowLoading?: boolean;
@@ -31,7 +30,6 @@ export default function ProfileHeader({
   isOwnProfile = false,
   onEditProfile,
   onFollowToggle,
-  onMessagePress,
   onSettingsPress,
   isFollowing = false,
   isFollowLoading = false,
@@ -45,11 +43,11 @@ export default function ProfileHeader({
       return (
         <View style={s.actionButtonsContainer}>
           <TouchableOpacity style={s.addProfileButton} onPress={onEditProfile}>
-            <Text style={s.addProfileButtonText}>Add profile section</Text>
+            <Text style={s.addProfileButtonText}>Edit profile</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={s.resourcesButton} onPress={onSettingsPress}>
-            <Text style={s.resourcesButtonText}>Resources</Text>
+          <TouchableOpacity style={s.messageButton} onPress={onSettingsPress}>
+            <Text style={s.messageButtonText}>Settings</Text>
           </TouchableOpacity>
         </View>
       );
@@ -65,10 +63,6 @@ export default function ProfileHeader({
           <Text style={s.followButtonText}>
             {isFollowLoading ? "Saving..." : isFollowing ? "Following" : "Follow"}
           </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={s.messageButton} onPress={onMessagePress}>
-          <Text style={s.messageButtonText}>Message</Text>
         </TouchableOpacity>
       </View>
     );
@@ -328,32 +322,6 @@ const styles = (colors: any) =>
       fontSize: 14,
       fontWeight: "600",
       color: colors.primary,
-    },
-    enhanceProfileButton: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 20,
-      paddingVertical: 8,
-      paddingHorizontal: 16,
-      alignItems: "center",
-    },
-    enhanceProfileButtonText: {
-      fontSize: 14,
-      fontWeight: "600",
-      color: colors.text,
-    },
-    resourcesButton: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 20,
-      paddingVertical: 8,
-      paddingHorizontal: 16,
-      alignItems: "center",
-    },
-    resourcesButtonText: {
-      fontSize: 14,
-      fontWeight: "600",
-      color: colors.text,
     },
     followButton: {
       backgroundColor: colors.primary,

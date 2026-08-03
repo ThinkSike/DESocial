@@ -331,9 +331,7 @@ export default function SearchScreen() {
         style={[
           styles.searchHeader,
           {
-            marginTop: 20,
             backgroundColor: colors.cardBackground,
-            borderBottomColor: colors.border,
           },
         ]}
       >
@@ -590,8 +588,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 4,
     zIndex: 2,
-    borderBottomWidth: 1,
     borderRadius: 16,
   },
   searchBarContainer: {
@@ -606,31 +605,8 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, fontSize: 16, fontWeight: "400" },
   clearButton: { marginLeft: 8 },
 
-  // Legacy section helpers (kept if referenced)
-  section: { marginBottom: 24 },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    marginBottom: 8,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    paddingHorizontal: 16,
-    marginBottom: 8,
-  },
-  sectionSubtitle: {
-    fontSize: 14,
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    lineHeight: 20,
-  },
-  seeAllText: { fontSize: 14, fontWeight: "600" },
-
   // News card internals
-  newsImage: { width: "100%", height: 200, resizeMode: "cover" },
+  newsImage: { width: "100%", height: 200 },
   newsContent: { padding: 16 },
   newsHeader: {
     flexDirection: "row",
@@ -656,13 +632,4 @@ const styles = StyleSheet.create({
   },
   newsSource: { fontSize: 12, fontWeight: "500" },
   newsTime: { fontSize: 12 },
-
-  topicsContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    paddingHorizontal: 16,
-    gap: 8,
-  },
-  topicChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
-  topicText: { fontSize: 12, fontWeight: "600" },
 });

@@ -1,3 +1,4 @@
+import BMCCMapModal from "@/components/BMCCMapModal";
 import CommentsSheet from "@/components/CommentsSheet";
 import NewsSidebar from "@/components/NewsSidebar";
 import PostCreator from "@/components/PostCreator";
@@ -6,17 +7,16 @@ import UserProfileSidebar from "@/components/UserProfileSidebar";
 import { useThemeColors } from "@/constants/Colors";
 import { usePosts } from "@/hooks/usePosts";
 import { useAuthStore } from "@/store/auth";
-import { openMaps } from "@/utils/maps";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-    ActivityIndicator,
-    Dimensions,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Dimensions,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -41,6 +41,7 @@ export default function HomeScreen() {
   } = usePosts();
 
   const [openPostId, setOpenPostId] = useState<string | null>(null);
+  const [mapVisible, setMapVisible] = useState(false);
 
   const handleRefresh = useCallback(async () => {
     await fetchPosts(true);
@@ -57,55 +58,51 @@ export default function HomeScreen() {
     setOpenPostId(postId);
   }, []);
 
-  const handleOpenMaps = React.useCallback(() => {
-    openMaps({ query: "Colleges near me" });
-  }, []);
+  const Header = () => (
+    <View style={styles(colors).header}>
+      <TouchableOpacity
+        onPress={() => setMapVisible(true)}
+        accessibilityRole="button"
+        accessibilityLabel="Open DES Pune Campus Map"
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <Text style={styles(colors).headerLogo}>DESocial</Text>
+      </TouchableOpacity>
 
-  // Show loading indicator on initial load
+      <View style={styles(colors).headerActions}>
+        <TouchableOpacity
+          onPress={() => router.push("/notifications" as any)}
+          accessibilityRole="button"
+          accessibilityLabel="Notifications"
+          style={{ padding: 6 }}
+        >
+          <Ionicons
+            name="notifications-outline"
+            size={22}
+            color={colors.textSecondary}
+          />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  // Loading state
   if (loading && posts.length === 0) {
     return (
       <SafeAreaView style={styles(colors).container}>
-        <View style={styles(colors).header}>
-          <TouchableOpacity
-            onPress={handleOpenMaps}
-            accessibilityRole="button"
-            accessibilityLabel="Open Maps"
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Text
-              style={{ fontSize: 18, fontWeight: "700", color: colors.text }}
-            >
-              DESocial
-            </Text>
-          </TouchableOpacity>
-
-          <View style={styles(colors).headerActions}>
-            <TouchableOpacity
-              onPress={() => router.push("/notifications" as any)}
-              accessibilityRole="button"
-              accessibilityLabel="Notifications"
-              style={{ padding: 6 }}
-            >
-              <Ionicons
-                name="notifications-outline"
-                size={22}
-                color={colors.textSecondary}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-        <View
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        >
+        <Header />
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={{ color: colors.textSecondary, marginTop: 12 }}>
             Loading posts...
           </Text>
         </View>
+        <BMCCMapModal visible={mapVisible} onClose={() => setMapVisible(false)} />
       </SafeAreaView>
     );
   }
 
+  // Tablet layout
   if (isTablet) {
     const LEFT_WIDTH = 310;
     const RIGHT_WIDTH = 330;
@@ -115,37 +112,8 @@ export default function HomeScreen() {
       LEFT_WIDTH + CENTER_MAX_WIDTH + RIGHT_WIDTH + CONTENT_GAP * 2;
 
     return (
-      <>
-        <SafeAreaView style={styles(colors).container}>
-        <View style={styles(colors).header}>
-          <TouchableOpacity
-            onPress={handleOpenMaps}
-            accessibilityRole="button"
-            accessibilityLabel="Open Maps"
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Text
-              style={{ fontSize: 18, fontWeight: "700", color: colors.text }}
-            >
-              DESocial
-            </Text>
-          </TouchableOpacity>
-
-          <View style={styles(colors).headerActions}>
-            <TouchableOpacity
-              onPress={() => router.push("/notifications" as any)}
-              accessibilityRole="button"
-              accessibilityLabel="Notifications"
-              style={{ padding: 6 }}
-            >
-              <Ionicons
-                name="notifications-outline"
-                size={22}
-                color={colors.textSecondary}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
+      <SafeAreaView style={styles(colors).container}>
+        <Header />
 
         <View style={styles(colors).mainContent}>
           <View
@@ -187,48 +155,22 @@ export default function HomeScreen() {
             </View>
           </View>
         </View>
-      </SafeAreaView>
 
-      <CommentsSheet
-        postId={openPostId}
-        visible={openPostId !== null}
-        onClose={() => setOpenPostId(null)}
-        onCommentCountChange={updateCommentCount}
-      />
-    </>
+        <CommentsSheet
+          postId={openPostId}
+          visible={openPostId !== null}
+          onClose={() => setOpenPostId(null)}
+          onCommentCountChange={updateCommentCount}
+        />
+        <BMCCMapModal visible={mapVisible} onClose={() => setMapVisible(false)} />
+      </SafeAreaView>
     );
   }
 
   // Mobile layout
   return (
     <SafeAreaView style={styles(colors).container}>
-      <View style={styles(colors).header}>
-        <TouchableOpacity
-          onPress={handleOpenMaps}
-          accessibilityRole="button"
-          accessibilityLabel="Open Maps"
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>
-            DESocial
-          </Text>
-        </TouchableOpacity>
-
-        <View style={styles(colors).headerActions}>
-          <TouchableOpacity
-            onPress={() => router.push("/notifications" as any)}
-            accessibilityRole="button"
-            accessibilityLabel="Notifications"
-            style={{ padding: 6 }}
-          >
-            <Ionicons
-              name="notifications-outline"
-              size={22}
-              color={colors.textSecondary}
-            />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <Header />
 
       <View style={styles(colors).mobileContent}>
         <PostList
@@ -251,6 +193,7 @@ export default function HomeScreen() {
         onClose={() => setOpenPostId(null)}
         onCommentCountChange={updateCommentCount}
       />
+      <BMCCMapModal visible={mapVisible} onClose={() => setMapVisible(false)} />
     </SafeAreaView>
   );
 }
@@ -267,6 +210,11 @@ const styles = (colors: any) =>
       backgroundColor: colors.surface,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
+    },
+    headerLogo: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: colors.text,
     },
     headerActions: { flexDirection: "row", alignItems: "center" },
     mainContent: { flex: 1 },
@@ -285,6 +233,5 @@ const styles = (colors: any) =>
       minWidth: 360,
       minHeight: 0,
     },
-    feedList: { flex: 1 },
     mobileContent: { flex: 1 },
   });

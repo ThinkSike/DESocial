@@ -227,33 +227,35 @@ export default function ProfileScreen() {
           />
         }
       >
-        {/* Rich profile header with cover photo + centered avatar */}
-        <ProfileHeader
-          user={displayedProfile}
-          isOwnProfile={isOwnProfile}
-          onEditProfile={isOwnProfile ? () => setEditVisible(true) : undefined}
-          onFollowToggle={isOwnProfile ? undefined : handleFollowToggle}
-          onAvatarPress={pickImage}
-          onSettingsPress={isOwnProfile ? () => router.push("/settings" as any) : undefined}
-          isFollowing={isFollowing}
-          isFollowLoading={followingActionLoading}
-        />
+        <View style={s.contentWrapper}>
+          {/* Rich profile header with cover photo + centered avatar */}
+          <ProfileHeader
+            user={displayedProfile}
+            isOwnProfile={isOwnProfile}
+            onEditProfile={isOwnProfile ? () => setEditVisible(true) : undefined}
+            onFollowToggle={isOwnProfile ? undefined : handleFollowToggle}
+            onAvatarPress={pickImage}
+            onSettingsPress={isOwnProfile ? () => router.push("/settings" as any) : undefined}
+            isFollowing={isFollowing}
+            isFollowLoading={followingActionLoading}
+          />
 
-        {/* Analytics card */}
-        <ProfileAnalytics
-          analytics={{
-            profileViews: displayedProfile?.stats.profileViews ?? 0,
-            followers: displayedProfile?.stats.followers ?? 0,
-            following: displayedProfile?.stats.following ?? 0,
-          }}
-        />
+          {/* Analytics card */}
+          <ProfileAnalytics
+            analytics={{
+              profileViews: displayedProfile?.stats.profileViews ?? 0,
+              followers: displayedProfile?.stats.followers ?? 0,
+              following: displayedProfile?.stats.following ?? 0,
+            }}
+          />
 
-        {/* Activity / posts */}
-        <ProfileActivity
-          posts={userPosts}
-          comments={userComments}
-          isOwnProfile={isOwnProfile}
-        />
+          {/* Activity / posts */}
+          <ProfileActivity
+            posts={userPosts}
+            comments={userComments}
+            isOwnProfile={isOwnProfile}
+          />
+        </View>
       </ScrollView>
 
       <Modal
@@ -335,9 +337,12 @@ const styles = (colors: any) =>
     container: { flex: 1 },
     center: { flex: 1, justifyContent: "center", alignItems: "center" },
     scroll: {
-      paddingHorizontal: 16,
       paddingVertical: 16,
+    },
+    contentWrapper: {
+      paddingHorizontal: 16,
       alignItems: "center",
+      width: "100%",
     },
     retryBtn: {
       marginTop: 12,
