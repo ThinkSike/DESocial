@@ -37,6 +37,7 @@ export default function HomeScreen() {
     handleCreatePost,
     handleLike,
     handleDeletePost,
+    handleEditPost,
     updateCommentCount,
   } = usePosts();
 
@@ -142,6 +143,7 @@ export default function HomeScreen() {
                   onLike={handleLike}
                   onComment={handleComment}
                   onDelete={handleDeletePost}
+                  onEdit={handleEditPost}
                   currentUserId={user?.id}
                   ListHeaderComponent={
                     <PostCreator onCreatePost={handleCreatePost} />
@@ -182,6 +184,7 @@ export default function HomeScreen() {
           onLike={handleLike}
           onComment={handleComment}
           onDelete={handleDeletePost}
+          onEdit={handleEditPost}
           currentUserId={user?.id}
           ListHeaderComponent={<PostCreator onCreatePost={handleCreatePost} />}
         />

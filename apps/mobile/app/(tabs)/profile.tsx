@@ -238,6 +238,8 @@ export default function ProfileScreen() {
             onSettingsPress={isOwnProfile ? () => router.push("/settings" as any) : undefined}
             isFollowing={isFollowing}
             isFollowLoading={followingActionLoading}
+            onFollowersTap={targetUserId ? () => router.push({ pathname: "/follow-list", params: { userId: targetUserId, type: "followers", name: displayedProfile?.displayName ?? "" } } as any) : undefined}
+            onFollowingTap={targetUserId ? () => router.push({ pathname: "/follow-list", params: { userId: targetUserId, type: "following", name: displayedProfile?.displayName ?? "" } } as any) : undefined}
           />
 
           {/* Analytics card */}

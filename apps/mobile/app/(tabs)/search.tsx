@@ -167,30 +167,16 @@ export default function SearchScreen() {
           api.get<{ users: UserProfile[] }>(
             `/api/users/search?q=${encodeURIComponent(trimmedQuery)}&limit=10`,
           ),
-          api.get<{ posts: Post[] }>("/api/posts?limit=50"),
+          api.get<{ posts: Post[] }>(
+            `/api/posts/search?q=${encodeURIComponent(trimmedQuery)}&limit=20`,
+          ),
         ]);
 
         if (!active) return;
         setMatchedUsers(usersResult.users);
-
-        const normalizedQuery = trimmedQuery.toLowerCase();
-        setMatchedPosts(
-          postsResult.posts.filter((post) => {
-            const haystacks = [
-              post.content.text,
-              post.user.displayName,
-              post.user.username,
-              post.community?.name,
-              ...(post.content.hashtags ?? []),
-            ]
-              .filter(Boolean)
-              .map((value) => String(value).toLowerCase());
-
-            return haystacks.some((value) => value.includes(normalizedQuery));
-          }),
-        );
+        setMatchedPosts(postsResult.posts);
       } catch (error) {
-        console.error("Error searching users:", error);
+        console.error("Error searching:", error);
         if (active) {
           setMatchedUsers([]);
           setMatchedPosts([]);
@@ -201,7 +187,7 @@ export default function SearchScreen() {
           setSearchingPosts(false);
         }
       }
-    }, 250);
+    }, 300);
 
     return () => {
       active = false;

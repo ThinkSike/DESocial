@@ -1,17 +1,20 @@
+import Avatar from "@/components/Avatar";
 import ReportSheet from "@/components/ReportSheet";
 import { useThemeColors } from "@/constants/Colors";
+import { api } from "@/lib/api";
 import { Post as PostType } from "@/types/post";
 import { formatEngagementNumber, getTimeAgo } from "@/utils/format";
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import React, { useState } from "react";
 import {
     Alert,
+    KeyboardAvoidingView,
     Modal,
     Platform,
     Pressable,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
     View,
 } from "react-native";
@@ -22,6 +25,7 @@ interface PostProps {
   onLike?: (postId: string) => void;
   onComment?: (postId: string) => void;
   onDelete?: (postId: string) => void | Promise<void>;
+  onEdit?: (postId: string, newText: string) => void;
   /** ID of the currently logged-in user — used to show/hide delete */
   currentUserId?: string;
 }
@@ -34,12 +38,16 @@ export default function Post({
   onLike,
   onComment,
   onDelete,
+  onEdit,
   currentUserId,
 }: PostProps) {
   const colors = useThemeColors();
   const styles = createStyles(colors);
   const [menuVisible, setMenuVisible] = useState(false);
   const [reportVisible, setReportVisible] = useState(false);
+  const [editVisible, setEditVisible] = useState(false);
+  const [editText, setEditText] = useState(post.content.text ?? "");
+  const [saving, setSaving] = useState(false);
 
   const isOwnPost = !!currentUserId && currentUserId === post.user.id;
   const likedByMe = !!post.likedByMe;
@@ -71,6 +79,30 @@ export default function Post({
         },
       ]
     );
+  };
+
+  const handleEditPress = () => {
+    setMenuVisible(false);
+    setEditText(post.content.text ?? "");
+    setEditVisible(true);
+  };
+
+  const handleSaveEdit = async () => {
+    const trimmed = editText.trim();
+    if (!trimmed) {
+      Alert.alert("Empty post", "Post text cannot be empty.");
+      return;
+    }
+    try {
+      setSaving(true);
+      await api.patch(`/api/posts/${post.id}`, { text: trimmed });
+      onEdit?.(post.id, trimmed);
+      setEditVisible(false);
+    } catch (e: any) {
+      Alert.alert("Error", e?.message ?? "Could not save changes.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const renderImages = () => {
@@ -146,23 +178,16 @@ export default function Post({
           style={styles.userInfo}
           onPress={() => onUserPress?.(post.user.id)}
         >
-          <Image
-            source={{ uri: post.user.avatar }}
-            style={styles.avatar}
-            contentFit="cover"
-            transition={200}
+          <Avatar
+            uri={post.user.avatar}
+            name={post.user.displayName}
+            size={40}
+            verified={post.user.verified}
+            style={{ marginRight: 12 }}
           />
           <View style={styles.userDetails}>
             <View style={styles.nameRow}>
               <Text style={styles.displayName}>{post.user.displayName}</Text>
-              {post.user.verified && (
-                <Ionicons
-                  name="checkmark-circle"
-                  size={16}
-                  color={colors.primary}
-                  style={styles.verifiedIcon}
-                />
-              )}
             </View>
             <Text style={styles.username}>@{post.user.username}</Text>
           </View>
@@ -234,13 +259,22 @@ export default function Post({
         <Pressable style={styles.modalBackdrop} onPress={() => setMenuVisible(false)}>
           <Pressable style={[styles.menuSheet, { backgroundColor: colors.surface }]}>
             {isOwnPost ? (
-              /* Own post — show Delete */
-              <TouchableOpacity style={styles.menuItem} onPress={handleDeletePress}>
-                <Ionicons name="trash-outline" size={20} color="#E53935" />
-                <Text style={[styles.menuItemText, { color: "#E53935" }]}>
-                  Delete post
-                </Text>
-              </TouchableOpacity>
+              /* Own post — show Edit + Delete */
+              <>
+                <TouchableOpacity style={styles.menuItem} onPress={handleEditPress}>
+                  <Ionicons name="create-outline" size={20} color={colors.primary} />
+                  <Text style={[styles.menuItemText, { color: colors.primary }]}>
+                    Edit post
+                  </Text>
+                </TouchableOpacity>
+                <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
+                <TouchableOpacity style={styles.menuItem} onPress={handleDeletePress}>
+                  <Ionicons name="trash-outline" size={20} color="#E53935" />
+                  <Text style={[styles.menuItemText, { color: "#E53935" }]}>
+                    Delete post
+                  </Text>
+                </TouchableOpacity>
+              </>
             ) : (
               /* Other's post — show Report */
               <TouchableOpacity
@@ -276,6 +310,45 @@ export default function Post({
         targetId={Number(post.id)}
         onClose={() => setReportVisible(false)}
       />
+
+      {/* Edit post modal */}
+      <Modal
+        visible={editVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setEditVisible(false)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setEditVisible(false)} />
+        <KeyboardAvoidingView behavior="padding" style={[styles.editSheet, { backgroundColor: colors.surface }]}>
+          <View style={styles.editHandle} />
+          <View style={styles.editHeader}>
+            <Text style={[styles.editTitle, { color: colors.text }]}>Edit post</Text>
+            <TouchableOpacity onPress={() => setEditVisible(false)}>
+              <Ionicons name="close" size={22} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+          <TextInput
+            style={[styles.editInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
+            value={editText}
+            onChangeText={setEditText}
+            multiline
+            autoFocus
+            maxLength={280}
+            placeholder="Edit your post..."
+            placeholderTextColor={colors.textSecondary}
+          />
+          <View style={styles.editFooter}>
+            <Text style={[styles.charCount, { color: colors.textSecondary }]}>{editText.length}/280</Text>
+            <TouchableOpacity
+              style={[styles.saveBtn, { backgroundColor: saving ? colors.border : colors.primary }]}
+              onPress={handleSaveEdit}
+              disabled={saving}
+            >
+              <Text style={styles.saveBtnText}>{saving ? "Saving..." : "Save changes"}</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -319,6 +392,51 @@ const createStyles = (colors: any) =>
       borderRadius: 20,
       marginRight: 12,
     },
+    editSheet: {
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      paddingHorizontal: 16,
+      paddingTop: 10,
+      paddingBottom: Platform.OS === "ios" ? 40 : 16,
+      marginTop: "auto",
+    },
+    editHandle: {
+      width: 40,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: "#ccc",
+      alignSelf: "center",
+      marginBottom: 12,
+    },
+    editHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 14,
+    },
+    editTitle: { fontSize: 17, fontWeight: "700" },
+    editInput: {
+      borderWidth: 1,
+      borderRadius: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      fontSize: 16,
+      minHeight: 100,
+      textAlignVertical: "top",
+      marginBottom: 12,
+    },
+    editFooter: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    charCount: { fontSize: 12 },
+    saveBtn: {
+      borderRadius: 20,
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+    },
+    saveBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
     userDetails: { flex: 1 },
     nameRow: { flexDirection: "row", alignItems: "center" },
     displayName: {

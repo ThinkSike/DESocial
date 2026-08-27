@@ -1,7 +1,7 @@
+import Avatar from "@/components/Avatar";
 import { useThemeColors } from "@/constants/Colors";
 import type { UserProfile } from "@/types/profile";
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import React from "react";
 import {
     Dimensions,
@@ -20,6 +20,8 @@ interface ProfileHeaderProps {
   isFollowing?: boolean;
   isFollowLoading?: boolean;
   onAvatarPress?: () => void;
+  onFollowersTap?: () => void;
+  onFollowingTap?: () => void;
 }
 
 const { width: screenWidth } = Dimensions.get("window");
@@ -34,6 +36,8 @@ export default function ProfileHeader({
   isFollowing = false,
   isFollowLoading = false,
   onAvatarPress,
+  onFollowersTap,
+  onFollowingTap,
 }: ProfileHeaderProps) {
   const colors = useThemeColors();
   const s = styles(colors);
@@ -82,11 +86,11 @@ export default function ProfileHeader({
           accessibilityRole={isOwnProfile ? "button" : undefined}
           accessibilityLabel={isOwnProfile ? "Change profile picture" : undefined}
         >
-          <Image
-            source={{ uri: user.avatar || "https://i.pravatar.cc/120?img=5" }}
-            style={s.profilePicture}
-            contentFit="cover"
-            transition={200}
+          <Avatar
+            uri={user.avatar}
+            name={user.displayName || user.username}
+            size={100}
+            style={{ borderRadius: 50 }}
           />
           {isOwnProfile && (
             <View style={s.editAvatarOverlay}>
@@ -150,10 +154,18 @@ export default function ProfileHeader({
               <Text style={s.statValue}>{user.stats?.comments ?? 0}</Text>
               <Text style={s.statLabel}>Comments</Text>
             </View>
-            <View style={s.statItem}>
-              <Text style={s.statValue}>{user.stats?.followers ?? 0}</Text>
+            <TouchableOpacity style={s.statItem} onPress={onFollowersTap} disabled={!onFollowersTap}>
+              <Text style={[s.statValue, onFollowersTap && { color: colors.primary }]}>
+                {user.stats?.followers ?? 0}
+              </Text>
               <Text style={s.statLabel}>Followers</Text>
-            </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.statItem} onPress={onFollowingTap} disabled={!onFollowingTap}>
+              <Text style={[s.statValue, onFollowingTap && { color: colors.primary }]}>
+                {user.stats?.following ?? 0}
+              </Text>
+              <Text style={s.statLabel}>Following</Text>
+            </TouchableOpacity>
           </View>
         </View>
 

@@ -155,6 +155,20 @@ export const usePosts = () => {
     [user, fetchPosts],
   );
 
+  const handleEditPost = useCallback(
+    (postId: string, newText: string) => {
+      // Optimistic update — reflect edit instantly without refetch
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? { ...p, content: { ...p.content, text: newText } }
+            : p,
+        ),
+      );
+    },
+    [],
+  );
+
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
@@ -169,6 +183,7 @@ export const usePosts = () => {
     handleCreatePost,
     handleLike,
     handleDeletePost,
+    handleEditPost,
     updateCommentCount,
   };
 };

@@ -1,14 +1,15 @@
+import Avatar from "@/components/Avatar";
 import { useThemeColors } from "@/constants/Colors";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useNotificationStore } from "@/store/notification";
 import type { PostContent } from "@/types/post";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import { Image } from "expo-image";
 import React, { useState } from "react";
 import {
     ActivityIndicator,
     Alert,
-    Image,
     Platform,
     ScrollView,
     StyleSheet,
@@ -105,7 +106,12 @@ export default function PostCreator({ user, onCreatePost }: PostCreatorProps) {
     <View style={styles.container}>
       {/* Input section */}
       <View style={styles.row}>
-        <Image source={{ uri: profile?.avatar }} style={styles.avatar} />
+        <Avatar
+          uri={profile?.avatar}
+          name={profile?.displayName}
+          size={48}
+          style={{ marginRight: 12 }}
+        />
         <View style={styles.inputWrap}>
           {!focused && !images.length ? (
             <TouchableOpacity onPress={() => setFocused(true)}>
@@ -200,7 +206,6 @@ const getStyles = (c: any) =>
       elevation: 3,
     },
     row: { flexDirection: "row", padding: 16 },
-    avatar: { width: 48, height: 48, borderRadius: 24, marginRight: 12 },
     inputWrap: {
       flex: 1,
       borderWidth: 1,

@@ -20,6 +20,7 @@ interface PostListProps {
   onComment?: (postId: string) => void;
   onShare?: (postId: string) => void;
   onDelete?: (postId: string) => void | Promise<void>;
+  onEdit?: (postId: string, newText: string) => void;
   currentUserId?: string;
   ListHeaderComponent?:
     | ComponentType<any>
@@ -39,6 +40,7 @@ export default function PostList({
   onComment,
   onShare,
   onDelete,
+  onEdit,
   currentUserId,
   ListHeaderComponent,
 }: PostListProps) {
@@ -52,10 +54,11 @@ export default function PostList({
         onLike={onLike}
         onComment={onComment}
         onDelete={onDelete}
+        onEdit={onEdit}
         currentUserId={currentUserId}
       />
     ),
-    [onUserPress, onLike, onComment, onDelete, currentUserId]
+    [onUserPress, onLike, onComment, onDelete, onEdit, currentUserId]
   );
 
   const keyExtractor = useCallback((item: PostType) => String(item.id), []);

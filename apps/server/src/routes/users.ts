@@ -353,4 +353,64 @@ users.delete("/:id/follow", authMiddleware, async (c) => {
   }
 });
 
+/** GET /api/users/:id/followers — list users who follow :id */
+users.get("/:id/followers", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const limit = Math.min(Number(c.req.query("limit")) || 50, 100);
+
+    const rows = await db
+      .select({
+        id: schema.users.id,
+        username: schema.users.username,
+        displayName: schema.users.displayName,
+        avatar: schema.users.avatar,
+        bio: schema.users.bio,
+        verified: schema.users.verified,
+        department: schema.users.department,
+        role: schema.users.role,
+      })
+      .from(schema.follows)
+      .innerJoin(schema.users, eq(schema.follows.followerId, schema.users.id))
+      .where(eq(schema.follows.followingId, id))
+      .orderBy(desc(schema.follows.createdAt))
+      .limit(limit);
+
+    return c.json(rows);
+  } catch (error) {
+    console.error("Get followers error:", error);
+    return c.json({ error: "Failed to fetch followers" }, 500);
+  }
+});
+
+/** GET /api/users/:id/following — list users that :id follows */
+users.get("/:id/following", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const limit = Math.min(Number(c.req.query("limit")) || 50, 100);
+
+    const rows = await db
+      .select({
+        id: schema.users.id,
+        username: schema.users.username,
+        displayName: schema.users.displayName,
+        avatar: schema.users.avatar,
+        bio: schema.users.bio,
+        verified: schema.users.verified,
+        department: schema.users.department,
+        role: schema.users.role,
+      })
+      .from(schema.follows)
+      .innerJoin(schema.users, eq(schema.follows.followingId, schema.users.id))
+      .where(eq(schema.follows.followerId, id))
+      .orderBy(desc(schema.follows.createdAt))
+      .limit(limit);
+
+    return c.json(rows);
+  } catch (error) {
+    console.error("Get following error:", error);
+    return c.json({ error: "Failed to fetch following" }, 500);
+  }
+});
+
 export default users;
